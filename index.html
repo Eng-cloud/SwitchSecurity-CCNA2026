@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCNA Interactive — تعلّم الشبكات بالتجربة</title>
+  <meta name="description" content="منصة عربية تفاعلية لتعلّم CCNA بالرسوم والمحاكاة بدل الحفظ. نبدأ من Layer 2 Security." />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="index.html">
+        <img class="logo" src="assets/logo.svg" alt="" />
+        <span>CCNA <b>Interactive</b></span>
+      </a>
+      <nav>
+        <a href="#roadmap">الخريطة</a>
+        <a href="port-security.html">Port Security</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- HERO -->
+    <section class="hero">
+      <span class="eyebrow"> SwitchSECURITY-CCNA </span>
+      <h1>تعلّم الشبكات <span class="hl">بالتجربة</span><br />مو بالحفظ</h1>
+      <p class="lead">
+          كل تقنية تبدأ بسؤال واحد
+        <strong>ليش انوجدت أصلاً؟</strong> — بعدها تشوف الهجمة، تشوف الحل، وتجرّبه بنفسك.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="port-security.html">ابدأ من Port Security ←</a>
+        <a class="btn" href="#roadmap">شوف الخريطة</a>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="progress-card" data-progress-card>
+      <div class="row">
+        <span>تقدّمك في القسم الحالي</span>
+        <b data-pct>0%</b>
+      </div>
+      <div class="bar"><span></span></div>
+      <div class="progress-list"></div>
+    </section>
+
+    <!-- ROADMAP -->
+    <section class="section" id="roadmap">
+      <div class="section-head reveal">
+        <div class="kicker">// ROADMAP</div>
+        <h2>خريطة SwitchSECURITY-CCNA</h2>
+        <p>اضغط أي عنصر عشان تفتح شرحه التفاعلي.</p>
+      </div>
+
+      <!-- Desktop topology -->
+      <div class="topo reveal" id="topo">
+        <svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="50" y1="20" x2="22" y2="66" stroke="#30363d" stroke-width="0.4" />
+          <line x1="50" y1="20" x2="50" y2="66" stroke="#30363d" stroke-width="0.4" />
+          <line x1="50" y1="20" x2="78" y2="66" stroke="#30363d" stroke-width="0.4" />
+        </svg>
+
+        <!-- positions use right/top so RTL centering stays correct -->
+        <div class="node core" style="right:50%; top:20%;" data-module="_core">
+          <div class="ic">🛡️</div>
+          <h3>Switch Security</h3>
+          <small>تأمين طبقة الـ layer2</small>
+        </div>
+
+        <a class="node" href="port-security.html" style="right:22%; top:66%;" data-module="portSecurity">
+          <div class="ic">🔌</div>
+          <h3>Port Security</h3>
+          <small>تحديد الأجهزة على المنفذ</small>
+          <span class="flag ready">متاح الآن</span>
+        </a>
+
+        <a class="node" href="dhcp-security.html" style="right:50%; top:66%;" data-module="dhcp">
+          <div class="ic">📡</div>
+          <h3>DHCP Security</h3>
+          <small>Snooping + DAI</small>
+          <span class="flag ready">متاح الآن</span>
+        </a>
+
+        <a class="node" href="stp-security.html" style="right:78%; top:66%;" data-module="stp">
+          <div class="ic">🌳</div>
+          <h3>STP Security</h3>
+          <small>BPDU / Root Guard</small>
+          <span class="flag ready">متاح الآن</span>
+        </a>
+      </div>
+
+      <!-- Mobile stacked list -->
+      <div class="topo-list">
+        <a class="node" href="port-security.html" data-module="portSecurity">
+          <div class="ic">🔌</div><h3>Port Security</h3>
+          <small>تحديد الأجهزة على المنفذ</small><span class="flag ready">متاح الآن</span>
+        </a>
+        <a class="node" href="dhcp-security.html" data-module="dhcp">
+          <div class="ic">📡</div><h3>DHCP Security</h3>
+          <small>Snooping + DAI</small><span class="flag ready">متاح الآن</span>
+        </a>
+        <a class="node" href="stp-security.html" data-module="stp">
+          <div class="ic">🌳</div><h3>STP Security</h3>
+          <small>BPDU / Root Guard</small><span class="flag ready">متاح الآن</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="wrap footer-credit">
+      <div class="credit-line">
+        <span>SwitchSECURITY-CCNA · تصميم وتطوير <b>Eng: Abdullah Abdali</b></span>
+      </div>
+      <div class="credit-links">
+        <a class="icon-btn" href="mailto:Abdullah.y.Abdali1@gmail.com" aria-label="راسلني بالإيميل" title="Abdullah.y.Abdali1@gmail.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.2"/><path d="m3.5 6.5 8.5 6.2 8.5-6.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a class="icon-btn" href="https://www.linkedin.com/in/abdullah-abdali-342126346" target="_blank" rel="noopener" aria-label="تواصل عبر لينكدإن" title="LinkedIn">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V20.5H6.94V8.5ZM5.25 3.5C4.14 3.5 3.25 4.4 3.25 5.5C3.25 6.6 4.14 7.5 5.25 7.5C6.36 7.5 7.25 6.6 7.25 5.5C7.25 4.4 6.36 3.5 5.25 3.5ZM20.75 20.5V13.9C20.75 10.6 19.05 9.05 16.77 9.05C14.94 9.05 14.11 10.06 13.65 10.77V8.5H10.27C10.31 9.35 10.27 20.5 10.27 20.5H13.65V13.9C13.65 13.55 13.68 13.2 13.78 12.95C14.06 12.25 14.7 11.53 15.77 11.53C17.18 11.53 17.37 12.75 17.37 14.03V20.5H20.75Z"/></svg>
+        </a>
+      </div>
+      <div class="credit-copy">© جميع الحقوق محفوظة — Eng: Abdullah Abdali</div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

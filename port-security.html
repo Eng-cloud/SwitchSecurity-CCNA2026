@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Port Security — CCNA Interactive</title>
+  <meta name="description" content="ليش انوجد Port Security؟ الهجمة، الحل، والمحاكاة التفاعلية + أوامر Cisco وملاحظات CCNA." />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="index.html">
+        <img class="logo" src="assets/logo.svg" alt="" />
+        <span>CCNA <b>Interactive</b></span>
+      </a>
+      <nav>
+        <a href="index.html">← الخريطة</a>
+        <a href="#sim">المحاكاة</a>
+        <a href="#cmds">الأوامر</a>
+        <a href="#faq">أسئلة الاختبار</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="hero" style="padding-bottom:8px;">
+      <span class="eyebrow">SwitchSECURITY-CCNA</span>
+      <h1>🔌 Port <span class="hl">Security</span></h1>
+      <p class="lead">تحديد مين يقدر يتكلّم على منفذ الـ Switch — قبل ما يوصل الهاكر.</p>
+    </section>
+
+    <div class="doc">
+
+      <!-- 1. المشكلة -->
+      <div class="block reveal">
+        <h3><span class="step">01</span> المشكلة</h3>
+        <p class="lead-line">
+          الـ Switch من طبيعته "كريم زيادة": أي جهاز يوصل أي منفذ، يتعلّم الـ MAC حقّه ويبدأ يمرّر له الترافيك.
+          هذا سهّل الحياة… وسهّلها للمهاجم بعد.
+        </p>
+        <p>
+          المشكلة ملخّصها سؤالين ما كان للـ Switch جواب عليهم لحاله:
+          <br />— <strong>مين</strong> الجهاز المسموح له على هذا المنفذ؟
+          <br />— <strong>كم</strong> جهاز مسموح خلف المنفذ الواحد؟
+        </p>
+      </div>
+
+      <!-- 2. ليش اخترعتها Cisco -->
+      <div class="block reveal">
+        <h3><span class="step">02</span> ليش اخترعتها Cisco؟</h3>
+        <p>
+          عشان يعطي الـ Access Port ذاكرة ويقول له: "هذا المنفذ يخدم أجهزة معيّنة وبعدد محدود.
+          أي شي يتعدّى هذا — تصرّف." باختصار: تحويل المنفذ من مفتوح للكل، إلى منفذ يعرف حدوده.
+        </p>
+      </div>
+
+      <!-- 3. الوضع قبلها -->
+      <div class="block reveal">
+        <h3><span class="step">03</span> كيف كان الوضع قبلها؟</h3>
+        <ul>
+          <li>أي موظف يجيب Switch صغير (أو Hub) ويوصله بالمنفذ ← فجأة عشرة أجهزة خلف منفذ واحد بلا رقابة.</li>
+          <li>ضيف/زائر يوصل جهازه في أي بريزة شبكة فاضية ويدخل الشبكة الداخلية مباشرة.</li>
+          <li>ما فيه شي يمنع مهاجم يغرق جدول الـ MAC حقّ الـ Switch (نشرحه تحت).</li>
+        </ul>
+      </div>
+
+      <!-- 4. الهجمة -->
+      <div class="block reveal">
+        <h3><span class="step">04</span> كيف تتم الهجمة؟ — MAC Flooding</h3>
+        <p>
+          الـ Switch يخزّن الـ MAC addresses في جدول اسمه <strong>CAM Table</strong>، وحجمه محدود.
+          المهاجم يستخدم أداة (مثل <span class="mono">macof</span>) تولّد آلاف الـ MAC وهمية بسرعة وتغرق الجدول.
+        </p>
+        <div class="callout warn">
+          لمّا يمتلئ الـ CAM Table، بعض الـ Switches "تنهار للأمان المقلوب" (fail-open):
+          تبدأ تعمل <strong>Flooding</strong> لكل الفريمات على كل المنافذ — يعني تتصرّف مثل Hub.
+          وهنا المهاجم يقعد يتنصّت (sniffing) على ترافيك مو موجّه له أصلاً.
+        </div>
+        <p class="lead-line">النتيجة: تسريب بيانات + احتمال دخول أجهزة غير مصرّح لها. و Port Security يقطع الطريق من البداية.</p>
+      </div>
+
+      <!-- 5. كيف تعمل + المحاكاة -->
+      <div class="block reveal" id="sim">
+        <h3><span class="step">05</span> كيف تعمل التقنية؟ — جرّبها</h3>
+        <p>
+          الفكرة: على المنفذ نحدّد <strong>أقصى عدد MACs مسموح</strong> (الافتراضي = 1)، ونحدّد
+          <strong>وش يسوي المنفذ لو انتهك</strong> الشرط (Violation Mode). جرّب بنفسك تحت:
+        </p>
+
+        <div class="sim">
+          <!-- Stage -->
+          <div class="stage">
+            <div class="switch">
+              <span class="label">SW1 · Fa0/1<br>max = 1</span>
+              <div class="ports">
+                <div class="port" id="port">1</div>
+                <div class="port">2</div>
+                <div class="port">3</div>
+              </div>
+            </div>
+            <div class="devices" id="devices">
+              <div class="dev" style="opacity:.5">
+                <span>لا يوجد جهاز موصول بعد</span>
+              </div>
+            </div>
+            <div class="sim-actions">
+              <button class="btn" id="btn-auth">وصّل جهاز مصرّح</button>
+              <button class="btn" id="btn-rogue">وصّل جهاز غير مصرّح</button>
+            </div>
+          </div>
+
+          <!-- Panel -->
+          <div class="panel">
+            <h4>Violation Mode</h4>
+            <div class="mode-pick" id="modes">
+              <label class="sel"><input type="radio" name="mode" value="shutdown" checked /> shutdown <small style="color:var(--dim)">(الافتراضي)</small></label>
+              <label><input type="radio" name="mode" value="restrict" /> restrict</label>
+              <label><input type="radio" name="mode" value="protect" /> protect</label>
+            </div>
+
+            <div class="stat-row"><span>حالة المنفذ</span><span id="st-state" class="state-up">up / secure-up</span></div>
+            <div class="stat-row"><span>MACs متعلّمة</span><span id="st-macs">0 / 1</span></div>
+            <div class="stat-row"><span>Violation counter</span><span id="st-count">0</span></div>
+
+            <div class="log" id="log">// السجل يظهر هنا…</div>
+            <div class="sim-actions">
+              <button class="btn" id="btn-reset">إعادة ضبط</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Violation modes table -->
+      <div class="block reveal">
+        <h3><span class="step">06</span> الفرق بين الـ Violation Modes</h3>
+        <table class="cmp">
+          <thead>
+            <tr><th>الوضع</th><th>يرمي الفريم؟</th><th>Syslog/SNMP</th><th>Counter</th><th>حالة المنفذ</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="dot g"></span>protect</td><td>نعم</td><td>لا</td><td>لا يزيد</td><td>يبقى up</td></tr>
+            <tr><td><span class="dot a"></span>restrict</td><td>نعم</td><td>نعم</td><td>يزيد</td><td>يبقى up</td></tr>
+            <tr><td><span class="dot r"></span>shutdown</td><td>نعم</td><td>نعم</td><td>يزيد</td><td>err-disabled (يطيح)</td></tr>
+          </tbody>
+        </table>
+        <div class="callout tip">
+          الخلاصة السريعة: <strong>protect</strong> يتجاهل بصمت، <strong>restrict</strong> يتجاهل ويوثّق،
+          <strong>shutdown</strong> يطفّي المنفذ (وهو الافتراضي).
+        </div>
+      </div>
+
+      <!-- 7. مثال شركة -->
+      <div class="block reveal">
+        <h3><span class="step">07</span> مثال من شركة</h3>
+        <p>
+          شركة عندها بريزات شبكة (مقابس Ethernet بالحائط) في الاستقبال للزوار. الـ IT يبغى: كل بريزة = جهاز واحد معتمد فقط.
+          يطبّقون Port Security بـ <span class="mono">maximum 1</span> و <span class="mono">sticky</span>،
+          والوضع <span class="mono">restrict</span> عشان ما يطفّى المنفذ كل شوي بس يوثّق المحاولات.
+          أول جهاز شرعي يوصل ← يتثبّت. أي جهاز ثاني ينحط بنفس البريزة ← يُرفض ويطلع Log للـ IT.
+        </p>
+      </div>
+
+      <!-- 8. الأوامر -->
+      <div class="block reveal" id="cmds">
+        <h3><span class="step">08</span> أوامر Cisco</h3>
+
+        <div class="code">
+          <div class="code-head"><span>Cisco IOS · Configuration</span><button class="copy-btn">نسخ</button></div>
+<pre><span class="cmt"># لازم المنفذ يكون Access ثابت قبل تفعيل الميزة</span>
+SW1(config)# <span class="cmd">interface</span> fastEthernet 0/1
+SW1(config-if)# <span class="cmd">switchport mode access</span>
+SW1(config-if)# <span class="cmd">switchport port-security</span>
+SW1(config-if)# <span class="cmd">switchport port-security maximum</span> 1
+SW1(config-if)# <span class="cmd">switchport port-security mac-address sticky</span>
+SW1(config-if)# <span class="cmd">switchport port-security violation</span> restrict</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Cisco IOS · Verification</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1# <span class="cmd">show port-security</span>
+SW1# <span class="cmd">show port-security interface</span> fastEthernet 0/1
+SW1# <span class="cmd">show port-security address</span></pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Cisco IOS · Recovery (بعد err-disabled)</span><button class="copy-btn">نسخ</button></div>
+<pre><span class="cmt"># يدوي: ادخل المنفذ واعمل shutdown ثم no shutdown</span>
+SW1(config-if)# <span class="cmd">shutdown</span>
+SW1(config-if)# <span class="cmd">no shutdown</span>
+
+<span class="cmt"># أو تلقائي بعد مدة</span>
+SW1(config)# <span class="cmd">errdisable recovery cause</span> psecure-violation
+SW1(config)# <span class="cmd">errdisable recovery interval</span> 300</pre>
+        </div>
+
+        <div class="callout warn">
+          تنويه: التفاصيل الدقيقة (مثل تصرّف الـ counter، وأسماء المنافذ) قد تختلف حبّة حسب موديل الـ Switch
+          وإصدار الـ IOS. اعتمد على مخرجات <span class="mono">show</span> على جهازك أو Packet Tracer وقت المذاكرة.
+        </div>
+      </div>
+
+      <!-- 9. ملاحظات CCNA -->
+      <div class="block reveal">
+        <h3><span class="step">09</span> أهم ملاحظات CCNA</h3>
+        <ul>
+          <li>الوضع الافتراضي للانتهاك هو <strong>shutdown</strong>، وهو الوحيد اللي يطفّي المنفذ (err-disabled).</li>
+          <li>الافتراضي للـ <span class="mono">maximum</span> هو <strong>1</strong> MAC.</li>
+          <li><strong>sticky</strong> = يتعلّم الـ MAC ديناميكيًا ثم يكتبه في الـ running-config (تحتاج <span class="mono">write</span> للحفظ الدائم).</li>
+          <li>Port Security يشتغل على <strong>Access/Trunk ثابت</strong> — مو على منفذ Dynamic/auto.</li>
+          <li>يمنع نوعين: أجهزة غير مصرّح لها + هجوم إغراق الـ CAM (MAC flooding).</li>
+        </ul>
+      </div>
+
+      <!-- Timeline -->
+      <div class="block reveal">
+        <h3><span class="step">10</span> Timeline — ليش انوجدت؟</h3>
+        <div class="timeline">
+          <div class="tl"><b>المشكلة</b>Switch يقبل أي جهاز على أي منفذ بلا حدود.</div>
+          <div class="tl"><b>الهجوم</b>إغراق الـ CAM Table ← Switch يصير مثل Hub ← تنصّت.</div>
+          <div class="tl"><b>الحل</b>Cisco تضيف Port Security: حدّد العدد والهوية على المنفذ.</div>
+          <div class="tl"><b>النتيجة</b>منفذ يعرف حدوده، ويتصرّف تلقائيًا عند الانتهاك.</div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="block reveal" id="faq">
+        <h3><span class="step">11</span> أسئلة متوقّعة بالاختبار</h3>
+        <details class="faq"><summary>وش الوضع الافتراضي للانتهاك؟</summary><p><strong>shutdown</strong> — ينقل المنفذ لحالة err-disabled ويرسل Syslog/SNMP ويزيد الـ counter.</p></details>
+        <details class="faq"><summary>الفرق بين restrict و protect؟</summary><p>الاثنين يرموا الفريم والمنفذ يبقى up. لكن <strong>restrict</strong> يوثّق (Syslog/SNMP) ويزيد الـ counter، و<strong>protect</strong> بصمت بدون توثيق وبدون زيادة الـ counter.</p></details>
+        <details class="faq"><summary>وش يعني sticky؟</summary><p>تعلّم ديناميكي للـ MAC ثم تثبيته في الـ running-config — يجمع بين سهولة الديناميكي وثبات الستاتيكي.</p></details>
+        <details class="faq"><summary>كم MAC مسموح افتراضيًا؟</summary><p>واحد فقط (<span class="mono">maximum 1</span>) ما لم تغيّره.</p></details>
+        <details class="faq"><summary>كيف أرجّع منفذ من err-disabled؟</summary><p>يدويًا بـ <span class="mono">shutdown</span> ثم <span class="mono">no shutdown</span>، أو تلقائيًا عبر <span class="mono">errdisable recovery</span>.</p></details>
+      </div>
+
+      <!-- Complete -->
+      <div class="block reveal" style="text-align:center;">
+        <h3 style="justify-content:center;">خلّصت القسم؟</h3>
+        <p class="lead-line">علّمه كمكتمل عشان يتحدّث تقدّمك في الخريطة الرئيسية.</p>
+        <button class="btn primary" id="btn-complete" data-module="portSecurity">✓ أنهيت Port Security</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-nav"><a href="index.html">← رجوع للخريطة</a> · القسم القادم: <a href="dhcp-security.html">DHCP Security ←</a></div>
+      <div class="footer-credit">
+        <div class="credit-line"><span>SwitchSECURITY-CCNA· تصميم وتطوير <b>Eng: Abdullah Abdali</b></span></div>
+        <div class="credit-links">
+          <a class="icon-btn" href="mailto:Abdullah.y.Abdali1@gmail.com" aria-label="راسلني بالإيميل" title="Abdullah.y.Abdali1@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.2"/><path d="m3.5 6.5 8.5 6.2 8.5-6.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="icon-btn" href="https://www.linkedin.com/in/abdullah-abdali-342126346" target="_blank" rel="noopener" aria-label="تواصل عبر لينكدإن" title="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V20.5H6.94V8.5ZM5.25 3.5C4.14 3.5 3.25 4.4 3.25 5.5C3.25 6.6 4.14 7.5 5.25 7.5C6.36 7.5 7.25 6.6 7.25 5.5C7.25 4.4 6.36 3.5 5.25 3.5ZM20.75 20.5V13.9C20.75 10.6 19.05 9.05 16.77 9.05C14.94 9.05 14.11 10.06 13.65 10.77V8.5H10.27C10.31 9.35 10.27 20.5 10.27 20.5H13.65V13.9C13.65 13.55 13.68 13.2 13.78 12.95C14.06 12.25 14.7 11.53 15.77 11.53C17.18 11.53 17.37 12.75 17.37 14.03V20.5H20.75Z"/></svg>
+          </a>
+        </div>
+        <div class="credit-copy">© جميع الحقوق محفوظة — Eng: Abdullah Abdali</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/port-security.js"></script>
+</body>
+</html>

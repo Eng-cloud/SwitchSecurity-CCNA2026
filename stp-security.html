@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STP Security — CCNA Interactive</title>
+  <meta name="description" content="تأمين Spanning Tree: PortFast و BPDU Guard و Root Guard و Loop Guard و Storm Control + محاكاة BPDU Guard وأوامر Cisco." />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="index.html"><img class="logo" src="assets/logo.svg" alt="" /><span>CCNA <b>Interactive</b></span></a>
+      <nav>
+        <a href="index.html">← الخريطة</a>
+        <a href="#features">الميزات</a>
+        <a href="#sim">المحاكاة</a>
+        <a href="#cmds">الأوامر</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="hero" style="padding-bottom:8px;">
+      <span class="eyebrow">SwitchSECURITY-CCNA</span>
+      <h1>🌳 STP <span class="hl">Security</span></h1>
+      <p class="lead">Spanning Tree يمنع الـ Loops — بس هو يثق بأي BPDU يوصله. نأمّنه.</p>
+    </section>
+
+    <div class="doc">
+
+      <!-- 1 -->
+      <div class="block reveal">
+        <h3><span class="step">01</span> المشكلة</h3>
+        <p class="lead-line">
+          الوصلات المكرّرة بين الـ Switches تسوّي <strong>Loop</strong> على الطبقة الثانية: الفريم يلف بلا
+          نهاية (ما فيه TTL في L2)، فيصير Broadcast Storm ويطيح استقرار جدول الـ MAC.
+        </p>
+        <p>STP يحل هذا بحجب الوصلات الزائدة وترك مسار واحد. لكنه يبني قراراته على رسائل <strong>BPDU</strong>
+          ويثق فيها بالكامل — وهنا الثغرة.</p>
+      </div>
+
+      <!-- 2 -->
+      <div class="block reveal">
+        <h3><span class="step">02</span> ليش نأمّن STP؟</h3>
+        <p>
+          لأن أي جهاز يقدر يرسل BPDU. مهاجم (أو Switch موصول بالغلط) يقدر يرسل BPDU "أقوى" ويصير هو الـ
+          <strong>Root</strong>، فيعيد توجيه مسارات الشبكة كلها من عنده، أو يسبّب Loop وانهيار. ميزات التأمين
+          تحدّد <strong>مين يرسل BPDU</strong> و<strong>مين يصير Root</strong>.
+        </p>
+      </div>
+
+      <!-- 3 -->
+      <div class="block reveal">
+        <h3><span class="step">03</span> التهديدات قبل التأمين</h3>
+        <ul>
+          <li>Switch غيرمصرح يُوصل بمنفذ مستخدم ويشارك في STP ← إعادة حساب الشجرة وبطء الشبكة.</li>
+          <li>مهاجم يرسل BPDU متفوّقة ← يخطف دور الـ Root ← MITM على مستوى L2.</li>
+          <li>عطل Unidirectional في الوصلة ← منفذ محجوب يظن إنه صار سليم ← Loop.</li>
+          <li>عاصفة Broadcast تغرق الشبكة (من Loop أو هجوم).</li>
+        </ul>
+      </div>
+
+      <!-- 4 features -->
+      <div class="block reveal" id="features">
+        <h3><span class="step">04</span> ميزات التأمين الخمس</h3>
+
+        <p><strong>① PortFast</strong> — ينقل منفذ الطرفي مباشرة إلى Forwarding (يتخطى Listening/Learning).
+          مو ميزة أمان بذاته، لكنه <em>شرط</em> لـ BPDU Guard. لا تفعّله على وصلات بين الـ Switches.
+          <span class="mono">spanning-tree portfast</span></p>
+
+        <div class="callout warn">
+          <strong>② BPDU Guard</strong> — لو وصلت BPDU على منفذ PortFast ← المنفذ يصير <strong>err-disabled</strong>.
+          يمنع أي Switch يُوصل بمنفذ مستخدم من دخول STP. <span class="mono">spanning-tree bpduguard enable</span>
+          <br><span style="color:var(--green)">(هذي والـ PortFast هي الأساسية في CCNA)</span>
+        </div>
+
+        <p><strong>③ Root Guard</strong> — على المنافذ المتّجهة لـ Switches ما نبغاها Root: لو وصلت BPDU متفوّقة
+          ← المنفذ يدخل حالة <strong>root-inconsistent</strong> (محجوب) حتى تتوقف. يثبّت مكان الـ Root.
+          <span class="mono">spanning-tree guard root</span></p>
+
+        <p><strong>④ Loop Guard</strong> — لو منفذ غير مُوجِّه توقّف عن استقبال BPDU (عطل Unidirectional)،
+          بدل ما ينتقل لـ Forwarding يدخل <strong>loop-inconsistent</strong> (محجوب). يمنع Loops الخفية.
+          <span class="mono">spanning-tree guard loop</span></p>
+
+        <p><strong>⑤ Storm Control</strong> — يحدّ نسبة الـ Broadcast/Multicast/Unknown-unicast، ويقدر يطفّي
+          المنفذ أو يرسل تنبيه عند تجاوز الحد. <span class="mono">storm-control broadcast level 20</span></p>
+
+        <p class="lead-line" style="margin-top:6px;">③④⑤ تميل لمستوى CCNP، لكنها مذكورة هنا لاكتمال الصورة.</p>
+      </div>
+
+      <!-- 5 sim -->
+      <div class="block reveal" id="sim">
+        <h3><span class="step">05</span> محاكاة BPDU Guard — جرّبها</h3>
+        <p>منفذ وصول (Fa0/5) عليه PortFast. جرّب توصّل جهاز طرفي عادي، ثم Switch مارق يرسل BPDU، مع/بدون BPDU Guard:</p>
+
+        <div class="sim">
+          <div class="stage">
+            <div class="switch">
+              <span class="label">SW1 · Fa0/5<br>PortFast</span>
+              <div class="ports"><div class="port" id="stp-port">5</div></div>
+            </div>
+            <div class="devices" id="stp-dev">
+              <div class="dev" style="opacity:.5"><span>لا يوجد جهاز موصول</span></div>
+            </div>
+            <div class="sim-actions">
+              <button class="btn" id="stp-pc">وصّل جهاز طرفي (PC)</button>
+              <button class="btn" id="stp-sw">وصّل Switch غيرمصرح (BPDU)</button>
+            </div>
+          </div>
+          <div class="panel">
+            <h4>BPDU Guard</h4>
+            <div class="sim-actions" style="margin-top:0;">
+              <button class="btn toggle-btn" id="stp-toggle">BPDU Guard: OFF</button>
+            </div>
+            <div class="stat-row"><span>حالة المنفذ</span><span id="stp-state" class="state-up">forwarding</span></div>
+            <div class="log" id="stp-log">// السجل…</div>
+            <div class="sim-actions"><button class="btn" id="stp-reset">إعادة ضبط</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 compare -->
+      <div class="block reveal">
+        <h3><span class="step">06</span> جدول المقارنة</h3>
+        <table class="cmp">
+          <thead><tr><th>الميزة</th><th>وين تطبّق</th><th>التصرّف</th></tr></thead>
+          <tbody>
+            <tr><td>PortFast</td><td>منافذ الأجهزة الطرفية</td><td>Forwarding فوري (مو أمان)</td></tr>
+            <tr><td>BPDU Guard</td><td>منافذ PortFast</td><td>BPDU وارد → err-disabled</td></tr>
+            <tr><td>Root Guard</td><td>نحو Switches غير موثوقة كـ Root</td><td>BPDU متفوّقة → root-inconsistent</td></tr>
+            <tr><td>Loop Guard</td><td>منافذ Root/Alternate</td><td>توقّف BPDU → loop-inconsistent</td></tr>
+            <tr><td>Storm Control</td><td>أي منفذ</td><td>تجاوز الحد → drop / shutdown</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 7 example -->
+      <div class="block reveal">
+        <h3><span class="step">07</span> مثال من شركة</h3>
+        <p>
+          كل منافذ المكاتب فيها PortFast + BPDU Guard. موظف وصّل Switch صغير من عنده ← المنفذ طاح err-disabled
+          فورًا وطلع تنبيه للـ IT. وعلى وصلات الـ Access نحو الـ Distribution فعّلوا Root Guard عشان يضمنون
+          إن الـ Root يبقى في الـ Core مهما صار.
+        </p>
+      </div>
+
+      <!-- 8 commands -->
+      <div class="block reveal" id="cmds">
+        <h3><span class="step">08</span> أوامر Cisco</h3>
+
+        <div class="code">
+          <div class="code-head"><span>PortFast + BPDU Guard</span><button class="copy-btn">نسخ</button></div>
+<pre><span class="cmt"># على منفذ واحد</span>
+SW1(config)# <span class="cmd">interface</span> fa0/5
+SW1(config-if)# <span class="cmd">spanning-tree portfast</span>
+SW1(config-if)# <span class="cmd">spanning-tree bpduguard enable</span>
+
+<span class="cmt"># أو على كل منافذ PortFast دفعة وحدة (Global)</span>
+SW1(config)# <span class="cmd">spanning-tree portfast default</span>
+SW1(config)# <span class="cmd">spanning-tree portfast bpduguard default</span></pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Root / Loop Guard + Storm Control</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1(config-if)# <span class="cmd">spanning-tree guard root</span>
+SW1(config-if)# <span class="cmd">spanning-tree guard loop</span>
+SW1(config-if)# <span class="cmd">storm-control broadcast level</span> 20
+SW1(config-if)# <span class="cmd">storm-control action</span> shutdown</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Verification</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1# <span class="cmd">show spanning-tree</span>
+SW1# <span class="cmd">show spanning-tree interface</span> fa0/5 <span class="cmd">detail</span>
+SW1# <span class="cmd">show spanning-tree inconsistentports</span>
+SW1# <span class="cmd">show storm-control</span></pre>
+        </div>
+
+        <div class="callout warn">
+          صيغة <span class="mono">storm-control level</span> تقبل نسبة مئوية أو bps/pps حسب الموديل، وأسماء الأوامر
+          قد تختلف قليلًا بين الإصدارات — أكّد من <span class="mono">?</span> على جهازك.
+        </div>
+      </div>
+
+      <!-- 9 notes -->
+      <div class="block reveal">
+        <h3><span class="step">09</span> أهم ملاحظات CCNA</h3>
+        <ul>
+          <li><strong>PortFast + BPDU Guard</strong> هما التركيز الأساسي في CCNA 200-301.</li>
+          <li>PortFast للمنافذ الطرفية فقط — لا تحطّه على وصلة Switch-to-Switch.</li>
+          <li>BPDU Guard: BPDU على منفذ PortFast ← err-disabled (نفس أسلوب استرجاع Port Security).</li>
+          <li>Root Guard = <span class="mono">root-inconsistent</span>، و Loop Guard = <span class="mono">loop-inconsistent</span> — انتبه للفرق.</li>
+          <li>الاسترجاع من err-disabled: يدوي (shut/no shut) أو <span class="mono">errdisable recovery</span>.</li>
+        </ul>
+      </div>
+
+      <!-- 10 timeline -->
+      <div class="block reveal">
+        <h3><span class="step">10</span> Timeline</h3>
+        <div class="timeline">
+          <div class="tl"><b>المشكلة</b>وصلات مكرّرة ← Loop ← Broadcast Storm.</div>
+          <div class="tl"><b>الحل الأساسي</b>STP يحجب الزائد — لكنه يثق بكل BPDU.</div>
+          <div class="tl"><b>الهجوم</b>BPDU مزيّفة تخطف الـ Root أو تدخّل Switch مارق.</div>
+          <div class="tl"><b>التأمين</b>PortFast/BPDU Guard/Root/Loop Guard/Storm Control.</div>
+        </div>
+      </div>
+
+      <!-- 11 faq -->
+      <div class="block reveal">
+        <h3><span class="step">11</span> أسئلة متوقّعة بالاختبار</h3>
+        <details class="faq"><summary>وش يسوي BPDU Guard لمّا يستقبل BPDU؟</summary><p>ينقل منفذ الـ PortFast إلى err-disabled فورًا.</p></details>
+        <details class="faq"><summary>الفرق بين Root Guard و BPDU Guard؟</summary><p>BPDU Guard يطفّي منفذ PortFast عند أي BPDU. Root Guard يحجب المنفذ (root-inconsistent) فقط عند BPDU <em>متفوّقة</em> تحاول تصير Root، ويرجع تلقائيًا لمّا تتوقف.</p></details>
+        <details class="faq"><summary>وين يُطبّق PortFast؟</summary><p>على المنافذ الموصولة بأجهزة طرفية فقط — لا على وصلات الـ Switches.</p></details>
+        <details class="faq"><summary>Loop Guard يحمي من ماذا؟</summary><p>من Loops الناتجة عن توقّف استقبال BPDU على منفذ (مثل عطل الوصلة أحادي الاتجاه).</p></details>
+      </div>
+
+      <!-- complete -->
+      <div class="block reveal" style="text-align:center;">
+        <h3 style="justify-content:center;">خلّصت STP Security؟</h3>
+        <p class="lead-line">علّمه كمكتمل — بهذا تكمل القسم كامل 🎉</p>
+        <button class="btn primary" id="btn-complete" data-module="stp">✓ أنهيت STP Security</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-nav"><a href="index.html">← رجوع للخريطة</a> · اكتمل SwitchSECURITY-CCNA🎉</div>
+      <div class="footer-credit">
+        <div class="credit-line"><span>SwitchSECURITY-CCNA· تصميم وتطوير <b>Eng: Abdullah Abdali</b></span></div>
+        <div class="credit-links">
+          <a class="icon-btn" href="mailto:Abdullah.y.Abdali1@gmail.com" aria-label="راسلني بالإيميل" title="Abdullah.y.Abdali1@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.2"/><path d="m3.5 6.5 8.5 6.2 8.5-6.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="icon-btn" href="https://www.linkedin.com/in/abdullah-abdali-342126346" target="_blank" rel="noopener" aria-label="تواصل عبر لينكدإن" title="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V20.5H6.94V8.5ZM5.25 3.5C4.14 3.5 3.25 4.4 3.25 5.5C3.25 6.6 4.14 7.5 5.25 7.5C6.36 7.5 7.25 6.6 7.25 5.5C7.25 4.4 6.36 3.5 5.25 3.5ZM20.75 20.5V13.9C20.75 10.6 19.05 9.05 16.77 9.05C14.94 9.05 14.11 10.06 13.65 10.77V8.5H10.27C10.31 9.35 10.27 20.5 10.27 20.5H13.65V13.9C13.65 13.55 13.68 13.2 13.78 12.95C14.06 12.25 14.7 11.53 15.77 11.53C17.18 11.53 17.37 12.75 17.37 14.03V20.5H20.75Z"/></svg>
+          </a>
+        </div>
+        <div class="credit-copy">© جميع الحقوق محفوظة — Eng: Abdullah Abdali</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/stp-security.js"></script>
+</body>
+</html>

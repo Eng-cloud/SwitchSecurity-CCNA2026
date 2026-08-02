@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DHCP Security — CCNA Interactive</title>
+  <meta name="description" content="DHCP Snooping و Dynamic ARP Inspection: الهجمات، جدول الـ Binding، والمحاكاة التفاعلية + أوامر Cisco." />
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="index.html"><img class="logo" src="assets/logo.svg" alt="" /><span>CCNA <b>Interactive</b></span></a>
+      <nav>
+        <a href="index.html">← الخريطة</a>
+        <a href="#snoop">Snooping</a>
+        <a href="#dai">DAI</a>
+        <a href="#cmds">الأوامر</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="hero" style="padding-bottom:8px;">
+      <span class="eyebrow">SwitchSECURITY-CCNA</span>
+      <h1>📡 DHCP <span class="hl">Security</span></h1>
+      <p class="lead">مين له حق يوزّع عناوين IP في الشبكة؟ ومين يقدر يدّعي إنه البوابة؟</p>
+    </section>
+
+    <div class="doc">
+
+      <!-- 1 -->
+      <div class="block reveal">
+        <h3><span class="step">01</span> المشكلة</h3>
+        <p class="lead-line">
+          العميل لمّا يشتغل يصرخ في الشبكة: "أبغى IP!" (DHCP Discover)، وأول سيرفر يرد ياخذ منه العميل
+          كل شي: الـ IP، والبوابة (Gateway)، والـ DNS.
+        </p>
+        <p>
+          المشكلة: الـ Switch ما يفرّق بين سيرفر شرعي وسيرفر مزيّف. أي جهاز يقدر يدّعي إنه DHCP Server —
+          وهنا يبدأ الخطر.
+        </p>
+      </div>
+
+      <!-- 2 -->
+      <div class="block reveal">
+        <h3><span class="step">02</span> ليش اخترعتها Cisco؟</h3>
+        <p>
+          عشان تعطي الـ Switch القدرة يفرز رسائل DHCP: يسمح للسيرفر الشرعي فقط، ويبني <strong>سجل</strong>
+          بمين أخذ أي IP ومن أي منفذ. هذا السجل (Binding Table) هو الأساس اللي يبني عليه DAI بعدين.
+        </p>
+      </div>
+
+      <!-- 3 -->
+      <div class="block reveal">
+        <h3><span class="step">03</span> كيف كان الوضع قبلها؟</h3>
+        <ul>
+          <li>أي جهاز يوصل الشبكة ويشغّل DHCP Server مزيّف ← يوزّع بوابة خاطئة تمرّ الترافيك من عنده (MITM).</li>
+          <li>مهاجم يغرق السيرفر الشرعي بطلبات وهمية حتى يخلص مخزون العناوين (DHCP Starvation).</li>
+          <li>ما فيه أي سجل يربط الـ IP بالـ MAC بالمنفذ — فما فيه أساس نتحقق منه لاحقًا.</li>
+        </ul>
+      </div>
+
+      <!-- 4 -->
+      <div class="block reveal">
+        <h3><span class="step">04</span> كيف تتم الهجمات؟</h3>
+        <p><strong>1) Rogue DHCP Server:</strong> جهاز المهاجم يرد على طلبات العملاء ويعطيهم بوابة = عنوانه هو.
+          كل ترافيك الضحية يمرّ من المهاجم قبل ما يوصل الإنترنت ← تنصّت وتعديل.</p>
+        <p><strong>2) DHCP Starvation:</strong> المهاجم يرسل آلاف الـ Discover بعناوين MAC مزيّفة حتى ينفد
+          مخزون الـ DHCP الشرعي، فيضطر العملاء ياخذون من سيرفره المزيّف.</p>
+        <div class="callout warn">
+          الحل: <strong>DHCP Snooping</strong> يمنع (1) بتصنيف المنافذ، والـ rate-limit (أو Port Security)
+          يخفّف (2).
+        </div>
+      </div>
+
+      <!-- 5 snooping + sim -->
+      <div class="block reveal" id="snoop">
+        <h3><span class="step">05</span> كيف يعمل DHCP Snooping؟ — جرّبه</h3>
+        <p>
+          الفكرة: نصنّف المنافذ إلى <strong>Trusted</strong> (توصل للسيرفر الشرعي أو للـ Switches الثانية)
+          و<strong>Untrusted</strong> (توصل للأجهزة/المستخدمين). رسائل السيرفر (Offer/Ack) القادمة من منفذ
+          Untrusted <strong>تُرمى</strong> — لأن المفروض ما فيه سيرفر خلف المستخدمين.
+        </p>
+
+        <div class="pill-row">
+          <span class="pill t">Trusted → السيرفر الشرعي / Uplink</span>
+          <span class="pill u">Untrusted → المستخدمون</span>
+        </div>
+
+        <div class="sim">
+          <div class="stage">
+            <div class="switch">
+              <span class="label">SW1<br>VLAN 10</span>
+              <div class="ports">
+                <div class="port trust" id="ds-p-trust">T</div>
+                <div class="port" id="ds-p-client">U</div>
+                <div class="port" id="ds-p-rogue">U</div>
+              </div>
+            </div>
+            <div class="devices">
+              <div class="dev ok"><span>🖥️ سيرفر DHCP المصرح</span><span class="mac">منفذ Trusted</span></div>
+              <div class="dev"><span>👤 عميل يطلب IP</span><span class="mac">منفذ Untrusted</span></div>
+              <div class="dev bad"><span>🕵️ سيرفر DHCP مزيّف</span><span class="mac">منفذ Untrusted</span></div>
+            </div>
+            <table class="mini-table" id="ds-bind">
+              <thead><tr><th>MAC</th><th>IP</th><th>VLAN</th><th>Port</th></tr></thead>
+              <tbody><tr><td class="empty" colspan="4">Binding Table فاضي</td></tr></tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <h4>DHCP Snooping</h4>
+            <div class="sim-actions" style="margin-top:0;">
+              <button class="btn toggle-btn" id="ds-toggle">DHCP Snooping: OFF</button>
+            </div>
+            <div class="sim-actions">
+              <button class="btn" id="ds-legit">رد السيرفر المصرح</button>
+              <button class="btn" id="ds-rogue">رد السيرفر المزيّف</button>
+            </div>
+            <div class="log" id="ds-log">// السجل…</div>
+            <div class="sim-actions"><button class="btn" id="ds-reset">إعادة ضبط</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 DAI + sim -->
+      <div class="block reveal" id="dai">
+        <h3><span class="step">06</span> Dynamic ARP Inspection (DAI) — جرّبه</h3>
+        <p>
+          DAI يبني على جدول الـ Binding: يفحص كل رسالة ARP على المنافذ Untrusted، ويتأكد إن ربط
+          <strong>IP ↔ MAC</strong> مطابق للسجل. لو مهاجم ادّعى إن IP البوابة = MAC حقّه (ARP Poisoning)،
+          DAI يرمي الرسالة.
+        </p>
+        <div class="callout tip">DAI <strong>يعتمد</strong> على DHCP Snooping — بدون جدول Binding ما عنده مرجع يتحقق منه (للأجهزة الثابتة يُستخدم ARP ACL).</div>
+
+        <div class="sim">
+          <div class="stage">
+            <table class="mini-table">
+              <thead><tr><th>الجهاز</th><th>IP</th><th>MAC (الحقيقي)</th></tr></thead>
+              <tbody>
+                <tr><td>Gateway</td><td>10.0.0.1</td><td>00:11:GW</td></tr>
+                <tr><td>Host-A</td><td>10.0.0.10</td><td>00:AA:HA</td></tr>
+                <tr><td>Attacker</td><td>—</td><td>00:EE:HK</td></tr>
+              </tbody>
+            </table>
+            <div class="devices" id="dai-out">
+              <div class="dev" style="opacity:.5"><span>أرسل رسالة ARP للتجربة</span></div>
+            </div>
+          </div>
+          <div class="panel">
+            <h4>Dynamic ARP Inspection</h4>
+            <div class="sim-actions" style="margin-top:0;">
+              <button class="btn toggle-btn" id="dai-toggle">DAI: OFF</button>
+            </div>
+            <div class="sim-actions">
+              <button class="btn" id="dai-legit">ARP شرعي (Host-A)</button>
+              <button class="btn" id="dai-poison">ARP مسموم (المهاجم = البوابة)</button>
+            </div>
+            <div class="stat-row"><span>حالة الشبكة</span><span id="dai-state" class="state-up">سليمة</span></div>
+            <div class="log" id="dai-log">// السجل…</div>
+            <div class="sim-actions"><button class="btn" id="dai-reset">إعادة ضبط</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7 -->
+      <div class="block reveal">
+        <h3><span class="step">07</span> مثال من شركة</h3>
+        <p>
+          السيرفر الشرعي على المنفذ اللي يربط الـ Switch بالـ Core (Trusted). كل منافذ المكاتب Untrusted.
+          موظف حط راوتر منزلي فيه DHCP شغّال بالغلط ← الـ Snooping يرمي عروضه فورًا، والموظفون يظلّون
+          ياخذون من السيرفر الصحيح. وبوجود DAI، لو أحد حاول ARP Poisoning على البوابة ← يُرفض.
+        </p>
+      </div>
+
+      <!-- 8 commands -->
+      <div class="block reveal" id="cmds">
+        <h3><span class="step">08</span> أوامر Cisco</h3>
+
+        <div class="code">
+          <div class="code-head"><span>DHCP Snooping</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1(config)# <span class="cmd">ip dhcp snooping</span>
+SW1(config)# <span class="cmd">ip dhcp snooping vlan</span> 10
+SW1(config)# <span class="cmd">interface</span> gig0/1        <span class="cmt"># المنفذ نحو السيرفر/Uplink</span>
+SW1(config-if)# <span class="cmd">ip dhcp snooping trust</span>
+SW1(config-if)# <span class="cmd">exit</span>
+SW1(config)# <span class="cmd">interface</span> fa0/2          <span class="cmt"># منفذ مستخدم (اختياري: rate limit)</span>
+SW1(config-if)# <span class="cmd">ip dhcp snooping limit rate</span> 10</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Dynamic ARP Inspection</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1(config)# <span class="cmd">ip arp inspection vlan</span> 10
+SW1(config)# <span class="cmd">interface</span> gig0/1
+SW1(config-if)# <span class="cmd">ip arp inspection trust</span>
+<span class="cmt"># فحص إضافي اختياري:</span>
+SW1(config)# <span class="cmd">ip arp inspection validate</span> src-mac dst-mac ip</pre>
+        </div>
+
+        <div class="code">
+          <div class="code-head"><span>Verification</span><button class="copy-btn">نسخ</button></div>
+<pre>SW1# <span class="cmd">show ip dhcp snooping</span>
+SW1# <span class="cmd">show ip dhcp snooping binding</span>
+SW1# <span class="cmd">show ip arp inspection</span></pre>
+        </div>
+
+        <div class="callout warn">
+          نقاط للتأكد على جهازك: (1) DAI افتراضيًا فيه حدّ لمعدّل حزم ARP على المنافذ Untrusted
+          (شائع أنه ~15 حزمة/ثانية) وتجاوزه ينقل المنفذ لـ err-disabled — أكّد الرقم حسب الـ IOS.
+          (2) أحيانًا Option 82 (<span class="mono">ip dhcp snooping information option</span>) تحتاج تعطيلها
+          إذا الـ Switch مو Relay، وإلا يفشل الـ DHCP. هذا يعتمد على الإعداد.
+        </div>
+      </div>
+
+      <!-- 9 -->
+      <div class="block reveal">
+        <h3><span class="step">09</span> أهم ملاحظات CCNA</h3>
+        <ul>
+          <li>بعد تفعيل Snooping، <strong>كل المنافذ Untrusted افتراضيًا</strong> — تحط <span class="mono">trust</span> يدويًا على الـ Uplink/السيرفر.</li>
+          <li>Snooping يرمي رسائل <strong>السيرفر</strong> (Offer/Ack) القادمة من منفذ Untrusted، ويسمح برسائل العميل.</li>
+          <li>الـ Binding Table = MAC + IP + Lease + VLAN + Interface، وهو مرجع DAI و IP Source Guard.</li>
+          <li><strong>DAI يعتمد على Snooping</strong>؛ للأجهزة الثابتة (بدون DHCP) تستخدم <span class="mono">arp access-list</span>.</li>
+          <li>DAI يوقف ARP Spoofing/Poisoning (هجمات MITM على البوابة).</li>
+        </ul>
+      </div>
+
+      <!-- 10 timeline -->
+      <div class="block reveal">
+        <h3><span class="step">10</span> Timeline</h3>
+        <div class="timeline">
+          <div class="tl"><b>المشكلة</b>أي جهاز يقدر يدّعي إنه DHCP Server أو صاحب IP البوابة.</div>
+          <div class="tl"><b>الهجوم</b>Rogue DHCP / Starvation ← ثم ARP Poisoning ← MITM.</div>
+          <div class="tl"><b>الحل 1</b>DHCP Snooping: منافذ موثوقة + جدول Binding.</div>
+          <div class="tl"><b>الحل 2</b>DAI فوق الـ Binding: يتحقق من كل ARP.</div>
+        </div>
+      </div>
+
+      <!-- 11 faq -->
+      <div class="block reveal">
+        <h3><span class="step">11</span> أسئلة متوقّعة بالاختبار</h3>
+        <details class="faq"><summary>بعد تفعيل DHCP Snooping، وش حالة المنافذ افتراضيًا؟</summary><p>كلها Untrusted. لازم تحدّد <span class="mono">ip dhcp snooping trust</span> على منفذ السيرفر/الـ Uplink.</p></details>
+        <details class="faq"><summary>ليش DAI يحتاج DHCP Snooping؟</summary><p>لأنه يتحقق من مطابقة IP↔MAC مقابل جدول الـ Binding اللي يبنيه الـ Snooping. بدونه ما عنده مرجع (إلا عبر ARP ACL للأجهزة الثابتة).</p></details>
+        <details class="faq"><summary>أي هجوم يوقفه Rogue DHCP prevention؟</summary><p>سيرفر DHCP مزيّف يوزّع بوابة خاطئة لعمل MITM.</p></details>
+        <details class="faq"><summary>وش يصير لو تجاوز منفذ حدّ معدّل ARP في DAI؟</summary><p>ينتقل المنفذ عادةً إلى err-disabled (تأكد من قيمة المعدّل حسب الـ IOS).</p></details>
+      </div>
+
+      <!-- complete -->
+      <div class="block reveal" style="text-align:center;">
+        <h3 style="justify-content:center;">خلّصت القسم؟</h3>
+        <p class="lead-line">علّمه كمكتمل عشان يتحدّث تقدّمك في الخريطة.</p>
+        <button class="btn primary" id="btn-complete" data-module="dhcp">✓ أنهيت DHCP Security</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footer-nav"><a href="index.html">← رجوع للخريطة</a> · القسم القادم: <a href="stp-security.html">STP Security ←</a></div>
+      <div class="footer-credit">
+        <div class="credit-line"><span>SwitchSECURITY-CCNA · تصميم وتطوير <b>Eng: Abdullah Abdali</b></span></div>
+        <div class="credit-links">
+          <a class="icon-btn" href="mailto:Abdullah.y.Abdali1@gmail.com" aria-label="راسلني بالإيميل" title="Abdullah.y.Abdali1@gmail.com">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.2"/><path d="m3.5 6.5 8.5 6.2 8.5-6.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="icon-btn" href="https://www.linkedin.com/in/abdullah-abdali-342126346" target="_blank" rel="noopener" aria-label="تواصل عبر لينكدإن" title="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 8.5H3.56V20.5H6.94V8.5ZM5.25 3.5C4.14 3.5 3.25 4.4 3.25 5.5C3.25 6.6 4.14 7.5 5.25 7.5C6.36 7.5 7.25 6.6 7.25 5.5C7.25 4.4 6.36 3.5 5.25 3.5ZM20.75 20.5V13.9C20.75 10.6 19.05 9.05 16.77 9.05C14.94 9.05 14.11 10.06 13.65 10.77V8.5H10.27C10.31 9.35 10.27 20.5 10.27 20.5H13.65V13.9C13.65 13.55 13.68 13.2 13.78 12.95C14.06 12.25 14.7 11.53 15.77 11.53C17.18 11.53 17.37 12.75 17.37 14.03V20.5H20.75Z"/></svg>
+          </a>
+        </div>
+        <div class="credit-copy">© جميع الحقوق محفوظة — Eng: Abdullah Abdali</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/dhcp-security.js"></script>
+</body>
+</html>
