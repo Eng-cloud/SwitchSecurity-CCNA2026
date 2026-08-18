@@ -244,7 +244,11 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-5);
-  min-height: 118px;
+  /* الارتفاع من المحتوى: رقم ثابت يقصّ النص عند تكبير الخط أو تطويل التسمية. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  justify-content: center;
 }
 
 .stat__label {
@@ -693,8 +697,11 @@
 }
 
 .otp__digit {
-  width: 52px;
-  height: 62px;
+  /* بوحدات الخط: تكبير الخط يوسّع الخانة معه بدل أن يفيض الرقم منها. */
+  inline-size: 2.2ch;
+  min-inline-size: var(--tap-target);
+  padding: var(--space-3) var(--space-2);
+  min-block-size: var(--tap-target);
   text-align: center;
   font-size: var(--text-2xl);
   font-weight: var(--weight-semibold);
@@ -1377,7 +1384,7 @@
   width: 45%;
 }
 .skeleton--card {
-  height: 118px;
+  min-height: 7rem;
   border-radius: var(--radius-md);
 }
 

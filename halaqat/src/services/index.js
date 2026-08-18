@@ -8,6 +8,7 @@ export * as authService from './authService.js';
 export * as studentService from './studentService.js';
 export * as teacherService from './teacherService.js';
 export * as assistantService from './assistantService.js';
+export * as taskService from './taskService.js';
 export * as supervisorService from './supervisorService.js';
 export * as adminService from './adminService.js';
 export * as parentService from './parentService.js';

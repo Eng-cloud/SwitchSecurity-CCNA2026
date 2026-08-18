@@ -67,10 +67,18 @@ describe('مصفوفة الصلاحيات', () => {
         ACTIONS.ASSISTANT_ASSIGN,
         ACTIONS.DELEGATION_MANAGE,
         ACTIONS.DISTINGUISHED_VIEW,
+        ACTIONS.TASKS_ASSIGN,
         ACTIONS.ATTENDANCE_RECORD,
         ACTIONS.NOTES_WRITE,
       ].sort(),
     );
+  });
+
+  it('تعيين المهام للمعلم وحده — هو من يتابع طلابه', () => {
+    expect(can('teacher', ACTIONS.TASKS_ASSIGN)).toBe(true);
+    for (const role of ['student', 'supervisor', 'admin', 'parent']) {
+      expect(can(role, ACTIONS.TASKS_ASSIGN)).toBe(false);
+    }
   });
 
   it('متميزو الشهر للمعلم والمشرف والإدارة لا للطالب وولي الأمر', () => {

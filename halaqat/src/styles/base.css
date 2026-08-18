@@ -24,9 +24,18 @@ html {
   }
 }
 
-:root[data-motion='reduced'] html,
-html:has(:root[data-motion='reduced']) {
+/*
+ * :root هو عنصر html نفسه، فالمحدد السابق (html داخل html) لم يكن يطابق شيئًا
+ * أبدًا ولم يُلغَ التمرير الناعم قط عند طلب تقليل الحركة.
+ */
+:root[data-motion='reduced'] {
   scroll-behavior: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='normal']) {
+    scroll-behavior: auto;
+  }
 }
 
 body {

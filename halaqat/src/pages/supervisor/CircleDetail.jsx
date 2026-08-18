@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useGoBack from '../../hooks/useGoBack.js';
+import SectionBoundary from '../../components/system/SectionBoundary.jsx';
 import * as supervisorService from '../../services/supervisorService.js';
 import * as managementService from '../../services/managementService.js';
 import { can, ACTIONS } from '../../config/permissions.js';
@@ -250,16 +251,19 @@ export default function CircleDetail() {
               </Card>
             ) : null}
 
-            <Card>
-              <BarChart
-                title={t('supervisor.circleOverview')}
-                data={data.series}
-                series={[
-                  { key: 'memorization', label: t('reports.memorization') },
-                  { key: 'review', label: t('reports.review') },
-                ]}
-              />
-            </Card>
+            {/* الرسم معزول: عطبه لا يُخفي جدول الطلاب ولا إجراءات الحلقة. */}
+            <SectionBoundary name="circle-chart">
+              <Card>
+                <BarChart
+                  title={t('supervisor.circleOverview')}
+                  data={data.series}
+                  series={[
+                    { key: 'memorization', label: t('reports.memorization') },
+                    { key: 'review', label: t('reports.review') },
+                  ]}
+                />
+              </Card>
+            </SectionBoundary>
 
             <Table
               columns={columns}

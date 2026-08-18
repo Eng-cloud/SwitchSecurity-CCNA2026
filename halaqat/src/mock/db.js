@@ -7,7 +7,7 @@
 import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -464,6 +464,8 @@ function generate() {
     createdAt: new Date().toISOString(),
     enrollmentRequests,
     assistantDelegations,
+    // مهام الطلاب — تُولَّد ليوم الطالب عند أول فتح وتُضاف إليها تعيينات المعلم.
+    tasks: [],
     users,
     circles,
     students,

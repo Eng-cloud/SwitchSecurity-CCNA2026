@@ -90,6 +90,8 @@ const ar = {
     goHome: 'العودة إلى الرئيسية',
     forbiddenTitle: 'لا تملك صلاحية لهذه الصفحة',
     forbiddenHint: 'هذه الصفحة متاحة لدور مختلف. يمكنك تبديل الدور من قائمة الحساب.',
+    sectionErrorTitle: 'تعذّر عرض هذا القسم',
+    sectionErrorHint: 'بقية الصفحة تعمل. يمكنك إعادة المحاولة دون إعادة تحميل الصفحة.',
     crashTitle: 'حدث خطأ في الواجهة',
     crashHint: 'يمكنك إعادة تحميل الصفحة للمتابعة. تفاصيل الخطأ مسجّلة أدناه.',
     reload: 'إعادة تحميل الصفحة',
@@ -1076,6 +1078,8 @@ const ar = {
       delegation: 'وكّلك معلمك بسماع مراجعة بعض زملائك',
       delegationDone: 'أنهى المساعد التوكيل المسند إليه',
       delegationChosen: 'اختار المساعد الطلاب الذين سيسمع لهم',
+      taskAssigned: 'عيّن لك معلمك مهمة جديدة',
+      taskDone: 'أنجز طالبك المهمة المسندة إليه',
     },
   },
 
@@ -1120,6 +1124,79 @@ const ar = {
     activateConfirm: 'سيعود المعلم إلى حسابه ويستأنف متابعة حلقته. هل تريد المتابعة؟',
     teacherSuspended: 'تم إيقاف المعلم',
     teacherActivated: 'تمت إعادة تفعيل المعلم',
+  },
+
+  /* المهام — محور رحلة الطالب */
+  tasks: {
+    title: 'مهامي',
+    todayTitle: 'مهام اليوم',
+    greeting: 'السلام عليكم {name} 👋',
+    countToday: 'عندك اليوم {count} مهام',
+    countOne: 'عندك اليوم مهمة واحدة',
+    allDone: 'أكملت مهام اليوم 🎉',
+    allDoneHint: 'أحسنت. عد غدًا لمهمة جديدة، أو راجع تقدمك الآن.',
+    empty: 'لا توجد مهام',
+
+    types: { memorize: 'حفظ جديد', review: 'مراجعة' },
+    fromTeacher: 'من معلمك',
+    fromPlan: 'من خطتك',
+    range: '{surah} · الآيات {from}–{to}',
+    start: { memorize: 'ابدأ الحفظ', review: 'ابدأ المراجعة' },
+    open: 'فتح المهمة',
+    viewAyat: 'عرض الآيات',
+    done: 'مُنجزة',
+    pending: 'بانتظارك',
+    dueToday: 'اليوم',
+
+    /* التنفيذ */
+    runTitle: 'تنفيذ المهمة',
+    listen: 'ابدأ التسميع',
+    stop: 'إيقاف',
+    analyzing: 'جارٍ تحليل التسميع...',
+
+    /* النتيجة والتوصية */
+    resultTitle: 'نتيجة التسميع',
+    excellentAyat: '{count} آيات ممتازة',
+    needWork: '{count} تحتاج مراجعة',
+    noMistakes: 'بلا أخطاء — إتقان تام',
+    praise: {
+      high: 'أداؤك ممتاز 👏',
+      mid: 'أداؤك جيد، وبقيت لمسات.',
+      low: 'تحتاج تثبيت المقطع قبل الانتقال.',
+    },
+    mistakesTitle: 'الآيات التي تحتاج مراجعة',
+    ayahNumber: 'آية {number}',
+    nextTitle: 'ما بعدها',
+    reviewMistakes: 'أضف مراجعة لهذه الآيات',
+    reviewMistakesHint: 'تُضاف مهمة مراجعة لآياتك المتعثرة فتثبّتها اليوم.',
+    goNextTask: 'انتقل للمهمة التالية',
+    finishDay: 'إنهاء اليوم',
+    progressUpdated: 'تم تحديث تقدمك',
+    pagesUp: '+{count} صفحة محفوظة',
+    masteryMove: 'الإتقان: {before}% ← {after}%',
+    dayProgress: 'مهام اليوم: {done} من {total}',
+
+    /* تعيين المعلم */
+    assignTitle: 'تعيين مهمة',
+    assignFor: 'تعيين مهمة لـ{name}',
+    assignType: 'نوع المهمة',
+    assignSurah: 'السورة',
+    assignFrom: 'من آية',
+    assignTo: 'إلى آية',
+    assignNote: 'ملاحظة للطالب (اختياري)',
+    assignSubmit: 'تعيين المهمة',
+    assigned: 'تم تعيين المهمة وستظهر عند الطالب',
+    assignedList: 'المهام المسندة',
+    noAssigned: 'لا توجد مهام مسندة بعد.',
+
+    errors: {
+      alreadyDone: 'هذه المهمة منجزة بالفعل.',
+      invalidMastery: 'نتيجة غير صالحة.',
+      invalidType: 'نوع مهمة غير معروف.',
+      invalidSurah: 'اختر سورة صحيحة.',
+      invalidRange: 'نطاق الآيات غير صحيح.',
+      noMistakes: 'لا توجد أخطاء تحتاج مراجعة.',
+    },
   },
 
   settings: {
