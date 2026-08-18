@@ -249,12 +249,25 @@ export async function changeUserRole({ role, userId, nextRole }) {
   );
 }
 
+/**
+ * إيقاف مستخدم أو إعادة تفعيله.
+ * الصلاحية بحسب المستهدَف لا بحسب إجراء واحد عام: إيقاف معلمٍ من اختصاص
+ * مشرفه والإدارة، وإيقاف مشرف للإدارة وحدها — كما في الحذف تمامًا.
+ */
 export async function setUserStatus({ role, userId, status }) {
   return request(() =>
     mutateDb((db) => {
-      assertCan(role, ACTIONS.USERS_MANAGE);
       const user = db.users.find((item) => item.id === userId);
       if (!user) throw new ApiError('notFound', 'state.notFoundHint');
+
+      if (user.role === 'teacher') assertCan(role, ACTIONS.TEACHERS_MANAGE);
+      else if (user.role === 'supervisor') assertCan(role, ACTIONS.SUPERVISORS_MANAGE);
+      else assertCan(role, ACTIONS.USERS_MANAGE);
+
+      if (!['active', 'suspended'].includes(status)) {
+        throw new ApiError('invalidStatus', 'state.errorHint');
+      }
+
       user.status = status;
       return { ...user };
     }),
@@ -436,7 +449,8 @@ export async function createEnrollmentRequest({ role, parentId, parentName, payl
         typeKey: 'enrollment',
         createdAt: enrollmentRequest.createdAt,
         read: false,
-        link: '/app/supervisor/requests',
+        // لكل دور مساره: توجيه الإدارة إلى مسار المشرف يُعيدها من حيث أتت.
+        linkByRole: { supervisor: '/app/supervisor/requests', admin: '/app/admin/requests' },
         roles: ['supervisor', 'admin'],
       });
 

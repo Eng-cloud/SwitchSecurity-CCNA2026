@@ -102,6 +102,8 @@ export async function getCircleDetail(circleId) {
             email: teacher.email,
             phone: teacher.phone,
             joinedAt: teacher.joinedAt,
+            // حالة الحساب تُعرض في الحلقة: معلم موقوف يجب أن يُرى موقوفًا.
+            status: teacher.status ?? 'active',
           }
         : null,
       ...circleStats(circleId),

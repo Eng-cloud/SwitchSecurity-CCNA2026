@@ -1034,6 +1034,7 @@ const ar = {
   },
 
   circles: {
+    open: 'فتح الحلقة',
     title: 'الحلقات',
     subtitle: 'كل الحلقات وأدائها.',
     name: 'اسم الحلقة',
@@ -1107,6 +1108,18 @@ const ar = {
     topTitle: 'الأعلى على مستوى حلقاتك',
     byCircle: 'حسب الحلقة',
     viewStudent: 'عرض الملف',
+  },
+
+  /* تفاصيل الحلقة — إجراءات المشرف والإدارة داخلها */
+  circleDetail: {
+    suspended: 'موقوف',
+    suspendTeacher: 'إيقاف المعلم',
+    activateTeacher: 'إعادة تفعيل المعلم',
+    suspendConfirm:
+      'سيُوقف حساب المعلم فلا يدخل المنصة، وتبقى الحلقة وطلابها كما هم. هل تريد المتابعة؟',
+    activateConfirm: 'سيعود المعلم إلى حسابه ويستأنف متابعة حلقته. هل تريد المتابعة؟',
+    teacherSuspended: 'تم إيقاف المعلم',
+    teacherActivated: 'تمت إعادة تفعيل المعلم',
   },
 
   settings: {

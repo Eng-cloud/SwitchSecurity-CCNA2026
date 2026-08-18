@@ -11,6 +11,7 @@ import {
   Table,
   Pagination,
   Badge,
+  Button,
   DataState,
   Skeleton,
 } from '../../components/ui/index.js';
@@ -49,6 +50,15 @@ export default function AdminCircles() {
         <Badge variant={row.performance >= 85 ? 'success' : row.performance >= 70 ? 'info' : 'warning'}>
           {formatPercent(row.performance)}
         </Badge>
+      ),
+    },
+    {
+      key: 'actions',
+      header: t('teacher.tableActions'),
+      render: (row) => (
+        <Button size="sm" variant="secondary" to={`/app/admin/circles/${row.id}`}>
+          {t('circles.open')}
+        </Button>
       ),
     },
   ];

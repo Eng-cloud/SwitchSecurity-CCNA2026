@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useListState from '../../hooks/useListState.js';
+import useGoBack from '../../hooks/useGoBack.js';
 import * as teacherService from '../../services/teacherService.js';
 import {
   formatNumber,
@@ -39,7 +40,6 @@ const STATUS_VARIANT = {
 export default function StudentProfile() {
   const t = useT();
   const { studentId } = useParams();
-  const navigate = useNavigate();
   const { role } = useAuth();
   const [noteOpen, setNoteOpen] = useState(false);
   const { values, setValue } = useListState({ defaults: { tab: 'info' } });
@@ -79,7 +79,9 @@ export default function StudentProfile() {
     },
   ];
 
-  const backPath = role === 'teacher' ? '/app/teacher/students' : `/app/${role}`;
+  // البديل حين يُفتح الرابط مباشرةً: قائمة الطلاب للمعلم، والحلقات لغيره.
+  const fallback = role === 'teacher' ? '/app/teacher/students' : `/app/${role}/circles`;
+  const goBack = useGoBack(fallback);
 
   return (
     <>
@@ -96,7 +98,7 @@ export default function StudentProfile() {
         ]}
         actions={
           <>
-            <Button variant="ghost" onClick={() => navigate(backPath)}>
+            <Button variant="ghost" onClick={goBack}>
               {t('common.back')}
             </Button>
             {role === 'teacher' ? (

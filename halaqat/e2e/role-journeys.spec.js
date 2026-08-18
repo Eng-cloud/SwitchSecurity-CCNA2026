@@ -53,12 +53,14 @@ test('رحلة المعلم: الحلقة → الطلاب → الطالب → 
   await page.getByRole('button', { name: 'معاينة الطباعة' }).click();
   await expect(page.locator('.print-header')).toBeVisible();
 
-  // In-app back + browser back
+  // رجوع داخل التطبيق ثم تقدّم المتصفح
+  // «رجوع» يرجع في سجل التنقل فعلًا (لا يدفع صفحة جديدة)، فالتقدّم يعيدنا للملف.
   await page.goto('/app/teacher/students');
   await page.locator('.card a').first().click();
+  await expect(page).toHaveURL(/\/app\/teacher\/students\/student-/);
   await page.getByRole('button', { name: 'رجوع' }).click();
   await expect(page).toHaveURL(/\/app\/teacher\/students$/);
-  await page.goBack();
+  await page.goForward();
   await expect(page).toHaveURL(/\/app\/teacher\/students\/student-/);
 
   await logout(page);

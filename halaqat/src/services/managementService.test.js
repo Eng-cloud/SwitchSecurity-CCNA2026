@@ -114,4 +114,98 @@ describe('خدمة الإدارة والإشراف', () => {
     });
     expect(result.isAssistant).toBe(true);
   });
+
+  /* ---------------------------------------------------------------
+     إيقاف المستخدمين — الصلاحية بحسب المستهدَف
+     --------------------------------------------------------------- */
+
+  it('المشرف يوقف معلمًا ويعيد تفعيله', async () => {
+    const teacher = getDb().users.find((user) => user.role === 'teacher');
+
+    const suspended = await managementService.setUserStatus({
+      role: 'supervisor',
+      userId: teacher.id,
+      status: 'suspended',
+    });
+    expect(suspended.status).toBe('suspended');
+
+    const active = await managementService.setUserStatus({
+      role: 'supervisor',
+      userId: teacher.id,
+      status: 'active',
+    });
+    expect(active.status).toBe('active');
+  });
+
+  it('المشرف لا يوقف مشرفًا ولا إداريًا', async () => {
+    const db = getDb();
+    const supervisor = db.users.find((user) => user.role === 'supervisor');
+    const admin = db.users.find((user) => user.role === 'admin');
+
+    await expect(
+      managementService.setUserStatus({ role: 'supervisor', userId: supervisor.id, status: 'suspended' }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+
+    await expect(
+      managementService.setUserStatus({ role: 'supervisor', userId: admin.id, status: 'suspended' }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+  });
+
+  it('المعلم لا يوقف أحدًا', async () => {
+    const teacher = getDb().users.find((user) => user.role === 'teacher');
+    await expect(
+      managementService.setUserStatus({ role: 'teacher', userId: teacher.id, status: 'suspended' }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+  });
+
+  it('حالة غير معروفة تُرفض', async () => {
+    const teacher = getDb().users.find((user) => user.role === 'teacher');
+    await expect(
+      managementService.setUserStatus({ role: 'admin', userId: teacher.id, status: 'deleted' }),
+    ).rejects.toMatchObject({ code: 'invalidStatus' });
+  });
+
+  /* ---------------------------------------------------------------
+     طلبات التسجيل تصل للمشرف والإدارة ويقرّرانها
+     --------------------------------------------------------------- */
+
+  it('المشرف يرى طلبات حلقاته والإدارة ترى الكل', async () => {
+    const forSupervisor = await managementService.listEnrollmentRequests({
+      role: 'supervisor',
+      userId: getDb().circles[0].supervisorId,
+      status: 'pending',
+    });
+    const forAdmin = await managementService.listEnrollmentRequests({
+      role: 'admin',
+      userId: 'user-admin',
+      status: 'pending',
+    });
+
+    expect(forSupervisor.length).toBeGreaterThan(0);
+    expect(forAdmin.length).toBeGreaterThanOrEqual(forSupervisor.length);
+  });
+
+  it('إشعار الطلب يوجّه كل دور إلى مساره', async () => {
+    const db = getDb();
+    const notification = db.notifications.find((item) => item.linkByRole);
+    // الطلب المبذور لا يحمل إشعارًا؛ ننشئ طلبًا جديدًا ليُولّد إشعاره.
+    const parent = db.users.find((user) => user.role === 'parent');
+    await managementService.createEnrollmentRequest({
+      role: 'parent',
+      parentId: parent.id,
+      parentName: parent.name,
+      payload: {
+        childName: 'ابن جديد',
+        city: db.circles[0].city,
+        district: db.circles[0].district,
+        mosque: db.circles[0].mosque,
+        circleId: db.circles[0].id,
+      },
+    });
+
+    const created = getDb().notifications.find((item) => item.typeKey === 'enrollment');
+    expect(created.linkByRole.supervisor).toBe('/app/supervisor/requests');
+    expect(created.linkByRole.admin).toBe('/app/admin/requests');
+    expect(notification ?? created).toBeTruthy();
+  });
 });

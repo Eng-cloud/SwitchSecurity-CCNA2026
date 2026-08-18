@@ -64,7 +64,8 @@ const TeacherReports = lazy(() => import('./pages/teacher/Reports.jsx'));
 /* المشرف */
 const SupervisorDashboard = lazy(() => import('./pages/supervisor/Dashboard.jsx'));
 const SupervisorCircles = lazy(() => import('./pages/supervisor/Circles.jsx'));
-const SupervisorCircleDetail = lazy(() => import('./pages/supervisor/CircleDetail.jsx'));
+/** تفاصيل الحلقة مشتركة بين المشرف والإدارة. */
+const CircleDetail = lazy(() => import('./pages/supervisor/CircleDetail.jsx'));
 const SupervisorTeachers = lazy(() => import('./pages/supervisor/Teachers.jsx'));
 const SupervisorDistinguished = lazy(() => import('./pages/supervisor/Distinguished.jsx'));
 const SupervisorReports = lazy(() => import('./pages/supervisor/Reports.jsx'));
@@ -178,7 +179,7 @@ export function AppRoutes() {
             <Route element={<RequireRole role="supervisor" />}>
               <Route path="supervisor" element={<SupervisorDashboard />} />
               <Route path="supervisor/circles" element={<SupervisorCircles />} />
-              <Route path="supervisor/circles/:circleId" element={<SupervisorCircleDetail />} />
+              <Route path="supervisor/circles/:circleId" element={<CircleDetail />} />
               <Route path="supervisor/teachers" element={<SupervisorTeachers />} />
               <Route path="supervisor/manage-teachers" element={<AdminTeachers />} />
               <Route path="supervisor/distinguished" element={<SupervisorDistinguished />} />
@@ -194,6 +195,7 @@ export function AppRoutes() {
               <Route path="admin/supervisors" element={<AdminSupervisors />} />
               <Route path="admin/teachers" element={<AdminTeachers />} />
               <Route path="admin/circles" element={<AdminCircles />} />
+              <Route path="admin/circles/:circleId" element={<CircleDetail />} />
               <Route path="admin/requests" element={<EnrollmentRequests />} />
               <Route path="admin/students/:studentId" element={<StudentProfile />} />
               <Route path="admin/reports" element={<AdminReports />} />
