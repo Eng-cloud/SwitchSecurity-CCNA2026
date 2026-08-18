@@ -45,3 +45,51 @@ test('نسخة الملف الواحد تعمل على الجوال', async ({ p
 
   assertNoConsoleErrors(errors);
 });
+
+/**
+ * لا يوجد رابط داخلي بوسم <a> عادي.
+ *
+ * في نسخة الملف الواحد يبني React Router روابطه بصيغة `#/app/...`، فأي رابط
+ * يبدأ بـ`/app` معناه وسم `<a href>` مكتوب يدويًا — وهذا يخرج المتصفح من
+ * التطبيق إلى مسار غير موجود على المضيف فتظهر صفحة فارغة.
+ */
+test('كل الروابط الداخلية تمر بالموجّه لا بوسم <a> عادي', async ({ page }) => {
+  const errors = watchConsole(page);
+
+  await page.goto(`${APP}#/demo`);
+  await page.getByTestId('demo-login-teacher').click();
+  await expect(page).toHaveURL(/#\/app\/teacher/);
+
+  const pages = [
+    '#/app/teacher',
+    '#/app/teacher/circle',
+    '#/app/teacher/students',
+    '#/app/teacher/assistant',
+    '#/app/teacher/sessions',
+    '#/app/teacher/reports',
+    '#/app/quran',
+    '#/app/settings',
+    '#/app/notifications',
+  ];
+
+  for (const path of pages) {
+    // eslint-disable-next-line no-await-in-loop
+    await page.goto(`${APP}${path}`);
+    // eslint-disable-next-line no-await-in-loop
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    // eslint-disable-next-line no-await-in-loop
+    const raw = await page.locator('a[href^="/app"]').evaluateAll((nodes) =>
+      nodes.map((node) => `${node.getAttribute('href')} (${node.textContent?.trim()})`),
+    );
+    expect(raw, `روابط خارج الموجّه في ${path}: ${raw.join(' | ')}`).toEqual([]);
+  }
+
+  // والنقر على اسم الطالب يفتح ملفه داخل التطبيق فعليًا.
+  await page.goto(`${APP}#/app/teacher/circle`);
+  await expect(page.getByRole('table')).toBeVisible();
+  await page.locator('table').getByRole('link').first().click();
+  await expect(page).toHaveURL(/#\/app\/teacher\/students\/student-/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});

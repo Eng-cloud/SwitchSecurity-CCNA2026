@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -88,7 +89,8 @@ export default function TeacherCircle() {
       sortable: true,
       render: (row) => (
         <span className="table__name">
-          <a href={`/app/teacher/students/${row.id}`}>{row.name}</a>
+          {/* Link لا <a>: الوسم العادي يخرج من التطبيق ويكسر نسخة الملف الواحد. */}
+          <Link to={`/app/teacher/students/${row.id}`}>{row.name}</Link>
           {row.isAssistant ? (
             <Badge variant="success" icon="★">
               {t('teacher.assistant.badge')}
