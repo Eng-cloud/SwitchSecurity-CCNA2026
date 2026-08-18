@@ -28,6 +28,48 @@ async function navLinkCount(page, name) {
   return count;
 }
 
+
+/**
+ * يزرع نشاطًا معلومًا داخل الشهر الجاري لطلاب حلقة، فلا تعتمد الاختبارات على
+ * موضع اليوم من الشهر (أول الشهر قد يخلو من نشاط كافٍ بطبيعته).
+ */
+async function seedMonthlyStars(page, circleId = 'circle-1', count = 3) {
+  await page.evaluate(
+    ({ circleId, count }) => {
+      const db = JSON.parse(localStorage.getItem('halaqat.db'));
+      const now = new Date();
+      const day = (i) => new Date(now.getFullYear(), now.getMonth(), 1 + i, 12).toISOString();
+      const members = db.students.filter((s) => s.circleId === circleId).slice(0, count);
+
+      members.forEach((student, index) => {
+        db.sessions = db.sessions.filter((x) => x.studentId !== student.id);
+        db.attendance = db.attendance.filter((x) => x.studentId !== student.id);
+        for (let i = 0; i < 5; i += 1) {
+          db.sessions.push({
+            id: `seed-s-${student.id}-${i}`,
+            studentId: student.id,
+            circleId,
+            teacherId: student.teacherId,
+            type: 'review',
+            mastery: 97 - index,
+            grade: 'excellent',
+            createdAt: day(i),
+          });
+          db.attendance.push({
+            id: `seed-a-${student.id}-${i}`,
+            studentId: student.id,
+            circleId,
+            date: day(i),
+            status: 'present',
+          });
+        }
+      });
+      localStorage.setItem('halaqat.db', JSON.stringify(db));
+    },
+    { circleId, count },
+  );
+}
+
 test('المعلم يعيّن مساعدًا ويوكّله بالمراجعة من قسم مستقل', async ({ page }) => {
   const errors = watchConsole(page);
   await freshSession(page);
@@ -131,6 +173,134 @@ test('المساعد يبقى طالبًا فلا تظهر له صفحات ال�
     // eslint-disable-next-line no-await-in-loop
     await expect(page).toHaveURL(/\/app\/student/);
   }
+
+  assertNoConsoleErrors(errors);
+});
+
+
+/* ===============================================================
+   متميزو الشهر
+   =============================================================== */
+
+test('المعلم يرى متميزي الشهر في حلقته ويعيّن منهم مساعدًا', async ({ page }) => {
+  const errors = watchConsole(page);
+  await freshSession(page);
+  await loginAs(page, 'teacher');
+  await seedMonthlyStars(page);
+  await page.goto('/app/teacher/assistant');
+
+  await expect(page.getByRole('heading', { name: 'متميزو الشهر' })).toBeVisible();
+  // المعايير معلنة لا خفية.
+  await expect(page.getByText(/يُحتسب من نشاط الشهر نفسه/)).toBeVisible();
+
+  const rows = page.getByTestId('distinguished-row');
+  await expect(rows.first()).toBeVisible();
+
+  // كل صف يعرض معاييره الثلاثة فيُفهم سبب الترتيب.
+  await expect(rows.first()).toContainText('إتقان الشهر');
+  await expect(rows.first()).toContainText('حضور الشهر');
+  await expect(rows.first()).toContainText('جلسات الشهر');
+
+  // ومن هذه القائمة يعيَّن المساعد مباشرة — لا يُعرض اسم ثم يُرفض تعيينه.
+  await page.getByTestId('assign-from-monthly').first().click();
+  await expect(page.getByText('تم تعيين الطالب مساعدًا للمعلم')).toBeVisible();
+
+  // تبديل المدة يعمل بلا خطأ.
+  await page.getByTestId('month-select').selectOption('previous');
+  await expect(page.getByRole('heading', { name: 'متميزو الشهر' })).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});
+
+test('المشرف يرى متميزي الشهر في حلقاته', async ({ page }) => {
+  const errors = watchConsole(page);
+  await freshSession(page);
+  await loginAs(page, 'supervisor');
+  await seedMonthlyStars(page);
+
+  await navigate(page, 'المتميزون', /\/app\/supervisor\/distinguished/);
+  await expect(page.getByRole('heading', { name: 'متميزو الشهر', level: 1 })).toBeVisible();
+  await expect(page.getByText(/يُحتسب من نشاط الشهر نفسه/)).toBeVisible();
+
+  // المشرف يرى متميزي حلقاته فعلًا — لا حالة فارغة.
+  await expect(page.getByTestId('distinguished-row').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'الأعلى على مستوى حلقاتك' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'حسب الحلقة' })).toBeVisible();
+  // واسم الحلقة يظهر في الترتيب الموحّد ليعرف أين الطالب.
+  await expect(page.getByTestId('distinguished-row').first()).toContainText('حلقة');
+
+  await page.getByTestId('month-select').selectOption('previous');
+  await expect(page.getByRole('heading', { name: 'متميزو الشهر', level: 1 })).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});
+
+test('المتميزون محجوبون عن الطالب وولي الأمر', async ({ page }) => {
+  const errors = watchConsole(page);
+  await freshSession(page);
+  await loginAs(page, 'student');
+  expect(await navLinkCount(page, 'المتميزون')).toBe(0);
+  await page.goto('/app/supervisor/distinguished');
+  await expect(page).toHaveURL(/\/app\/student/);
+
+  assertNoConsoleErrors(errors);
+});
+
+/* ===============================================================
+   المساعد يختار زملاءه بنفسه
+   =============================================================== */
+
+test('المعلم يفوّض الاختيار للمساعد فيختار زملاءه ويسمّع لهم', async ({ page }) => {
+  const errors = watchConsole(page);
+  await freshSession(page);
+
+  // 1) المعلم: ينهي التوكيل المبذور ثم يوكّل بوضع «المساعد يختار».
+  await loginAs(page, 'teacher');
+  await page.goto('/app/teacher/assistant');
+
+  await page.getByRole('button', { name: 'إنهاء التوكيل' }).first().click();
+  await page.getByRole('button', { name: 'تأكيد' }).click();
+  await expect(page.getByText('تم إنهاء التوكيل')).toBeVisible();
+
+  await page.getByTestId('delegate-open').first().click();
+  await page.getByRole('radio', { name: 'المساعد يختار بنفسه' }).check();
+  await page.getByTestId('delegate-quota').fill('2');
+  await page.getByTestId('delegate-submit').click();
+  await expect(page.getByText('تم توكيل المساعد بالطلاب المحددين')).toBeVisible();
+
+  // المعلم يرى أن التوكيل بانتظار اختيار المساعد.
+  await expect(page.getByText('بانتظار اختيار المساعد').first()).toBeVisible();
+
+  // 2) الطالب المساعد: يختار زميلين ثم يسمّع لهما.
+  await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
+  await loginAs(page, 'student');
+  await page.goto('/app/student/assistant');
+
+  await page.getByTestId('choose-open').click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('checkbox').nth(0).check();
+  await dialog.getByRole('checkbox').nth(1).check();
+  await page.getByTestId('choose-submit').click();
+  await expect(page.getByText('تم تسجيل اختيارك')).toBeVisible();
+
+  // اختفى نداء الاختيار وظهر الاسمان.
+  await expect(page.getByTestId('choose-open')).toHaveCount(0);
+  await expect(page.getByTestId('duty-item')).toHaveCount(2);
+
+  await page.getByTestId('record-review').first().click();
+  await page.getByTestId('record-submit').click();
+  await expect(page.getByTestId('record-submit')).toHaveCount(0);
+  await page.getByTestId('record-review').first().click();
+  await page.getByTestId('record-submit').click();
+
+  // اكتملت الحصة اختيارًا وسماعًا ⇒ انتهى التوكيل.
+  await expect(page.getByText('لا توجد مهمة موكَّلة إليك الآن')).toBeVisible();
+
+  // 3) المعلم يرى أن الأسماء اختارها المساعد.
+  await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
+  await loginAs(page, 'teacher');
+  await page.goto('/app/teacher/assistant');
+  await expect(page.getByText('اختاره المساعد').first()).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });

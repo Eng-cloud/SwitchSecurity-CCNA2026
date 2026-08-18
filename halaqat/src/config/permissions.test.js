@@ -66,10 +66,19 @@ describe('مصفوفة الصلاحيات', () => {
         ACTIONS.REPORTS_PRINT,
         ACTIONS.ASSISTANT_ASSIGN,
         ACTIONS.DELEGATION_MANAGE,
+        ACTIONS.DISTINGUISHED_VIEW,
         ACTIONS.ATTENDANCE_RECORD,
         ACTIONS.NOTES_WRITE,
       ].sort(),
     );
+  });
+
+  it('متميزو الشهر للمعلم والمشرف والإدارة لا للطالب وولي الأمر', () => {
+    expect(can('teacher', ACTIONS.DISTINGUISHED_VIEW)).toBe(true);
+    expect(can('supervisor', ACTIONS.DISTINGUISHED_VIEW)).toBe(true);
+    expect(can('admin', ACTIONS.DISTINGUISHED_VIEW)).toBe(true);
+    expect(can('student', ACTIONS.DISTINGUISHED_VIEW)).toBe(false);
+    expect(can('parent', ACTIONS.DISTINGUISHED_VIEW)).toBe(false);
   });
 
   it('المشرف لا يعيّن مساعدًا ولا يوكّل — هذه علاقة معلم بطلابه', () => {

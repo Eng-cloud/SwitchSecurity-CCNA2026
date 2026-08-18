@@ -419,6 +419,8 @@ function generate() {
       circleId: demoCircle.id,
       scope: 'review',
       status: 'active',
+      selectionMode: 'teacher',
+      quota: delegatedPeers.length,
       note: 'مراجعة جزء عمّ قبل الاختبار الأسبوعي.',
       createdAt: daysAgo(1),
       completedAt: null,
@@ -429,6 +431,7 @@ function generate() {
         mastery: index === 0 ? 88 : null,
         note: index === 0 ? 'حفظ متقن مع تنبيه على المدود.' : '',
         doneAt: index === 0 ? daysAgo(0) : null,
+        chosenBy: 'teacher',
       })),
     });
   }

@@ -94,8 +94,14 @@ describe('خدمة الإدارة والإشراف', () => {
     ).rejects.toMatchObject({ messageKey: 'parent.requests.errors.alreadyDecided' });
   });
 
-  it('تشترط الإتقان لتعيين المساعد', async () => {
-    const weak = getDb().students.find((student) => student.masteryAvg < 85);
+  it('تشترط الجدارة لتعيين المساعد', async () => {
+    const db = getDb();
+    // دون الحدّين: متوسط عام ضعيف ولا نشاط هذا الشهر يؤهله.
+    const weak = db.students.find((student) => !student.isAssistant);
+    weak.masteryAvg = 60;
+    db.sessions = db.sessions.filter((item) => item.studentId !== weak.id);
+    db.attendance = db.attendance.filter((item) => item.studentId !== weak.id);
+
     await expect(
       managementService.setAssistant({ role: 'teacher', studentId: weak.id, isAssistant: true }),
     ).rejects.toMatchObject({ messageKey: 'teacher.assistant.notEligible' });

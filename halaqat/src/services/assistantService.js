@@ -15,9 +15,22 @@
 import { request, ApiError } from '../mock/api.js';
 import { getDb, mutateDb } from '../mock/db.js';
 import { can, ACTIONS } from '../config/permissions.js';
+import { evaluateStudent } from './distinguishedService.js';
 
-/** الحد الأدنى لمتوسط الإتقان ليُعتبر الطالب متميزًا مؤهلًا للمساعدة. */
+/** الحد الأدنى لمتوسط الإتقان العام ليُعتبر الطالب مؤهلًا للمساعدة. */
 export const ELIGIBILITY_MASTERY = 85;
+
+/**
+ * يؤهَّل للمساعدة من أثبت جدارته بأحد طريقين:
+ *  - متوسط عام ≥ 85% (سجل طويل)، أو
+ *  - تميّز هذا الشهر بمعايير «متميزي الشهر» (أداء حاضر).
+ * توحيد التعريف مقصود: لا يظهر اسم في قائمة المتميزين ثم يُرفض تعيينه.
+ */
+export function isEligible(db, student) {
+  if (!student) return false;
+  if (student.masteryAvg >= ELIGIBILITY_MASTERY) return true;
+  return evaluateStudent(db, student).distinguished;
+}
 
 /** أقصى عدد زملاء في توكيل واحد — التوكيل مهمة قصيرة لا عبء دائم. */
 export const MAX_DELEGATION_ITEMS = 6;
@@ -53,13 +66,18 @@ function delegations(db) {
 }
 
 function progressOf(delegation) {
-  const total = delegation.items.length;
+  // في وضع «المساعد يختار» المهمة بحجم الحصة لا بعدد ما اختاره حتى الآن،
+  // فلا يبدو التوكيل مكتملًا لمجرد أنه سمّع أول من اختار.
+  const quota = delegation.quota ?? delegation.items.length;
+  const total = delegation.selectionMode === 'assistant' ? quota : delegation.items.length;
   const done = delegation.items.filter((item) => item.status === 'done').length;
   return {
     total,
     done,
-    remaining: total - done,
+    remaining: Math.max(0, total - done),
     percent: total === 0 ? 0 : Math.round((done / total) * 100),
+    chosen: delegation.items.length,
+    toChoose: Math.max(0, total - delegation.items.length),
   };
 }
 
@@ -93,7 +111,7 @@ export async function getAssistantPanel({ role, teacherId, circleId }) {
       memorizedJuz: student.memorizedJuz,
       status: student.status,
       isAssistant: Boolean(student.isAssistant),
-      eligible: student.masteryAvg >= ELIGIBILITY_MASTERY,
+      eligible: isEligible(db, student),
     });
 
     const all = circleStudents.map(toRow);
@@ -138,7 +156,7 @@ export async function setAssistant({ role, studentId, isAssistant }) {
       const student = db.students.find((item) => item.id === studentId);
       if (!student) throw new ApiError('notFound', 'state.notFoundHint');
 
-      if (isAssistant && student.masteryAvg < ELIGIBILITY_MASTERY) {
+      if (isAssistant && !isEligible(db, student)) {
         throw new ApiError('notEligible', 'teacher.assistant.notEligible');
       }
 
@@ -170,8 +188,24 @@ export async function setAssistant({ role, studentId, isAssistant }) {
   return result;
 }
 
-/** توكيل المساعد بسماع مراجعة زملاء محددين. */
-export async function createDelegation({ role, teacherId, circleId, assistantStudentId, studentIds, note = '' }) {
+/**
+ * توكيل المساعد بسماع مراجعة زملائه.
+ *
+ * وضعان يختارهما المعلم:
+ *  - `teacher`: المعلم يسمّي الطلاب بأعيانهم (studentIds).
+ *  - `assistant`: المعلم يحدد عددًا (quota) والمساعد يختار زملاءه بنفسه،
+ *    ويبقى الاختيار محصورًا في حلقة المعلم ومحدودًا بالعدد المسموح.
+ */
+export async function createDelegation({
+  role,
+  teacherId,
+  circleId,
+  assistantStudentId,
+  studentIds = [],
+  selectionMode = 'teacher',
+  quota = 3,
+  note = '',
+}) {
   const result = await request(() =>
     mutateDb((db) => {
       assertCan(role, ACTIONS.DELEGATION_MANAGE);
@@ -190,12 +224,30 @@ export async function createDelegation({ role, teacherId, circleId, assistantStu
       );
       if (open) throw new ApiError('hasActive', 'teacher.assistant.errors.hasActive');
 
-      const unique = [...new Set(studentIds ?? [])].filter((id) => id !== assistantStudentId);
-      if (unique.length === 0) {
-        throw new ApiError('noStudents', 'teacher.assistant.errors.noStudents');
+      if (!['teacher', 'assistant'].includes(selectionMode)) {
+        throw new ApiError('invalidMode', 'teacher.assistant.errors.invalidMode');
       }
-      if (unique.length > MAX_DELEGATION_ITEMS) {
-        throw new ApiError('tooMany', 'teacher.assistant.errors.tooMany');
+
+      // في وضع «المساعد يختار» لا أسماء عند الإنشاء، بل عدد مسموح به فقط.
+      const allowed = selectionMode === 'assistant' ? Number(quota) : 0;
+      if (selectionMode === 'assistant') {
+        if (!Number.isInteger(allowed) || allowed < 1 || allowed > MAX_DELEGATION_ITEMS) {
+          throw new ApiError('invalidQuota', 'teacher.assistant.errors.invalidQuota');
+        }
+      }
+
+      const unique =
+        selectionMode === 'assistant'
+          ? []
+          : [...new Set(studentIds ?? [])].filter((id) => id !== assistantStudentId);
+
+      if (selectionMode === 'teacher') {
+        if (unique.length === 0) {
+          throw new ApiError('noStudents', 'teacher.assistant.errors.noStudents');
+        }
+        if (unique.length > MAX_DELEGATION_ITEMS) {
+          throw new ApiError('tooMany', 'teacher.assistant.errors.tooMany');
+        }
       }
 
       const targets = unique.map((id) => {
@@ -215,6 +267,9 @@ export async function createDelegation({ role, teacherId, circleId, assistantStu
         circleId,
         scope: 'review',
         status: 'active',
+        selectionMode,
+        // العدد المسموح به: حصة المساعد في وضع اختياره، وإلا عدد الأسماء.
+        quota: selectionMode === 'assistant' ? allowed : targets.length,
         note: String(note ?? '').trim(),
         createdAt: new Date().toISOString(),
         completedAt: null,
@@ -294,18 +349,103 @@ export async function getMyDuty(studentId) {
 
     const teacher = db.users.find((item) => item.id === delegation.teacherId);
     const circle = db.circles.find((item) => item.id === delegation.circleId);
+    const shaped = shape(delegation);
+
+    // من يصلح أن يختاره المساعد: زملاء حلقته ممن لم يخترهم بعد.
+    const chosen = new Set(delegation.items.map((item) => item.studentId));
+    const candidates =
+      delegation.selectionMode === 'assistant' && shaped.progress.toChoose > 0
+        ? db.students
+            .filter(
+              (item) =>
+                item.circleId === delegation.circleId &&
+                item.id !== studentId &&
+                !chosen.has(item.id),
+            )
+            .map((item) => ({ id: item.id, name: item.name, memorizedJuz: item.memorizedJuz }))
+        : [];
 
     return {
       active: true,
       isAssistant: Boolean(student.isAssistant),
       delegation: {
-        ...shape(delegation),
+        ...shaped,
         teacherName: teacher?.name ?? '',
         circleName: circle?.name ?? '',
       },
+      candidates,
       history,
     };
   });
+}
+
+/**
+ * اختيار المساعد لزملائه — متاح فقط حين يفوّضه المعلم بذلك.
+ *
+ * الاختيار محكوم بثلاثة قيود: من حلقته، وليس نفسه، وضمن العدد الذي حدده
+ * المعلم. فالتفويض بالاختيار لا يعني تفويضًا مفتوحًا.
+ */
+export async function chooseDelegationStudents({ assistantStudentId, delegationId, studentIds }) {
+  const result = await request(() =>
+    mutateDb((db) => {
+      const delegation = delegations(db).find((item) => item.id === delegationId);
+      if (!delegation) throw new ApiError('notFound', 'state.notFoundHint');
+
+      if (delegation.assistantStudentId !== assistantStudentId) {
+        throw new ApiError('forbidden', 'state.forbiddenHint');
+      }
+      if (delegation.status !== 'active') {
+        throw new ApiError('notActive', 'teacher.assistant.errors.notActive');
+      }
+      if (delegation.selectionMode !== 'assistant') {
+        // المعلم سمّى الطلاب بنفسه، فليس للمساعد تعديل القائمة.
+        throw new ApiError('notAllowedToChoose', 'student.assistant.errors.notAllowedToChoose');
+      }
+
+      const already = new Set(delegation.items.map((item) => item.studentId));
+      const unique = [...new Set(studentIds ?? [])].filter(
+        (id) => id !== assistantStudentId && !already.has(id),
+      );
+      if (unique.length === 0) {
+        throw new ApiError('noStudents', 'teacher.assistant.errors.noStudents');
+      }
+
+      const room = (delegation.quota ?? 0) - delegation.items.length;
+      if (unique.length > room) {
+        throw new ApiError('overQuota', 'student.assistant.errors.overQuota');
+      }
+
+      unique.forEach((id) => {
+        const target = db.students.find((item) => item.id === id);
+        if (!target || target.circleId !== delegation.circleId) {
+          throw new ApiError('outsideCircle', 'teacher.assistant.errors.outsideCircle');
+        }
+        delegation.items.push({
+          studentId: target.id,
+          studentName: target.name,
+          status: 'pending',
+          mastery: null,
+          note: '',
+          doneAt: null,
+          // توثيق من اختار هذا الاسم — المساعد أم المعلم.
+          chosenBy: 'assistant',
+        });
+      });
+
+      db.notifications.unshift({
+        id: `notif-${Date.now()}`,
+        typeKey: 'delegationChosen',
+        createdAt: new Date().toISOString(),
+        read: false,
+        link: '/app/teacher/assistant',
+        roles: ['teacher'],
+      });
+
+      return shape(delegation);
+    }),
+  );
+  emitChange();
+  return result;
 }
 
 /**
@@ -366,7 +506,7 @@ export async function recordReview({ assistantStudentId, delegationId, studentId
 
       const progress = progressOf(delegation);
       let closed = false;
-      if (progress.remaining === 0) {
+      if (progress.remaining === 0 && progress.toChoose === 0) {
         // انتهت الأسماء ⇒ انتهت المهمة، ويعود الطالب لوضعه الطبيعي.
         delegation.status = 'completed';
         delegation.completedAt = now;

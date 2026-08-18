@@ -118,6 +118,7 @@ const ar = {
     reports: 'التقارير',
     circle: 'الحلقة',
     assistant: 'المساعد',
+    distinguished: 'المتميزون',
     assistantDuty: 'مهمة التسميع',
     circles: 'الحلقات',
     students: 'الطلاب',
@@ -341,6 +342,14 @@ const ar = {
       remaining: 'بقي {count}',
       allDone: 'أكملت جميع من وُكّلت بهم ✅',
 
+      chooseTitle: 'اختر من تسمع لهم',
+      chooseHint: 'وكّلك معلمك باختيار {count} من زملائك في الحلقة.',
+      chooseOpen: 'اختيار الزملاء',
+      chooseSubmit: 'تأكيد الاختيار',
+      chosen: 'تم تسجيل اختيارك',
+      chooseRemaining: 'بقي لك اختيار {count}',
+      chooseEmpty: 'لا يوجد زميل متاح للاختيار.',
+
       record: 'تسجيل سماع المراجعة',
       recordFor: 'سماع مراجعة {name}',
       masteryLabel: 'تقدير الإتقان',
@@ -352,6 +361,11 @@ const ar = {
       completed: 'أكملت المهمة كاملة — انتهى التوكيل وعدت لوضعك الطبيعي.',
       historyTitle: 'مهام سابقة',
       historyEmpty: 'لا توجد مهام سابقة.',
+
+      errors: {
+        notAllowedToChoose: 'معلمك حدد الأسماء بنفسه، فليس لك تغييرها.',
+        overQuota: 'تجاوزت العدد المسموح به.',
+      },
     },
 
     todayGoal: 'هدف اليوم',
@@ -697,7 +711,8 @@ const ar = {
       unassign: 'إلغاء التعيين',
       assigned: 'تم تعيين الطالب مساعدًا للمعلم',
       unassigned: 'تم إلغاء تعيين المساعد',
-      notEligible: 'يُشترط ألا يقل متوسط الإتقان عن 85% لتعيين الطالب مساعدًا.',
+      notEligible:
+        'لتعيينه مساعدًا يلزم متوسط إتقان عام ‏85%‏ فأكثر، أو أن يكون من متميزي هذا الشهر.',
       hint: 'المساعد يسمع مراجعة من يوكّله المعلم بهم فقط.',
       badge: 'مساعد',
 
@@ -726,6 +741,22 @@ const ar = {
       delegateNote: 'ملاحظة للمساعد (اختياري)',
       delegateNotePlaceholder: 'مثال: مراجعة جزء عمّ قبل الاختبار الأسبوعي.',
       delegateSubmit: 'إرسال التوكيل',
+
+      // من يختار الطلاب: المعلم بنفسه أم المساعد ضمن عدد محدد
+      selectionLegend: 'من يختار الطلاب؟',
+      selectionByTeacher: 'أنا أحدد الأسماء',
+      selectionByTeacherHint: 'تختار زملاءه بنفسك من قائمة الحلقة.',
+      selectionByAssistant: 'المساعد يختار بنفسه',
+      selectionByAssistantHint: 'تحدد العدد فقط، ويختار هو من زملائه في الحلقة.',
+      quotaLabel: 'عدد الطلاب المسموح به',
+      quotaHint: 'من ١ إلى {max}. لا يتجاوزه المساعد.',
+      awaitingChoice: 'بانتظار اختيار المساعد',
+      chosenByAssistant: 'اختاره المساعد',
+      chosenProgress: 'اختار {chosen} من {total}',
+      modeBadge: {
+        teacher: 'أسماء من المعلم',
+        assistant: 'اختيار المساعد',
+      },
       delegateCreated: 'تم توكيل المساعد بالطلاب المحددين',
 
       delegationsTitle: 'التوكيلات',
@@ -756,6 +787,8 @@ const ar = {
         notDelegated: 'هذا الطالب ليس ضمن توكيلك.',
         alreadyDone: 'سُجّل سماع هذا الطالب مسبقًا.',
         invalidMastery: 'أدخل نسبة إتقان بين ٠ و١٠٠.',
+        invalidMode: 'وضع اختيار غير معروف.',
+        invalidQuota: 'حدد عددًا صحيحًا ضمن الحد المسموح.',
       },
     },
 
@@ -1041,7 +1074,39 @@ const ar = {
       assistant: 'تم تعيينك مساعدًا للمعلم',
       delegation: 'وكّلك معلمك بسماع مراجعة بعض زملائك',
       delegationDone: 'أنهى المساعد التوكيل المسند إليه',
+      delegationChosen: 'اختار المساعد الطلاب الذين سيسمع لهم',
     },
+  },
+
+  /* متميزو الشهر — مشترك بين المعلم والمشرف */
+  distinguished: {
+    title: 'متميزو الشهر',
+    teacherSubtitle: 'الأعلى أداءً في حلقتك خلال هذا الشهر.',
+    supervisorSubtitle: 'الأعلى أداءً في الحلقات التي تشرف عليها خلال هذا الشهر.',
+    monthCurrent: 'هذا الشهر',
+    monthPrevious: 'الشهر الماضي',
+    monthLabel: 'المدة',
+
+    criteria: 'معايير التميّز',
+    criteriaText:
+      'يُحتسب من نشاط الشهر نفسه لا من متوسط الطالب العام: إتقان جلسات الشهر {mastery}% فأكثر، وحضور {attendance}% فأكثر، و{sessions} جلسات على الأقل.',
+
+    rank: 'الترتيب',
+    monthMastery: 'إتقان الشهر',
+    monthAttendance: 'حضور الشهر',
+    monthSessions: 'جلسات الشهر',
+    overallMastery: 'المتوسط العام',
+    byAssistant: 'منها {count} بسماع المساعد',
+    score: 'المؤشر',
+
+    empty: 'لا يوجد متميز بهذه المعايير في هذه المدة.',
+    emptyHint:
+      'قد يكون الشهر في أوله ولم يكتمل نشاط كافٍ بعد — جرّب «الشهر الماضي».',
+    circleEmpty: 'لا متميز في هذه الحلقة هذه المدة.',
+    countBadge: '{count} متميز',
+    topTitle: 'الأعلى على مستوى حلقاتك',
+    byCircle: 'حسب الحلقة',
+    viewStudent: 'عرض الملف',
   },
 
   settings: {

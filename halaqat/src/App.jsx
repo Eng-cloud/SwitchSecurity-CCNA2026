@@ -66,6 +66,7 @@ const SupervisorDashboard = lazy(() => import('./pages/supervisor/Dashboard.jsx'
 const SupervisorCircles = lazy(() => import('./pages/supervisor/Circles.jsx'));
 const SupervisorCircleDetail = lazy(() => import('./pages/supervisor/CircleDetail.jsx'));
 const SupervisorTeachers = lazy(() => import('./pages/supervisor/Teachers.jsx'));
+const SupervisorDistinguished = lazy(() => import('./pages/supervisor/Distinguished.jsx'));
 const SupervisorReports = lazy(() => import('./pages/supervisor/Reports.jsx'));
 
 /* الإدارة */
@@ -180,6 +181,7 @@ export function AppRoutes() {
               <Route path="supervisor/circles/:circleId" element={<SupervisorCircleDetail />} />
               <Route path="supervisor/teachers" element={<SupervisorTeachers />} />
               <Route path="supervisor/manage-teachers" element={<AdminTeachers />} />
+              <Route path="supervisor/distinguished" element={<SupervisorDistinguished />} />
               <Route path="supervisor/requests" element={<EnrollmentRequests />} />
               <Route path="supervisor/students/:studentId" element={<StudentProfile />} />
               <Route path="supervisor/reports" element={<SupervisorReports />} />

@@ -19,6 +19,7 @@ export const ACTIONS = {
   STUDENTS_MANAGE: 'students.manage',
   ASSISTANT_ASSIGN: 'assistant.assign',
   DELEGATION_MANAGE: 'delegation.manage',
+  DISTINGUISHED_VIEW: 'distinguished.view',
   ENROLLMENT_CREATE: 'enrollment.create',
   ENROLLMENT_REVIEW: 'enrollment.review',
   ATTENDANCE_RECORD: 'attendance.record',
@@ -44,6 +45,7 @@ const MATRIX = {
     A.REPORTS_PRINT,
     A.ASSISTANT_ASSIGN,
     A.DELEGATION_MANAGE,
+    A.DISTINGUISHED_VIEW,
     A.ATTENDANCE_RECORD,
     A.NOTES_WRITE,
   ],
@@ -55,6 +57,7 @@ const MATRIX = {
     A.CIRCLES_MANAGE,
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
+    A.DISTINGUISHED_VIEW,
     A.NOTES_WRITE,
   ],
 
@@ -66,6 +69,7 @@ const MATRIX = {
     A.CIRCLES_MANAGE,
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
+    A.DISTINGUISHED_VIEW,
   ],
 
   parent: [A.QURAN_READ, A.ENROLLMENT_CREATE],

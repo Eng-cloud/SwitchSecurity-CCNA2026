@@ -48,6 +48,7 @@ const NAVIGATION = {
     { to: '/app/supervisor', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/supervisor/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
     { to: '/app/supervisor/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫', primary: true },
+    { to: '/app/supervisor/distinguished', labelKey: 'nav.distinguished', icon: '🏅' },
     { to: '/app/supervisor/requests', labelKey: 'nav.requests', icon: '📬', primary: true },
     QURAN_ITEM,
     { to: '/app/supervisor/reports', labelKey: 'nav.reports', icon: '📊' },

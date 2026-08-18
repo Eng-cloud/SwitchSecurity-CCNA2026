@@ -22,6 +22,20 @@ function clearDelegations() {
   db.assistantDelegations = [];
 }
 
+
+/** طالب دون الحدّين: متوسطه العام ضعيف ولا نشاط له هذا الشهر. */
+function ineligibleStudent(circleId) {
+  const db = getDb();
+  const student = db.students.find(
+    (item) => item.circleId === circleId && !item.isAssistant,
+  );
+  student.masteryAvg = 60;
+  // إسقاط نشاط الشهر حتى لا يتأهل بمسار «متميزي الشهر».
+  db.sessions = db.sessions.filter((s) => s.studentId !== student.id);
+  db.attendance = db.attendance.filter((a) => a.studentId !== student.id);
+  return student;
+}
+
 describe('خدمة مساعد المعلم', () => {
   beforeEach(() => {
     resetDb();
@@ -45,15 +59,43 @@ describe('خدمة مساعد المعلم', () => {
     ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
   });
 
-  it('التعيين مشروط بحدّ الإتقان', async () => {
-    const { db, circle } = context();
-    const weak = db.students.find(
-      (student) => student.circleId === circle.id && student.masteryAvg < 85,
-    );
+  it('التعيين مشروط بالجدارة: متوسط عام عالٍ أو تميّز هذا الشهر', async () => {
+    const { circle } = context();
 
+    // لا هذا ولا ذاك ⇒ يُرفض.
+    const weak = ineligibleStudent(circle.id);
     await expect(
       assistantService.setAssistant({ role: 'teacher', studentId: weak.id, isAssistant: true }),
     ).rejects.toMatchObject({ messageKey: 'teacher.assistant.notEligible' });
+
+    // متوسطه العام ضعيف لكنه متميز هذا الشهر ⇒ يُقبل.
+    const db = getDb();
+    const now = new Date();
+    const day = (i) => new Date(now.getFullYear(), now.getMonth(), 1 + i, 12).toISOString();
+    for (let i = 0; i < 4; i += 1) {
+      db.sessions.push({
+        id: `sx-${i}`,
+        studentId: weak.id,
+        circleId: circle.id,
+        type: 'review',
+        mastery: 95,
+        createdAt: day(i),
+      });
+      db.attendance.push({
+        id: `ax-${i}`,
+        studentId: weak.id,
+        circleId: circle.id,
+        date: day(i),
+        status: 'present',
+      });
+    }
+
+    const result = await assistantService.setAssistant({
+      role: 'teacher',
+      studentId: weak.id,
+      isAssistant: true,
+    });
+    expect(result.isAssistant).toBe(true);
   });
 
   it('التوكيل مقصور على زملاء الحلقة ولا يشمل المساعد نفسه', async () => {
@@ -333,7 +375,13 @@ describe('خدمة مساعد المعلم', () => {
     expect(panel.assistants.some((item) => item.id === assistant.id)).toBe(true);
     // المعيَّن لا يظهر ثانيةً ضمن المرشحين.
     expect(panel.eligible.every((item) => item.id !== assistant.id)).toBe(true);
-    expect(panel.eligible.every((item) => item.masteryAvg >= panel.eligibilityMastery)).toBe(true);
+    // كل مرشح مؤهل بأحد المسارين: متوسط عام عالٍ أو تميّز هذا الشهر.
+    const db = getDb();
+    expect(
+      panel.eligible.every((item) =>
+        assistantService.isEligible(db, db.students.find((s) => s.id === item.id)),
+      ),
+    ).toBe(true);
   });
 
   it('المعلم يُنهي التوكيل مبكرًا', async () => {
@@ -357,5 +405,235 @@ describe('خدمة مساعد المعلم', () => {
     await expect(
       assistantService.completeDelegation({ role: 'teacher', delegationId: delegation.id }),
     ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.notActive' });
+  });
+
+  /* ---------------------------------------------------------------
+     وضع «المساعد يختار زملاءه»
+     --------------------------------------------------------------- */
+
+  it('المعلم يفوّض الاختيار للمساعد بعدد محدد', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    expect(delegation.selectionMode).toBe('assistant');
+    expect(delegation.quota).toBe(2);
+    // لا أسماء بعد — المهمة بحجم الحصة لا بما اختير.
+    expect(delegation.items).toHaveLength(0);
+    expect(delegation.progress.total).toBe(2);
+    expect(delegation.progress.toChoose).toBe(2);
+
+    const duty = await assistantService.getMyDuty(assistant.id);
+    expect(duty.candidates.length).toBeGreaterThan(0);
+    expect(duty.candidates.every((c) => c.id !== assistant.id)).toBe(true);
+  });
+
+  it('المساعد يختار زملاءه ثم يسمّع لهم', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, peers } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    const chosen = await assistantService.chooseDelegationStudents({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentIds: [peers[0].id, peers[1].id],
+    });
+
+    expect(chosen.items).toHaveLength(2);
+    expect(chosen.items.every((item) => item.chosenBy === 'assistant')).toBe(true);
+    expect(chosen.progress.toChoose).toBe(0);
+
+    await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+      mastery: 90,
+    });
+    const last = await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[1].id,
+      mastery: 85,
+    });
+
+    expect(last.closed).toBe(true);
+    expect(last.delegation.status).toBe('completed');
+  });
+
+  it('لا يتجاوز المساعد العدد الذي حدده المعلم', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, peers } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentIds: [peers[0].id, peers[1].id, peers[2].id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'student.assistant.errors.overQuota' });
+
+    // ولا بالتقسيط على دفعتين.
+    await assistantService.chooseDelegationStudents({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentIds: [peers[0].id, peers[1].id],
+    });
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentIds: [peers[2].id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'student.assistant.errors.overQuota' });
+  });
+
+  it('اختيار المساعد محصور في حلقته ولا يشمل نفسه', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, db } = context();
+    const outsider = db.students.find((student) => student.circleId !== circle.id);
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentIds: [outsider.id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.outsideCircle' });
+
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentIds: [assistant.id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.noStudents' });
+  });
+
+  it('حين يسمّي المعلم الأسماء لا يملك المساعد تغييرها', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, peers } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id],
+    });
+    expect(delegation.selectionMode).toBe('teacher');
+
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentIds: [peers[1].id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'student.assistant.errors.notAllowedToChoose' });
+  });
+
+  it('لا يختار أحد نيابة عن مساعد آخر', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, peers } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    await expect(
+      assistantService.chooseDelegationStudents({
+        assistantStudentId: peers[3].id,
+        delegationId: delegation.id,
+        studentIds: [peers[0].id],
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+  });
+
+  it('حصة غير صالحة تُرفض', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle } = context();
+
+    for (const quota of [0, -1, 99]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        assistantService.createDelegation({
+          role: 'teacher',
+          teacherId,
+          circleId: circle.id,
+          assistantStudentId: assistant.id,
+          selectionMode: 'assistant',
+          quota,
+        }),
+      ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.invalidQuota' });
+    }
+  });
+
+  it('التوكيل لا يُغلق قبل اكتمال الاختيار والسماع معًا', async () => {
+    clearDelegations();
+    const { assistant, teacherId, circle, peers } = context();
+
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      selectionMode: 'assistant',
+      quota: 2,
+    });
+
+    // اختار واحدًا فقط من اثنين ثم سمّع له: المهمة ما زالت جارية.
+    await assistantService.chooseDelegationStudents({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentIds: [peers[0].id],
+    });
+    const first = await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+      mastery: 90,
+    });
+
+    expect(first.closed).toBe(false);
+    expect(first.delegation.status).toBe('active');
+    expect(first.delegation.progress.toChoose).toBe(1);
   });
 });

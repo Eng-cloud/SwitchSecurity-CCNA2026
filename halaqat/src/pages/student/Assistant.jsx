@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx';
 import useAssistantDuty from '../../hooks/useAssistantDuty.js';
 import * as assistantService from '../../services/assistantService.js';
 import { formatPercent, formatRelative } from '../../lib/format.js';
+import { Checkbox } from '../../components/ui/Choice.jsx';
 import {
   PageHeader,
   Section,
@@ -33,6 +34,8 @@ export default function StudentAssistant() {
   const { duty, reload } = useAssistantDuty();
 
   const [target, setTarget] = useState(null);
+  const [choosing, setChoosing] = useState(false);
+  const [picked, setPicked] = useState([]);
   const [mastery, setMastery] = useState('85');
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
@@ -43,6 +46,30 @@ export default function StudentAssistant() {
     setMastery('85');
     setNote('');
     setTarget(item);
+  };
+
+  const togglePick = (studentId, checked) => {
+    setPicked((prev) => (checked ? [...prev, studentId] : prev.filter((id) => id !== studentId)));
+  };
+
+  const submitChoice = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      await assistantService.chooseDelegationStudents({
+        assistantStudentId: user.studentId,
+        delegationId: delegation.id,
+        studentIds: picked,
+      });
+      setChoosing(false);
+      setPicked([]);
+      toast.success(t('student.assistant.chosen'));
+      await reload();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const submit = async (event) => {
@@ -147,8 +174,32 @@ export default function StudentAssistant() {
         ) : null}
       </Card>
 
+      {delegation.progress.toChoose > 0 ? (
+        <Card>
+          <p className="t-strong">{t('student.assistant.chooseTitle')}</p>
+          <p className="t-sm t-muted">
+            {t('student.assistant.chooseHint', { count: delegation.progress.total })} ·{' '}
+            {t('student.assistant.chooseRemaining', { count: delegation.progress.toChoose })}
+          </p>
+          <Button
+            onClick={() => {
+              setPicked([]);
+              setChoosing(true);
+            }}
+            data-testid="choose-open"
+          >
+            {t('student.assistant.chooseOpen')}
+          </Button>
+        </Card>
+      ) : null}
+
       <Section id="duty-items" title={t('teacher.assistant.delegateStudents')}>
         <div className="stack-2">
+          {delegation.items.length === 0 ? (
+            <Card variant="quiet">
+              <p className="t-muted">{t('student.assistant.chooseHint', { count: delegation.progress.total })}</p>
+            </Card>
+          ) : null}
           {delegation.items.map((item) => (
             <Card key={item.studentId} variant="quiet" data-testid="duty-item">
               <div className="row row-2 row-between row-wrap">
@@ -176,6 +227,50 @@ export default function StudentAssistant() {
           ))}
         </div>
       </Section>
+
+      <Modal
+        open={choosing}
+        onClose={() => setChoosing(false)}
+        title={t('student.assistant.chooseTitle')}
+        description={t('student.assistant.chooseHint', { count: delegation.progress.total })}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setChoosing(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="choose-form"
+              status={saving ? 'loading' : 'idle'}
+              data-testid="choose-submit"
+            >
+              {t('student.assistant.chooseSubmit')}
+            </Button>
+          </>
+        }
+      >
+        <form id="choose-form" className="stack-3" onSubmit={submitChoice}>
+          <Alert variant="info">{t('student.assistant.scopeNoticeText')}</Alert>
+          {(duty.candidates ?? []).length === 0 ? (
+            <p className="t-muted">{t('student.assistant.chooseEmpty')}</p>
+          ) : (
+            <div className="stack-2">
+              {(duty.candidates ?? []).map((candidate) => (
+                <Checkbox
+                  key={candidate.id}
+                  card
+                  label={candidate.name}
+                  checked={picked.includes(candidate.id)}
+                  onChange={(checked) => togglePick(candidate.id, checked)}
+                  disabled={
+                    !picked.includes(candidate.id) && picked.length >= delegation.progress.toChoose
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </form>
+      </Modal>
 
       <Modal
         open={Boolean(target)}

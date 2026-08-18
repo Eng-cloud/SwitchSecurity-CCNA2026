@@ -1697,3 +1697,58 @@
 .delegation-items > li + li {
   border-block-start: 1px solid var(--border-subtle);
 }
+
+/* ---------------------------------------------------------------
+   قائمة متميزي الشهر — ترتيب مرقّم بأسطر مفصولة
+   --------------------------------------------------------------- */
+.distinguished-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.distinguished-list > li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.distinguished-list > li + li {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.distinguished-list__rank {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+}
+
+/* الثلاثة الأوائل بوسم لوني خفيف — مع الرقم لا اللون وحده. */
+.distinguished-list > li:first-child .distinguished-list__rank {
+  background: color-mix(in srgb, var(--brand-600) 16%, transparent);
+  color: var(--brand-700, var(--brand-600));
+}
+
+.distinguished-list__body {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.distinguished-list__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-inline-start: auto;
+}

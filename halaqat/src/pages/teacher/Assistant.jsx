@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as assistantService from '../../services/assistantService.js';
+import * as distinguishedService from '../../services/distinguishedService.js';
 import { formatPercent, formatRelative } from '../../lib/format.js';
 import {
   PageHeader,
@@ -19,8 +20,12 @@ import {
   ProgressBar,
   DataState,
   PageSkeleton,
+  Skeleton,
+  Select,
+  Input,
 } from '../../components/ui/index.js';
-import { Checkbox } from '../../components/ui/Choice.jsx';
+import { Checkbox, RadioGroup } from '../../components/ui/Choice.jsx';
+import DistinguishedList from '../../components/distinguished/DistinguishedList.jsx';
 
 const DELEGATION_VARIANT = { active: 'info', completed: 'success', cancelled: 'warning' };
 
@@ -44,18 +49,35 @@ export default function TeacherAssistant() {
   const [saving, setSaving] = useState(false);
   const [finishing, setFinishing] = useState(null);
   const [showAllEligible, setShowAllEligible] = useState(false);
+  const [month, setMonth] = useState('current');
+  const [selectionMode, setSelectionMode] = useState('teacher');
+  const [quota, setQuota] = useState('3');
 
   const fetcher = useCallback(
-    () => assistantService.getAssistantPanel({ role, teacherId: user.id, circleId: user.circleId }),
-    [role, user.id, user.circleId],
+    () => assistantService.getAssistantPanel({ role, teacherId: user.userId, circleId: user.circleId }),
+    [role, user.userId, user.circleId],
   );
-  const { data, loading, error, refetch } = useAsyncData(fetcher, [role, user.id, user.circleId]);
+  const { data, loading, error, refetch } = useAsyncData(fetcher, [role, user.userId, user.circleId]);
+
+  const monthlyFetcher = useCallback(
+    () =>
+      distinguishedService.listMonthlyDistinguished({
+        role,
+        userId: user.userId,
+        circleId: user.circleId,
+        month,
+      }),
+    [role, user.userId, user.circleId, month],
+  );
+  const monthly = useAsyncData(monthlyFetcher, [role, user.userId, user.circleId, month]);
+  const monthlyRows = monthly.data?.circles?.[0]?.students ?? [];
 
   const handleAssistant = async (student, next) => {
     try {
       await assistantService.setAssistant({ role, studentId: student.id, isAssistant: next });
       toast.success(next ? t('teacher.assistant.assigned') : t('teacher.assistant.unassigned'));
       refetch();
+      monthly.refetch();
     } catch (err) {
       toast.error(t(err?.messageKey ?? 'state.errorHint'));
     }
@@ -64,6 +86,8 @@ export default function TeacherAssistant() {
   const openDelegate = (assistant) => {
     setPicked([]);
     setNote('');
+    setSelectionMode('teacher');
+    setQuota('3');
     setDelegateFor(assistant);
   };
 
@@ -77,15 +101,18 @@ export default function TeacherAssistant() {
     try {
       await assistantService.createDelegation({
         role,
-        teacherId: user.id,
+        teacherId: user.userId,
         circleId: user.circleId,
         assistantStudentId: delegateFor.id,
         studentIds: picked,
+        selectionMode,
+        quota: Number(quota),
         note,
       });
       toast.success(t('teacher.assistant.delegateCreated'));
       setDelegateFor(null);
       refetch();
+      monthly.refetch();
     } catch (err) {
       toast.error(t(err?.messageKey ?? 'state.errorHint'));
     } finally {
@@ -132,6 +159,67 @@ export default function TeacherAssistant() {
       >
         {data ? (
           <>
+            {/* متميزو الشهر: من نشاط الشهر نفسه، ومنه يختار المعلم مساعده. */}
+            <Section
+              id="monthly"
+              title={t('distinguished.title')}
+              hint={t('distinguished.teacherSubtitle')}
+              actions={
+                <Select
+                  value={month}
+                  onChange={(event) => setMonth(event.target.value)}
+                  aria-label={t('distinguished.monthLabel')}
+                  data-testid="month-select"
+                >
+                  <option value="current">{t('distinguished.monthCurrent')}</option>
+                  <option value="previous">{t('distinguished.monthPrevious')}</option>
+                </Select>
+              }
+            >
+              <DataState
+                loading={monthly.loading}
+                error={monthly.error}
+                onRetry={monthly.refetch}
+                loadingFallback={<Skeleton variant="card" count={3} height={64} />}
+              >
+                {monthly.data ? (
+                  <div className="stack-3">
+                    <p className="t-sm t-muted">
+                      {t('distinguished.criteriaText', {
+                        mastery: monthly.data.criteria.minMastery,
+                        attendance: monthly.data.criteria.minAttendance,
+                        sessions: monthly.data.criteria.minSessions,
+                      })}
+                    </p>
+
+                    {monthlyRows.length === 0 ? (
+                      <Card variant="quiet">
+                        <p className="t-muted">{t('distinguished.empty')}</p>
+                        <p className="t-sm t-muted">{t('distinguished.emptyHint')}</p>
+                      </Card>
+                    ) : (
+                      <DistinguishedList
+                        rows={monthlyRows}
+                        profileBase="/app/teacher/students"
+                        action={(row) =>
+                          row.isAssistant ? null : (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleAssistant(row, true)}
+                              data-testid="assign-from-monthly"
+                            >
+                              {t('teacher.assistant.assign')}
+                            </Button>
+                          )
+                        }
+                      />
+                    )}
+                  </div>
+                ) : null}
+              </DataState>
+            </Section>
+
             <Section
               id="assistants"
               title={t('teacher.assistant.assistantsTitle')}
@@ -248,9 +336,14 @@ export default function TeacherAssistant() {
                             {formatRelative(delegation.createdAt, t)}
                           </p>
                         </div>
-                        <Badge variant={DELEGATION_VARIANT[delegation.status]}>
-                          {t(`teacher.assistant.status.${delegation.status}`)}
-                        </Badge>
+                        <span className="row row-2">
+                          <Badge variant="neutral">
+                            {t(`teacher.assistant.modeBadge.${delegation.selectionMode ?? 'teacher'}`)}
+                          </Badge>
+                          <Badge variant={DELEGATION_VARIANT[delegation.status]}>
+                            {t(`teacher.assistant.status.${delegation.status}`)}
+                          </Badge>
+                        </span>
                       </div>
 
                       <ProgressBar
@@ -262,10 +355,28 @@ export default function TeacherAssistant() {
                         })}
                       />
 
+                      {delegation.progress.toChoose > 0 ? (
+                        <p className="t-sm t-muted">
+                          {t('teacher.assistant.awaitingChoice')} ·{' '}
+                          {t('teacher.assistant.chosenProgress', {
+                            chosen: delegation.progress.chosen,
+                            total: delegation.progress.total,
+                          })}
+                        </p>
+                      ) : null}
+
                       <ul className="delegation-items">
                         {delegation.items.map((item) => (
                           <li key={item.studentId}>
-                            <span>{item.studentName}</span>
+                            <span>
+                              {item.studentName}
+                              {item.chosenBy === 'assistant' ? (
+                                <span className="t-sm t-muted">
+                                  {' '}
+                                  · {t('teacher.assistant.chosenByAssistant')}
+                                </span>
+                              ) : null}
+                            </span>
                             <span className="row row-2">
                               {item.status === 'done' ? (
                                 <span className="tnum t-sm t-muted">
@@ -322,23 +433,59 @@ export default function TeacherAssistant() {
         <form id="delegate-form" className="stack-3" onSubmit={submitDelegation}>
           <Alert variant="info">{t('teacher.assistant.scopeNoticeText')}</Alert>
 
-          <Field
-            label={t('teacher.assistant.delegateStudents')}
-            hint={t('teacher.assistant.delegateStudentsHint', { max: data?.maxItems ?? 6 })}
-          >
-            <div className="stack-2">
-              {(delegateFor ? peersOf(delegateFor.id) : []).map((student) => (
-                <Checkbox
-                  key={student.id}
-                  card
-                  label={student.name}
-                  hint={`${t('teacher.assistant.mastery')}: ${formatPercent(student.masteryAvg)}`}
-                  checked={picked.includes(student.id)}
-                  onChange={(checked) => togglePick(student.id, checked)}
-                />
-              ))}
-            </div>
-          </Field>
+          <RadioGroup
+            legend={t('teacher.assistant.selectionLegend')}
+            name="selection-mode"
+            value={selectionMode}
+            onChange={setSelectionMode}
+            options={[
+              {
+                value: 'teacher',
+                label: t('teacher.assistant.selectionByTeacher'),
+                hint: t('teacher.assistant.selectionByTeacherHint'),
+              },
+              {
+                value: 'assistant',
+                label: t('teacher.assistant.selectionByAssistant'),
+                hint: t('teacher.assistant.selectionByAssistantHint'),
+              },
+            ]}
+          />
+
+          {selectionMode === 'assistant' ? (
+            <Field
+              label={t('teacher.assistant.quotaLabel')}
+              hint={t('teacher.assistant.quotaHint', { max: data?.maxItems ?? 6 })}
+            >
+              <Input
+                type="number"
+                min="1"
+                max={data?.maxItems ?? 6}
+                value={quota}
+                onChange={(event) => setQuota(event.target.value)}
+                data-testid="delegate-quota"
+                required
+              />
+            </Field>
+          ) : (
+            <Field
+              label={t('teacher.assistant.delegateStudents')}
+              hint={t('teacher.assistant.delegateStudentsHint', { max: data?.maxItems ?? 6 })}
+            >
+              <div className="stack-2">
+                {(delegateFor ? peersOf(delegateFor.id) : []).map((student) => (
+                  <Checkbox
+                    key={student.id}
+                    card
+                    label={student.name}
+                    hint={`${t('teacher.assistant.mastery')}: ${formatPercent(student.masteryAvg)}`}
+                    checked={picked.includes(student.id)}
+                    onChange={(checked) => togglePick(student.id, checked)}
+                  />
+                ))}
+              </div>
+            </Field>
+          )}
 
           <Field label={t('teacher.assistant.delegateNote')}>
             <Textarea
