@@ -7,6 +7,17 @@
  * تنبيه: هذه صلاحيات واجهة في نسخة تجريبية بلا خادم، وليست تفويضًا أمنيًا.
  */
 
+/**
+ * ترتيب عرض الأدوار في كل الواجهات — من الأقرب للطالب إلى الأعلى إشرافًا.
+ * مصدر واحد كي لا يختلف الترتيب بين صفحة وأخرى.
+ */
+export const ROLE_ORDER = ['student', 'parent', 'teacher', 'supervisor', 'admin'];
+
+/** ترتيب قائمة أدوار بحسب الترتيب المعتمد. */
+export function sortRoles(roles) {
+  return [...roles].sort((a, b) => ROLE_ORDER.indexOf(a) - ROLE_ORDER.indexOf(b));
+}
+
 /** كل الإجراءات المعرّفة في المنصة. */
 export const ACTIONS = {
   QURAN_READ: 'quran.read',

@@ -95,7 +95,7 @@ export default function TeacherReports() {
         >
           {data ? (
             <div className="stack-6">
-              <div className="grid grid-4">
+              <div className="grid grid-4 stagger">
                 <Stat
                   label={t('teacher.circleStudents')}
                   value={formatNumber(data.studentsCount)}

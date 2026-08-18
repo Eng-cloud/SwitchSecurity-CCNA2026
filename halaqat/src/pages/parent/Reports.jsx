@@ -81,7 +81,7 @@ export default function ParentReports() {
           loadingFallback={<PageSkeleton cards={2} />}
         >
           <div className="stack-6">
-            <div className="grid grid-3">
+            <div className="grid grid-3 stagger">
               <Stat label={t('parent.childrenTitle')} value={formatNumber(children.length)} icon="🧑‍🎓" />
               <Stat
                 label={t('reports.averageMastery')}

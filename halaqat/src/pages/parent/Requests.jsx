@@ -111,7 +111,7 @@ export default function ParentRequests() {
         ]}
       />
 
-      <div className="grid grid-2">
+      <div className="grid grid-2 stagger">
         {/* النموذج */}
         <Card className="stack-5">
           <h2 className="t-lg t-semibold">{t('parent.requests.formTitle')}</h2>
@@ -136,7 +136,7 @@ export default function ParentRequests() {
               </Select>
             </Field>
 
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Field label={t('parent.requests.city')} error={errors.city} required>
                 <Select
                   value={form.city}

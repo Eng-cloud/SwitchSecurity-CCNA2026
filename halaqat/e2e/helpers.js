@@ -37,7 +37,7 @@ export async function loginAs(page, role) {
 }
 
 /** رحلة الدخول الكاملة عبر البريد + رمز التحقق. */
-export async function loginWithOtp(page, email = 'student@demo.local') {
+export async function loginWithOtp(page, email = 'student@halaqat.sa') {
   await page.goto('/login');
   await page.getByLabel(/البريد الإلكتروني أو رقم الجوال/).fill(email);
   await page.getByTestId('login-submit').click();

@@ -94,7 +94,7 @@ export default function SupervisorCircleDetail() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('supervisor.tableStudents')}
                 value={formatNumber(data.studentsCount)}

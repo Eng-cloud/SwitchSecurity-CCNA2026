@@ -74,7 +74,7 @@ export default function SearchPage() {
 
           {data.students.length > 0 ? (
             <Section title={t('search.groups.students')} id="results-students">
-              <ul className="grid grid-3">
+              <ul className="grid grid-3 stagger">
                 {data.students.map((student) => (
                   <li key={student.id}>
                     <Card className="row row-3">
@@ -101,7 +101,7 @@ export default function SearchPage() {
 
           {data.circles.length > 0 ? (
             <Section title={t('search.groups.circles')} id="results-circles">
-              <ul className="grid grid-3">
+              <ul className="grid grid-3 stagger">
                 {data.circles.map((circle) => (
                   <li key={circle.id}>
                     <Card className="row row-3">
@@ -125,7 +125,7 @@ export default function SearchPage() {
 
           {data.surahs.length > 0 ? (
             <Section title={t('search.groups.surahs')} id="results-surahs">
-              <ul className="grid grid-3">
+              <ul className="grid grid-3 stagger">
                 {data.surahs.map((surah) => (
                   <li key={surah.number}>
                     <Card className="row row-3">

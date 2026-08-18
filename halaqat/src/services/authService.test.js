@@ -15,14 +15,14 @@ describe('خدمة المصادقة (Mock)', () => {
   });
 
   it('ينشئ تحديًا مع رمز تجريبي وبيانات مخفية', async () => {
-    const challenge = await authService.requestOtp('student@demo.local');
+    const challenge = await authService.requestOtp('student@halaqat.sa');
     expect(challenge.demoCode).toBe('123456');
     expect(challenge.masked).toContain('*');
     expect(challenge.expiresAt).toBeGreaterThan(Date.now());
   });
 
   it('يرفض الرمز الخاطئ ثم يقبل الصحيح', async () => {
-    await authService.requestOtp('student@demo.local');
+    await authService.requestOtp('student@halaqat.sa');
 
     await expect(authService.verifyOtp('000000')).rejects.toMatchObject({
       messageKey: 'auth.errors.otpInvalid',
@@ -35,7 +35,7 @@ describe('خدمة المصادقة (Mock)', () => {
   });
 
   it('يقفل بعد تجاوز عدد المحاولات', async () => {
-    await authService.requestOtp('student@demo.local');
+    await authService.requestOtp('student@halaqat.sa');
     for (let i = 0; i < 5; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       await expect(authService.verifyOtp('111111')).rejects.toBeTruthy();
@@ -87,7 +87,7 @@ describe('خدمة المصادقة (Mock)', () => {
   it('التسجيل ينشئ تحديًا ثم مستخدمًا جديدًا', async () => {
     await authService.register({
       name: 'مستخدم تجريبي',
-      identifier: 'new.user@demo.local',
+      identifier: 'new.user@halaqat.sa',
       city: 'الرياض',
       role: 'teacher',
     });

@@ -54,7 +54,7 @@ export default function Review() {
         }
       />
 
-      <div className="grid grid-3">
+      <div className="grid grid-3 stagger">
         <Stat label={t('reports.sessionsCount')} value={formatNumber(sessions.length)} icon="🔁" />
         <Stat label={t('reports.averageMastery')} value={formatPercent(average)} icon="📈" />
         <Stat

@@ -83,7 +83,7 @@ export default function StudentReports() {
         >
           {data ? (
             <div className="stack-6">
-              <div className="grid grid-4">
+              <div className="grid grid-4 stagger">
                 <Stat
                   label={t('reports.pagesMemorized')}
                   value={formatNumber(data.pagesMemorized)}

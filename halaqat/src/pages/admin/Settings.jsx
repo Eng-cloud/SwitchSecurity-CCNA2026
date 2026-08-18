@@ -17,7 +17,7 @@ import {
   Skeleton,
 } from '../../components/ui/index.js';
 
-/** إعدادات المنصة (تجريبية). */
+/** إعدادات المنصة. */
 export default function AdminSettings() {
   const t = useT();
   const toast = useToast();
@@ -108,7 +108,6 @@ export default function AdminSettings() {
               </Button>
             </form>
 
-            <Alert variant="mock">{t('app.mockNotice')}</Alert>
           </Card>
         ) : null}
       </DataState>

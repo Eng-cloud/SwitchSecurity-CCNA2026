@@ -60,9 +60,6 @@ export default function Demo() {
                 <p className="t-semibold">{t(`roles.${account.role}`)}</p>
                 <p className="t-xs t-muted">{ROLE_HINTS[account.role]}</p>
               </div>
-              <Badge variant="neutral" icon="◇">
-                {t('demo.demoOnly')}
-              </Badge>
             </div>
 
             <p className="t-xs t-muted" style={{ direction: 'ltr', textAlign: 'start' }}>
@@ -81,8 +78,8 @@ export default function Demo() {
           </div>
         ))}
 
-        <Alert variant="mock" title={t('app.mockNotice')}>
-          {t('demo.notice')} {t('demo.otpNotice', { code: DEMO_OTP })}
+        <Alert variant="info">
+          {t('demo.otpNotice', { code: DEMO_OTP })}
         </Alert>
 
         <p className="t-center t-sm">

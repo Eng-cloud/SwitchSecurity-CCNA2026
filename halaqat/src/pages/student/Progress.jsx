@@ -44,7 +44,7 @@ export default function Progress() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('student.progress.memorizedPages')}
                 value={formatNumber(data.memorizedPages)}
@@ -95,7 +95,7 @@ export default function Progress() {
                     id: 'juz-list',
                     title: t('common.details'),
                     content: (
-                      <ul className="grid grid-2">
+                      <ul className="grid grid-2 stagger">
                         {data.juzProgress.map((item) => (
                           <li key={item.juz}>
                             <ProgressBar

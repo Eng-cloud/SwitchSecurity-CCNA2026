@@ -91,14 +91,14 @@ function daysAgo(days) {
 }
 
 /* ---------------------------------------------------------------
-   الحسابات التجريبية الثابتة
+   حسابات الدخول الثابتة
    --------------------------------------------------------------- */
 export const DEMO_ACCOUNTS = [
-  { role: 'student', email: 'student@demo.local' },
-  { role: 'teacher', email: 'teacher@demo.local' },
-  { role: 'supervisor', email: 'supervisor@demo.local' },
-  { role: 'admin', email: 'admin@demo.local' },
-  { role: 'parent', email: 'parent@demo.local' },
+  { role: 'student', email: 'student@halaqat.sa' },
+  { role: 'parent', email: 'parent@halaqat.sa' },
+  { role: 'teacher', email: 'teacher@halaqat.sa' },
+  { role: 'supervisor', email: 'supervisor@halaqat.sa' },
+  { role: 'admin', email: 'admin@halaqat.sa' },
 ];
 
 export const DEMO_OTP = '123456';
@@ -125,7 +125,7 @@ function generate() {
     id: 'user-admin',
     name: 'سارة القحطاني',
     role: 'admin',
-    email: 'admin@demo.local',
+    email: 'admin@halaqat.sa',
     phone: '0500000004',
     city: 'الرياض',
     joinedAt: daysAgo(720),
@@ -139,7 +139,7 @@ function generate() {
     id: `user-supervisor-${index + 1}`,
     name: index === 0 ? 'عبدالعزيز الأنصاري' : fullName(rng),
     role: 'supervisor',
-    email: index === 0 ? 'supervisor@demo.local' : `supervisor${index + 1}@demo.local`,
+    email: index === 0 ? 'supervisor@halaqat.sa' : `supervisor${index + 1}@halaqat.sa`,
     phone: `05000000${20 + index}`,
     city: rng.pick(CITIES),
     district: rng.pick(DISTRICTS),
@@ -154,7 +154,7 @@ function generate() {
     id: `user-teacher-${index + 1}`,
     name: index === 0 ? 'إبراهيم الغامدي' : fullName(rng),
     role: 'teacher',
-    email: index === 0 ? 'teacher@demo.local' : `teacher${index + 1}@demo.local`,
+    email: index === 0 ? 'teacher@halaqat.sa' : `teacher${index + 1}@halaqat.sa`,
     phone: `05100000${String(index + 10)}`,
     city: rng.pick(CITIES),
     district: rng.pick(DISTRICTS),
@@ -180,12 +180,12 @@ function generate() {
     });
   });
 
-  /* --- ولي أمر تجريبي --- */
+  /* --- ولي أمر --- */
   const parent = {
     id: 'user-parent-1',
     name: 'أحمد الحربي',
     role: 'parent',
-    email: 'parent@demo.local',
+    email: 'parent@halaqat.sa',
     phone: '0500000005',
     city: 'الرياض',
     joinedAt: daysAgo(300),
@@ -203,7 +203,7 @@ function generate() {
       const id = `student-${circleIndex + 1}-${String(i + 1).padStart(2, '0')}`;
       const memorizedPages = rng.int(12, 380);
       const masteryRaw = rng.score(58, 98);
-      // الطالب التجريبي متميز دائمًا ليظهر مسار «مساعد المعلم» في العرض التجريبي.
+      // حساب الطالب الأول متميز دائمًا ليظهر مسار «مساعد المعلم» كاملًا.
       const mastery = isDemoStudent ? Math.max(94, masteryRaw) : masteryRaw;
       const attendanceRate = rng.score(62, 100);
       const targetDaily = rng.pick([2, 3, 3, 4]);
@@ -214,7 +214,7 @@ function generate() {
         userId: `user-${id}`,
         name: isDemoStudent ? 'عبدالله العتيبي' : fullName(rng),
         role: 'student',
-        email: isDemoStudent ? 'student@demo.local' : `${id}@demo.local`,
+        email: isDemoStudent ? 'student@halaqat.sa' : `${id}@halaqat.sa`,
         phone: `0530${String(circleIndex)}${String(i).padStart(4, '0')}`,
         city: circle.location.includes('نموذجي') ? 'الرياض' : rng.pick(CITIES),
         circleId: circle.id,
@@ -276,7 +276,7 @@ function generate() {
     }
   });
 
-  // ابنان لولي الأمر التجريبي.
+  // ابنان لولي الأمر.
   parent.childrenIds = [students[0].id, students[1].id];
   students[0].guardianName = parent.name;
   students[1].guardianName = parent.name;

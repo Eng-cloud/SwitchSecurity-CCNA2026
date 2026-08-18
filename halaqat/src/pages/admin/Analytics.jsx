@@ -37,7 +37,7 @@ export default function AdminAnalytics() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Stat
                 label={t('admin.activeUsers')}
                 value={formatNumber(data.activeUsers)}
@@ -62,7 +62,7 @@ export default function AdminAnalytics() {
               />
             </Card>
 
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Card>
                 <DonutChart title={t('admin.byRole')} data={data.byRole} />
               </Card>

@@ -76,7 +76,7 @@ export default function SupervisorReports() {
         >
           {data ? (
             <div className="stack-6">
-              <div className="grid grid-4">
+              <div className="grid grid-4 stagger">
                 <Stat
                   label={t('supervisor.circlesCount')}
                   value={formatNumber(data.totals.circles)}

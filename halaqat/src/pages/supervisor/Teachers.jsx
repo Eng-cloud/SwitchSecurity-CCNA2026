@@ -64,7 +64,7 @@ export default function SupervisorTeachers() {
         emptyTitle={t('state.emptySearchTitle')}
         emptyText={t('state.emptySearchHint')}
         loadingFallback={
-          <div className="grid grid-3">
+          <div className="grid grid-3 stagger">
             {Array.from({ length: 6 }, (_, index) => (
               <Skeleton key={index} variant="card" height={170} />
             ))}
@@ -73,7 +73,7 @@ export default function SupervisorTeachers() {
       >
         {data ? (
           <>
-            <ul className="grid grid-3">
+            <ul className="grid grid-3 stagger">
               {data.items.map((circle) => (
                 <li key={circle.id}>
                   <Card className="stack-3">

@@ -3,6 +3,7 @@
 import { request, ApiError } from '../mock/api.js';
 import { getDb, mutateDb, getStudent, getSurahName } from '../mock/db.js';
 import { SURAHS_WITH_TEXT } from '../mock/quran.js';
+import { toISODate } from '../lib/format.js';
 
 function summarizeSessions(sessions) {
   if (!sessions.length) return { count: 0, avgMastery: 0, lastAt: null };
@@ -62,12 +63,27 @@ export async function getDashboard(studentId) {
   });
 }
 
+/**
+ * إنجاز اليوم محفوظ باسم كل بند على حدة ومقيَّد بتاريخه.
+ *
+ * كان الإنجاز عدّادًا واحدًا، فتعليم بندٍ يُعلّم ما قبله تلقائيًا ولا سبيل
+ * للتراجع عن ضغطة بالخطأ. الآن لكل بند حالته، والتبديل يعمل في الاتجاهين.
+ */
+function planProgressOf(student) {
+  const today = toISODate(new Date());
+  const stored = student.planProgress;
+  // يوم جديد ⇒ صفحة جديدة: لا يُحسب إنجاز الأمس على اليوم.
+  if (!stored || stored.date !== today) return { date: today, doneIds: [] };
+  return { date: today, doneIds: [...(stored.doneIds ?? [])] };
+}
+
 function buildDailyPlan(student) {
   const base = SURAHS_WITH_TEXT;
   const pick = (offset) => base[(student.memorizedPages + offset) % base.length];
   const newSurah = pick(0);
   const recentSurah = pick(3);
   const farSurah = pick(7);
+  const { doneIds } = planProgressOf(student);
 
   return [
     {
@@ -77,7 +93,6 @@ function buildDailyPlan(student) {
       surahName: newSurah.name,
       fromAyah: 1,
       toAyah: Math.min(newSurah.ayahCount, 5),
-      done: student.todayDone >= 1,
     },
     {
       id: 'plan-recent',
@@ -86,7 +101,6 @@ function buildDailyPlan(student) {
       surahName: recentSurah.name,
       fromAyah: 1,
       toAyah: recentSurah.ayahCount,
-      done: student.todayDone >= 2,
     },
     {
       id: 'plan-far',
@@ -95,18 +109,37 @@ function buildDailyPlan(student) {
       surahName: farSurah.name,
       fromAyah: 1,
       toAyah: farSurah.ayahCount,
-      done: student.todayDone >= 3,
     },
-  ];
+  ].map((item) => ({ ...item, done: doneIds.includes(item.id) }));
 }
 
-export async function completePlanItem(studentId, planId) {
+/** أسماء بنود الخطة — تُستعمل للتحقق من صحة المُعرَّف الوارد. */
+const PLAN_IDS = ['plan-new', 'plan-recent', 'plan-far'];
+
+/**
+ * تبديل حالة بند في خطة اليوم.
+ * @param {boolean|undefined} done اتركه فارغًا للتبديل، أو مرّره صراحةً.
+ */
+export async function completePlanItem(studentId, planId, { done } = {}) {
   return request(() =>
     mutateDb((db) => {
       const student = db.students.find((item) => item.id === studentId);
       if (!student) throw new ApiError('notFound', 'state.notFoundHint');
-      student.todayDone = Math.min(student.targetDaily, student.todayDone + 1);
-      return { todayDone: student.todayDone, planId };
+      if (!PLAN_IDS.includes(planId)) throw new ApiError('notFound', 'state.notFoundHint');
+
+      const progress = planProgressOf(student);
+      const wasDone = progress.doneIds.includes(planId);
+      const nextDone = done === undefined ? !wasDone : Boolean(done);
+
+      progress.doneIds = nextDone
+        ? [...new Set([...progress.doneIds, planId])]
+        : progress.doneIds.filter((id) => id !== planId);
+
+      student.planProgress = progress;
+      // عدّاد الصفحات يتبع عدد البنود المنجزة فلا يفترقان.
+      student.todayDone = Math.min(student.targetDaily, progress.doneIds.length);
+
+      return { planId, done: nextDone, todayDone: student.todayDone };
     }),
   );
 }

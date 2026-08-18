@@ -65,7 +65,7 @@ export default function TestResult() {
                 </div>
               </div>
 
-              <div className="grid grid-3">
+              <div className="grid grid-3 stagger">
                 <Stat label={t('tests.correct')} value={formatNumber(attempt.correctCount)} icon="✓" />
                 <Stat
                   label={t('tests.wrong')}

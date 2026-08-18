@@ -79,7 +79,7 @@ export default function TeacherStudents() {
           ) : null
         }
         loadingFallback={
-          <div className="grid grid-3">
+          <div className="grid grid-3 stagger">
             {Array.from({ length: 6 }, (_, index) => (
               <Skeleton key={index} variant="card" height={150} />
             ))}
@@ -88,7 +88,7 @@ export default function TeacherStudents() {
       >
         {data ? (
           <>
-            <ul className="grid grid-3">
+            <ul className="grid grid-3 stagger">
               {data.items.map((student) => (
                 <li key={student.id}>
                   <Card className="stack-3">

@@ -16,7 +16,7 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   // حتى تعمل الرحلة نفسها على الجوال أيضًا)
   await page.goto('/login');
   await expect(page).toHaveURL(/\/login/);
-  await loginWithOtp(page, 'student@demo.local');
+  await loginWithOtp(page, 'student@halaqat.sa');
 
   // Dashboard
   await expect(page).toHaveURL(/\/app\/student/);
@@ -42,7 +42,8 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   await expect(page.getByTestId('recitation-result')).toBeVisible({ timeout: 15000 });
   await expect(page.getByText('تم تحليل التسميع')).toBeVisible();
   // لا يُقدَّم التحليل على أنه ذكاء اصطناعي حقيقي
-  await expect(page.getByText(/تحليل تجريبي \(Mock\)/)).toBeVisible();
+  // القراءة الآلية مُعلَّمة صراحةً بأنها ليست تقييمًا نهائيًا ولا ذكاءً اصطناعيًا.
+  await expect(page.getByText(/ليست تقييمًا بالذكاء الاصطناعي/)).toBeVisible();
   await page.getByTestId('save-session').click();
   await expect(page.getByText('تم حفظ الجلسة').first()).toBeVisible();
 

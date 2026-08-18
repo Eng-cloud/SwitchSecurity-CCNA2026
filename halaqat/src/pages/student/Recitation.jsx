@@ -21,7 +21,7 @@ import {
 } from '../../components/ui/index.js';
 
 /**
- * التسميع مع تحليل تجريبي (Mock AI).
+ * التسميع مع قراءة أولية آلية (ليست ذكاءً اصطناعيًا).
  * الرحلة: اختيار المقطع → تسجيل → إيقاف → تحليل → نتيجة → حفظ.
  */
 export default function Recitation() {
@@ -117,7 +117,7 @@ export default function Recitation() {
         <Card className="stack-5">
           <h2 className="t-lg t-semibold">{t('recitation.selectRange')}</h2>
 
-          <div className="grid grid-3">
+          <div className="grid grid-3 stagger">
             <Field label={t('recitation.surah')}>
               <Select
                 value={range.surahNumber}
@@ -282,7 +282,7 @@ export default function Recitation() {
               </div>
             </div>
 
-            <div className="grid grid-3">
+            <div className="grid grid-3 stagger">
               <Stat
                 label={t('recitation.result.correctAyat')}
                 value={formatNumber(result.correctAyat)}
@@ -322,7 +322,7 @@ export default function Recitation() {
               </Button>
             </div>
 
-            <Alert variant="mock" title={t('app.mockNotice')}>
+            <Alert variant="info" title={t('recitation.noticeTitle')}>
               {t('recitation.result.mockNotice')}
             </Alert>
           </Card>

@@ -88,7 +88,7 @@ export default function TeacherSessions() {
       >
         <Card className="stack-5">
           <form className="stack-5" onSubmit={handleSubmit}>
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Field label={t('teacher.session.studentLabel')} required>
                 <Select
                   value={form.studentId || students[0]?.id || ''}
@@ -116,7 +116,7 @@ export default function TeacherSessions() {
               </Field>
             </div>
 
-            <div className="grid grid-3">
+            <div className="grid grid-3 stagger">
               <Field label={t('recitation.surah')}>
                 <Select
                   value={form.surahNumber}

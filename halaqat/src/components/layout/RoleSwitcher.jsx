@@ -5,12 +5,10 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import { ROLE_HOME } from '../../config/navigation.js';
 import Button from '../ui/Button.jsx';
-
-const ROLES = ['student', 'teacher', 'supervisor', 'admin', 'parent'];
+import { ROLE_ORDER as ROLES } from '../../config/permissions.js';
 
 /**
- * تبديل الدور داخل وضع التجربة.
- * ملاحظة معروضة للمستخدم: هذه واجهة تجريبية وليست صلاحيات حقيقية.
+ * تبديل الدور — لاستعراض المنصة من منظور كل دور.
  */
 export default function RoleSwitcher({ onDone, compact = true }) {
   const t = useT();

@@ -230,7 +230,7 @@ export default function TeacherAssistant() {
                   <p className="t-muted">{t('teacher.assistant.assistantsEmpty')}</p>
                 </Card>
               ) : (
-                <div className="grid grid-2">
+                <div className="grid grid-2 stagger">
                   {data.assistants.map((assistant) => (
                     <Card key={assistant.id} data-testid="assistant-card">
                       <div className="row row-2 row-between">
@@ -281,7 +281,7 @@ export default function TeacherAssistant() {
                   <p className="t-muted">{t('teacher.assistant.eligibleEmpty')}</p>
                 </Card>
               ) : (
-                <div className="grid grid-3">
+                <div className="grid grid-3 stagger">
                   {(showAllEligible
                     ? data.eligible
                     : data.eligible.slice(0, ELIGIBLE_PREVIEW)

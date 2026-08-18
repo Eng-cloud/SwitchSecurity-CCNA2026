@@ -64,7 +64,7 @@ test('نموذج الدخول: تحقق من الحقل الفارغ والصي�
   // صيغة صحيحة لكن غير مسجلة
   await page.getByRole('textbox').fill('nobody@nowhere.local');
   await page.getByTestId('login-submit').click();
-  await expect(page.getByText('لا يوجد حساب بهذه الوسيلة. جرّب الحسابات التجريبية.').first()).toBeVisible();
+  await expect(page.getByText('لا يوجد حساب بهذه الوسيلة.').first()).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });
@@ -72,7 +72,7 @@ test('نموذج الدخول: تحقق من الحقل الفارغ والصي�
 test('رمز التحقق: رمز خاطئ يعرض خطأ ثم الرمز الصحيح ينجح', async ({ page }) => {
   const errors = watchConsole(page);
   await page.goto('/login');
-  await page.getByRole('textbox').fill('student@demo.local');
+  await page.getByRole('textbox').fill('student@halaqat.sa');
   await page.getByTestId('login-submit').click();
   await expect(page).toHaveURL(/verify/);
 
@@ -100,8 +100,8 @@ test('التسجيل: خطوتان مع تحقق ثم رمز التحقق', asyn
   await page.getByRole('button', { name: 'التالي' }).click();
   await expect(page.getByText('أدخل الاسم الكامل.')).toBeVisible();
 
-  await page.getByRole('textbox').first().fill('مستخدم تجريبي جديد');
-  await page.getByRole('textbox').nth(1).fill('new.teacher@demo.local');
+  await page.getByRole('textbox').first().fill('مستخدم جديد للاختبار');
+  await page.getByRole('textbox').nth(1).fill('new.teacher@halaqat.sa');
   await page.getByRole('button', { name: 'التالي' }).click();
 
   await expect(page.getByText('اختيار الدور')).toBeVisible();

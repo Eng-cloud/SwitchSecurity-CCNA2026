@@ -99,14 +99,14 @@ export default function QuranLibrary() {
               emptyTitle={t('state.emptySearchTitle')}
               emptyText={t('state.emptySearchHint')}
               loadingFallback={
-                <div className="grid grid-3">
+                <div className="grid grid-3 stagger">
                   {Array.from({ length: 9 }, (_, index) => (
                     <Skeleton key={index} variant="card" height={72} />
                   ))}
                 </div>
               }
             >
-              <ul className="grid grid-3">
+              <ul className="grid grid-3 stagger">
                 {(surahs ?? []).map((surah) => (
                   <li key={surah.number}>
                     <Link
@@ -138,7 +138,7 @@ export default function QuranLibrary() {
         ) : null}
 
         {values.tab === 'juzs' ? (
-          <ul className="grid grid-3">
+          <ul className="grid grid-3 stagger">
             {(juzList ?? []).map((juz) => (
               <li key={juz.number}>
                 <Card className="row row-3">

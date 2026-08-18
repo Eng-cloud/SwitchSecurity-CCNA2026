@@ -122,7 +122,7 @@ export default function Goals() {
                 variant={goal.pace === 'behind' ? 'warning' : 'success'}
               />
 
-              <div className="grid grid-4">
+              <div className="grid grid-4 stagger">
                 <Stat
                   label={t('student.goals.targetJuz')}
                   value={
@@ -157,7 +157,7 @@ export default function Goals() {
               </div>
 
               <form className="stack-4" onSubmit={saveJuzGoal}>
-                <div className="grid grid-2">
+                <div className="grid grid-2 stagger">
                   <Field label={t('student.goals.targetJuz')}>
                     <Select
                       value={juzForm.targetJuz}
@@ -219,7 +219,7 @@ export default function Goals() {
             {/* الهدف اليومي */}
             <Section title={t('student.goals.dailyTitle')} id="daily-goal">
               <Card className="stack-4">
-                <div className="grid grid-3">
+                <div className="grid grid-3 stagger">
                   <Stat
                     label={t('student.todayGoal')}
                     value={`${formatNumber(data.todayDone)} / ${formatNumber(data.targetDaily)}`}
@@ -238,7 +238,7 @@ export default function Goals() {
                 </div>
 
                 <form className="stack-4" onSubmit={saveDaily}>
-                  <div className="grid grid-2">
+                  <div className="grid grid-2 stagger">
                     <Field label={t('student.goals.pagesPerDay')}>
                       <Select
                         value={dailyForm.targetDaily}

@@ -59,7 +59,7 @@ test.describe('الصفحات العامة', () => {
     const errors = watchConsole(page);
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'تجربة المنصة' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'استعراض الأدوار' }).first()).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     assertNoConsoleErrors(errors);
   });

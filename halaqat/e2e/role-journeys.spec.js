@@ -133,7 +133,7 @@ test('رحلة الإدارة: المستخدمون → الحلقات → ال�
 
   // Settings
   await page.goto('/app/admin/settings');
-  await page.getByLabel('اسم المنصة').fill('منصة الحلقات — تجريبي');
+  await page.getByLabel('اسم المنصة').fill('منصة الحلقات — اختبار');
   await page.getByRole('button', { name: 'حفظ' }).click();
   await expect(page.getByText('تم حفظ الإعدادات').first()).toBeVisible();
 
@@ -167,7 +167,7 @@ test('تبديل الدور داخل وضع التجربة يغيّر التنق
   await expect(page.getByRole('link', { name: 'التسميع' }).first()).toBeVisible();
 
   await page.getByRole('button', { name: /الحساب/ }).click();
-  await page.getByRole('button', { name: 'تجربة المعلم' }).click();
+  await page.getByRole('button', { name: 'التبديل إلى المعلم' }).click();
 
   await expect(page).toHaveURL(/\/app\/teacher/);
   await expect(page.getByRole('heading', { name: 'حلقتي اليوم' })).toBeVisible();

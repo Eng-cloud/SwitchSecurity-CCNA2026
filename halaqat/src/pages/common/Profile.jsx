@@ -82,7 +82,6 @@ export default function Profile() {
           <div className="row row-2 row-wrap">
             <Badge variant="brand">{t(`roles.${user?.role}`)}</Badge>
             <Badge variant="warning" icon="◇">
-              {t('demo.demoOnly')}
             </Badge>
           </div>
           <p className="t-sm t-muted">

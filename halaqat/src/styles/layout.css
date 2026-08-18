@@ -567,32 +567,6 @@ kbd {
   text-align: center;
 }
 
-/* ---------------- Page transition ---------------- */
-.route-fade {
-  animation: route-in var(--dur-normal) var(--ease-out);
-}
-
-@keyframes route-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-:root[data-motion='reduced'] .route-fade {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :root:not([data-motion='normal']) .route-fade {
-    animation: none;
-  }
-}
-
 /* ---------------- Menus (dropdown) ---------------- */
 /*
  * كل القوائم المنسدلة تخرج من أزرار الشريط العلوي، وهذه الأزرار مجتمعة عند

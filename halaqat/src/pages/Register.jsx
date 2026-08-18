@@ -8,7 +8,9 @@ import AuthLayout from '../components/layout/AuthLayout.jsx';
 import { Button, Field, Input, Select, Checkbox, RadioGroup, ProgressBar } from '../components/ui/index.js';
 
 const CITIES = ['الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'أبها', 'بريدة'];
-const ROLES = ['student', 'teacher', 'parent'];
+import { sortRoles } from '../config/permissions.js';
+
+const ROLES = sortRoles(['student', 'teacher', 'parent']);
 
 /** إنشاء حساب على خطوتين قصيرتين ثم رمز التحقق. */
 export default function Register() {

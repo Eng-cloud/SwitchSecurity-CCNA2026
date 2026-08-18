@@ -48,7 +48,7 @@ export default function ParentDashboard() {
         emptyText={t('parent.noChildren')}
         loadingFallback={<PageSkeleton cards={2} />}
       >
-        <div className="grid grid-2">
+        <div className="grid grid-2 stagger">
           {children.map((child) => (
             <Card key={child.id} className="stack-4">
               <div className="row row-3">
@@ -74,7 +74,7 @@ export default function ParentDashboard() {
                 </Badge>
               </div>
 
-              <div className="grid grid-2">
+              <div className="grid grid-2 stagger">
                 <Stat
                   label={t('student.progress.memorizedPages')}
                   value={formatNumber(child.memorizedPages)}

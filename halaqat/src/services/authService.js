@@ -4,6 +4,7 @@
  */
 
 import { request, ApiError } from '../mock/api.js';
+import { ROLE_ORDER } from '../config/permissions.js';
 import {
   DEMO_ACCOUNTS,
   DEMO_OTP,
@@ -21,7 +22,8 @@ const OTP_TTL_SECONDS = 120;
 const RESEND_COOLDOWN_SECONDS = 30;
 const MAX_ATTEMPTS = 5;
 
-export const ROLES = ['student', 'teacher', 'supervisor', 'admin', 'parent'];
+/** الأدوار بترتيب العرض المعتمد — مصدرها ملف الصلاحيات. */
+export const ROLES = ROLE_ORDER;
 
 export const DEMO_LOGIN_ACCOUNTS = DEMO_ACCOUNTS;
 export const DEMO_CODE = DEMO_OTP;

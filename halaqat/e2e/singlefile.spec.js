@@ -15,7 +15,7 @@ test('نسخة الملف الواحد تعمل على الجوال', async ({ p
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
 
   // دخول تجريبي عبر التوجيه بالـhash
-  await page.getByRole('link', { name: 'تجربة المنصة' }).first().click();
+  await page.getByRole('link', { name: 'استعراض الأدوار' }).first().click();
   await expect(page).toHaveURL(/#\/demo/);
 
   await page.getByTestId('demo-login-student').click();

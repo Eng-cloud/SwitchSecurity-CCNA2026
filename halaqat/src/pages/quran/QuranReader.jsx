@@ -222,8 +222,8 @@ export default function QuranReader() {
 
             {!data.textAvailable ? (
               <Alert variant="warning" title={t('common.notAvailable')}>
-                نص هذه السورة غير متضمَّن في النسخة التجريبية. الواجهة وكل الإجراءات تعمل، والنص
-                يُربط بمصدر مصحف موثّق في النسخة الحقيقية.
+                نص هذه السورة غير متاح في هذا الإصدار. لا يُعرض نص قرآني إلا من مصدر مصحف
+                موثّق، وبقية أدوات القراءة والعلامات تعمل كما هي.
               </Alert>
             ) : (
               <div className="quran-text">

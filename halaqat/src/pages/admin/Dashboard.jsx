@@ -47,7 +47,7 @@ export default function AdminDashboard() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('admin.totalStudents')}
                 value={formatNumber(data.totals.students)}
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
               />
             </div>
 
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Card>
                 <LineChart
                   title={t('admin.activityChart')}
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
               </Card>
             </div>
 
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Card>
                 <DonutChart title={t('admin.byRole')} data={data.roleDistribution} />
               </Card>

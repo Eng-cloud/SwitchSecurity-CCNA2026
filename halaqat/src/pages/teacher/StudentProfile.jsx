@@ -131,7 +131,7 @@ export default function StudentProfile() {
                   </span>
                 </div>
               </div>
-              <div className="grid grid-2" style={{ minWidth: '260px' }}>
+              <div className="grid grid-2 stagger" style={{ minWidth: '260px' }}>
                 <Stat
                   label={t('reports.averageMastery')}
                   value={formatPercent(data.masteryAvg)}
@@ -173,7 +173,7 @@ export default function StudentProfile() {
 
               {values.tab === 'progress' ? (
                 <div className="stack-5">
-                  <div className="grid grid-4">
+                  <div className="grid grid-4 stagger">
                     <Stat
                       label={t('student.progress.memorizedPages')}
                       value={formatNumber(data.memorizedPages)}

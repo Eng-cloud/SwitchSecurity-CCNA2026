@@ -44,7 +44,7 @@ export default function Tests() {
         emptyTitle={t('tests.noTests')}
         loadingFallback={<Skeleton variant="card" count={2} height={160} />}
       >
-        <div className="grid grid-2">
+        <div className="grid grid-2 stagger">
           {tests.map((test) => (
             <Card key={test.id} className="stack-4">
               <div className="row row-between">

@@ -196,7 +196,7 @@ export default function SupervisorCircles() {
               data-testid="circle-name"
             />
           </Field>
-          <div className="grid grid-2">
+          <div className="grid grid-2 stagger">
             <Field label={t('admin.form.city')}>
               <Select
                 value={form.city}

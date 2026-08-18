@@ -14,7 +14,9 @@ const FEATURES = [
   { key: 4, icon: '📊' },
 ];
 
-const ROLES = ['student', 'teacher', 'supervisor', 'admin'];
+import { ROLE_ORDER } from '../config/permissions.js';
+
+const ROLES = ROLE_ORDER;
 
 /** الصفحة التعريفية — مدخل الرحلة. */
 export default function Landing() {
@@ -58,7 +60,6 @@ export default function Landing() {
         <section className="landing__section landing__hero">
           <div>
             <Badge variant="brand" icon="◇">
-              {t('app.demoBadge')}
             </Badge>
             <h1 className="landing__hero-title mt-4">{t('landing.heroTitle')}</h1>
             <p className="landing__hero-text">{t('landing.heroSubtitle')}</p>
@@ -164,7 +165,6 @@ export default function Landing() {
       </main>
 
       <footer className="landing__footer">
-        <p>{t('app.mockNotice')}</p>
       </footer>
     </>
   );

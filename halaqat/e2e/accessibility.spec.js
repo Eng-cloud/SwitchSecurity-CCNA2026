@@ -182,3 +182,60 @@ test('الصفحة تحمل معالم دلالية وعنوانًا واحدً�
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
 });
+
+
+/**
+ * طبقة الحركة تُلغى فعلًا عند طلب تقليل الحركة — من إعداد المنصة ومن النظام.
+ * والعنصر يبقى ظاهرًا في حالته النهائية، فلا يختفي محتوى بإلغاء الحركة.
+ */
+test.describe('تقليل الحركة', () => {
+  test('إعداد المنصة يوقف كل الحركات', async ({ page }) => {
+    const errors = watchConsole(page);
+    await loginAs(page, 'student');
+
+    // الحركة تعمل في الوضع الطبيعي.
+    await page.evaluate(() =>
+      localStorage.setItem('halaqat.a11y', JSON.stringify({ motion: 'normal' })),
+    );
+    await page.reload();
+    const normal = await page.evaluate(
+      () => getComputedStyle(document.querySelector('.route-fade')).animationName,
+    );
+    expect(normal).not.toBe('none');
+
+    // ومع تقليل الحركة تتوقف تمامًا.
+    await page.evaluate(() =>
+      localStorage.setItem('halaqat.a11y', JSON.stringify({ motion: 'reduced' })),
+    );
+    await page.reload();
+
+    const reduced = await page.evaluate(() => {
+      const page$ = document.querySelector('.route-fade');
+      const item = document.querySelector('.stagger > *');
+      return {
+        route: getComputedStyle(page$).animationName,
+        routeOpacity: getComputedStyle(page$).opacity,
+        item: item ? getComputedStyle(item).animationName : 'none',
+        itemOpacity: item ? getComputedStyle(item).opacity : '1',
+      };
+    });
+
+    expect(reduced.route).toBe('none');
+    expect(reduced.item).toBe('none');
+    // لا يبقى شيء شفافًا بعد إيقاف الحركة.
+    expect(Number(reduced.routeOpacity)).toBe(1);
+    expect(Number(reduced.itemOpacity)).toBe(1);
+
+    assertNoConsoleErrors(errors);
+  });
+
+  test('تفضيل النظام لتقليل الحركة يُحترم بلا إعداد', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await loginAs(page, 'student');
+
+    const name = await page.evaluate(
+      () => getComputedStyle(document.querySelector('.route-fade')).animationName,
+    );
+    expect(name).toBe('none');
+  });
+});

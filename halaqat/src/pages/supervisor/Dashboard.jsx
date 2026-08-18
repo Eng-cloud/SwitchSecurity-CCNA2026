@@ -47,7 +47,7 @@ export default function SupervisorDashboard() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('supervisor.circlesCount')}
                 value={formatNumber(data.circlesCount)}
@@ -114,7 +114,7 @@ export default function SupervisorDashboard() {
               )}
             </Section>
 
-            <div className="grid grid-2">
+            <div className="grid grid-2 stagger">
               <Card>
                 <LineChart
                   title={t('reports.trend')}

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { sortRoles } from '../../config/permissions.js';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -32,7 +33,7 @@ import UserFormModal from '../../components/management/UserFormModal.jsx';
  * الطلاب وأولياء الأمور يُدارون من قسم المعلمين ومن طلبات التسجيل،
  * فلا يختلط سجل المستخدمين بسجل الطلاب.
  */
-const MANAGED_ROLES = ['admin', 'supervisor', 'teacher'];
+const MANAGED_ROLES = sortRoles(['admin', 'supervisor', 'teacher']);
 
 export default function AdminUsers() {
   const t = useT();

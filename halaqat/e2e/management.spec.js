@@ -75,13 +75,13 @@ test('الإدارة: ثلاثة أقسام مع إضافة معلم وتغيي�
   // إضافة معلم جديد
   await page.goto('/app/admin/teachers');
   await page.getByTestId('add-teacher').click();
-  await page.getByTestId('user-name').fill('معلم تجريبي جديد');
+  await page.getByTestId('user-name').fill('معلم جديد للاختبار');
   await page.getByTestId('user-city').selectOption({ index: 1 });
   await page.getByTestId('user-district').selectOption({ index: 1 });
   await page.getByTestId('user-circle-name').fill('حلقة الاختبار');
   await page.getByTestId('submit-user').click();
   await expect(page.getByText('تمت إضافة المعلم').first()).toBeVisible();
-  await expect(page.getByText('معلم تجريبي جديد')).toBeVisible();
+  await expect(page.getByText('معلم جديد للاختبار')).toBeVisible();
 
   // تغيير دور مستخدم
   await page.goto('/app/admin/users');
@@ -112,7 +112,7 @@ test('المشرف يضيف حلقة ويدير معلميه وطلابهم', as
   const addStudent = page.getByTestId('add-student').first();
   if (await addStudent.count()) {
     await addStudent.click();
-    await page.getByTestId('student-name').fill('طالب تجريبي جديد');
+    await page.getByTestId('student-name').fill('طالب جديد للاختبار');
     await page.getByTestId('submit-student').click();
     await expect(page.getByText('تمت إضافة الطالب').first()).toBeVisible();
   }

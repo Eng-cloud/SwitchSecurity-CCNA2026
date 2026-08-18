@@ -336,7 +336,7 @@ export default function AdminTeachers() {
               data-testid="student-name"
             />
           </Field>
-          <div className="grid grid-2">
+          <div className="grid grid-2 stagger">
             <Field label={t('admin.form.age')} optional>
               <Input
                 type="number"

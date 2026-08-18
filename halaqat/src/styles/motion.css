@@ -1,0 +1,179 @@
+/* =========================================================
+   طبقة الحركة — هادئة بما يليق بالمصحف
+
+   قواعد التزمت بها:
+   - لا ارتداد ولا دوران ولا وميض. الحركة إمّا ظهور تدريجي أو صعود يسير.
+   - المسافات قصيرة (٦–١٠ بكسل) والمنحنى خارجٌ ناعم بلا تجاوز.
+   - كل حركة تُلغى تمامًا عند تقليل الحركة، والعنصر يبقى في حالته النهائية.
+   - لا نحرّك الشريط العلوي ولا حاويات القوائم: أي transform عليها يصنع حاوية
+     مرجعية جديدة فتنزاح القوائم المنسدلة عن مواضعها.
+   ========================================================= */
+
+:root {
+  /* منحنى هادئ: يبدأ بسرعة ويستقر بلطف، بلا تجاوز للهدف. */
+  --ease-calm: cubic-bezier(0.32, 0.72, 0.24, 1);
+  --dur-enter: 420ms;
+  --dur-settle: 640ms;
+  /* الفارق الزمني بين عنصر وتاليه في القوائم المتتابعة. */
+  --stagger-step: 55ms;
+}
+
+/* ---------------------------------------------------------
+   حركات أساسية
+   --------------------------------------------------------- */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* توهّج خفيف يمرّ مرة واحدة عند تمام الإنجاز — بلا تغيّر في الحجم. */
+@keyframes gentle-glow {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 32%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
+/* ---------------------------------------------------------
+   دخول الصفحة — تلاشٍ متقاطع هادئ
+
+   بلا انزلاق رأسي عمدًا: انزلاق المحتوى يزحزح كل شيء تحت المؤشر لحظة
+   الانتقال، فيلاحق المستخدم زرًّا يتحرك. الحركة المحسوسة تُترك لما لا
+   يزاحم التفاعل: نمو المؤشرات، ودخول النوافذ، وضغطة الزر.
+   --------------------------------------------------------- */
+.route-fade {
+  animation: fade-in var(--dur-enter) var(--ease-calm) both;
+}
+
+/* ---------------------------------------------------------
+   ظهور متتابع للقوائم والشبكات
+   يُطبَّق على الحاوية، فيظهر أبناؤها واحدًا إثر واحد.
+
+   ظهورٌ بالشفافية وحدها لا بالحركة: الأبناء كثيرون، وتحريك مواضعهم
+   يزحزح التخطيط لحظةً ويُبقي المؤشر يطارد هدفًا متحركًا. التتابع وحده
+   يكفي لإحساس الهدوء.
+   --------------------------------------------------------- */
+.stagger > * {
+  animation: fade-in var(--dur-enter) var(--ease-calm) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: calc(var(--stagger-step) * 1); }
+.stagger > *:nth-child(3) { animation-delay: calc(var(--stagger-step) * 2); }
+.stagger > *:nth-child(4) { animation-delay: calc(var(--stagger-step) * 3); }
+.stagger > *:nth-child(5) { animation-delay: calc(var(--stagger-step) * 4); }
+.stagger > *:nth-child(6) { animation-delay: calc(var(--stagger-step) * 5); }
+.stagger > *:nth-child(7) { animation-delay: calc(var(--stagger-step) * 6); }
+.stagger > *:nth-child(8) { animation-delay: calc(var(--stagger-step) * 7); }
+.stagger > *:nth-child(n + 9) { animation-delay: calc(var(--stagger-step) * 8); }
+
+/* ظهور مفرد لعنصر يدخل الصفحة لاحقًا (تنبيه، لافتة، نتيجة). */
+.reveal {
+  animation: fade-in var(--dur-enter) var(--ease-calm) both;
+}
+
+.reveal--soft {
+  animation: fade-in var(--dur-settle) var(--ease-calm) both;
+}
+
+/* ---------------------------------------------------------
+   لمسات التفاعل
+   --------------------------------------------------------- */
+.card,
+.stat {
+  transition:
+    box-shadow var(--dur-normal) var(--ease-calm),
+    border-color var(--dur-normal) var(--ease-calm);
+}
+
+/* البطاقة القابلة للنقر ترتفع قليلًا — بلا تكبير يشوّش النص. */
+a.card:hover,
+.card--interactive:hover {
+  transform: translateY(-2px);
+  transition: transform var(--dur-normal) var(--ease-calm);
+}
+
+.btn {
+  transition:
+    background-color var(--dur-fast) var(--ease-calm),
+    border-color var(--dur-fast) var(--ease-calm),
+    color var(--dur-fast) var(--ease-calm),
+    box-shadow var(--dur-fast) var(--ease-calm),
+    transform var(--dur-fast) var(--ease-calm);
+}
+
+/* ضغطة محسوسة بلا قفزة. */
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.nav-item,
+.bottom-nav__item {
+  transition:
+    background-color var(--dur-fast) var(--ease-calm),
+    color var(--dur-fast) var(--ease-calm);
+}
+
+/* صفوف الجداول والقوائم: تمييز هادئ عند المرور. */
+.table tbody tr,
+.delegation-items > li,
+.distinguished-list > li {
+  transition: background-color var(--dur-fast) var(--ease-calm);
+}
+
+/* ---------------------------------------------------------
+   المؤشرات
+   --------------------------------------------------------- */
+/* امتلاء شريط التقدم يُقرأ كحركة نمو لا كقفزة رقم. */
+.progress__bar {
+  transition: width var(--dur-settle) var(--ease-calm);
+}
+
+.ring__circle {
+  transition: stroke-dashoffset var(--dur-settle) var(--ease-calm);
+}
+
+/* بند الخطة عند تمامه: توهّج واحد ثم سكون. */
+.plan-item--done {
+  animation: gentle-glow var(--dur-settle) var(--ease-calm) 1;
+}
+
+/* ---------------------------------------------------------
+   إلغاء الحركة — من إعداد المنصة أو من النظام
+   العنصر يبقى في حالته النهائية، فلا يختفي شيء بإلغاء الحركة.
+   --------------------------------------------------------- */
+:root[data-motion='reduced'] .route-fade,
+:root[data-motion='reduced'] .stagger > *,
+:root[data-motion='reduced'] .reveal,
+:root[data-motion='reduced'] .reveal--soft,
+:root[data-motion='reduced'] .plan-item--done {
+  animation: none;
+}
+
+:root[data-motion='reduced'] a.card:hover,
+:root[data-motion='reduced'] .card--interactive:hover,
+:root[data-motion='reduced'] .btn:active:not(:disabled) {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='normal']) .route-fade,
+  :root:not([data-motion='normal']) .stagger > *,
+  :root:not([data-motion='normal']) .reveal,
+  :root:not([data-motion='normal']) .reveal--soft,
+  :root:not([data-motion='normal']) .plan-item--done {
+    animation: none;
+  }
+
+  :root:not([data-motion='normal']) a.card:hover,
+  :root:not([data-motion='normal']) .card--interactive:hover,
+  :root:not([data-motion='normal']) .btn:active:not(:disabled) {
+    transform: none;
+  }
+}

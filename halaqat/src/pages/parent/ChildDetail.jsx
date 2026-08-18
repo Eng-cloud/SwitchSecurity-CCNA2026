@@ -74,7 +74,7 @@ export default function ParentChildDetail() {
       >
         {data ? (
           <div className="stack-6">
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('student.progress.memorizedPages')}
                 value={formatNumber(data.memorizedPages)}

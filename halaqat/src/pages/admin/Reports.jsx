@@ -77,7 +77,7 @@ export default function AdminReports() {
         >
           {data ? (
             <div className="stack-6">
-              <div className="grid grid-4">
+              <div className="grid grid-4 stagger">
                 <Stat
                   label={t('admin.totalCircles')}
                   value={formatNumber(data.totals.circles)}

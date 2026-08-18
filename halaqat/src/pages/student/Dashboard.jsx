@@ -37,11 +37,14 @@ export default function StudentDashboard() {
   );
   const { data, loading, error, refetch } = useAsyncData(fetcher, [user.studentId]);
 
-  const handleComplete = async (planId) => {
-    setCompleting(planId);
+  /** تبديل حالة بند الخطة — الضغطة الخاطئة يتراجع عنها بضغطة مثلها. */
+  const handleToggle = async (item) => {
+    setCompleting(item.id);
     try {
-      await studentService.completePlanItem(user.studentId, planId);
-      toast.success(t('student.plan.marked'));
+      const result = await studentService.completePlanItem(user.studentId, item.id, {
+        done: !item.done,
+      });
+      toast.success(result.done ? t('student.plan.marked') : t('student.plan.unmarked'));
       refetch();
     } catch {
       toast.error(t('state.errorHint'));
@@ -117,7 +120,7 @@ export default function StudentDashboard() {
             ) : null}
 
             {/* المؤشرات */}
-            <div className="grid grid-4">
+            <div className="grid grid-4 stagger">
               <Stat
                 label={t('student.todayGoal')}
                 value={formatFraction(student.todayDone, student.targetDaily)}
@@ -175,18 +178,18 @@ export default function StudentDashboard() {
                         {item.surahName} · {formatNumber(item.fromAyah)}–{formatNumber(item.toAyah)}
                       </p>
                     </div>
-                    {item.done ? (
-                      <Badge variant="success">{t('student.plan.done')}</Badge>
-                    ) : (
+                    <div className="row row-2">
+                      {item.done ? <Badge variant="success">{t('student.plan.done')}</Badge> : null}
                       <Button
-                        variant="secondary"
+                        variant={item.done ? 'ghost' : 'secondary'}
                         size="sm"
                         status={completing === item.id ? 'loading' : 'idle'}
-                        onClick={() => handleComplete(item.id)}
+                        onClick={() => handleToggle(item)}
+                        data-testid={item.done ? 'plan-undo' : 'plan-done'}
                       >
-                        {t('student.plan.markDone')}
+                        {item.done ? t('student.plan.undo') : t('student.plan.markDone')}
                       </Button>
-                    )}
+                    </div>
                   </div>
                 ))}
               </div>

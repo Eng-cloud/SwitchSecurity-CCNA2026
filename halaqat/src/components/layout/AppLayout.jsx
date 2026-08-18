@@ -103,7 +103,6 @@ export default function AppLayout() {
           <NavList items={commonItems} unreadCount={unreadCount} />
         </div>
 
-        <p className="sidebar__note">{t('app.mockNotice')}</p>
       </nav>
 
       <header className="topbar" data-app-topbar="">

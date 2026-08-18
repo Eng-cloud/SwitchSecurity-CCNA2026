@@ -142,7 +142,6 @@ function AccountSection() {
         <div className="row row-3 row-wrap">
           <Badge variant="brand">{t(`roles.${user?.role}`)}</Badge>
           <Badge variant="warning" icon="◇">
-            {t('demo.demoOnly')}
           </Badge>
         </div>
 
@@ -414,7 +413,6 @@ function HelpSection() {
           {t('settings.resetDemo')}
         </Button>
 
-        <Alert variant="mock">{t('app.mockNotice')}</Alert>
       </Card>
 
       <ConfirmDialog
