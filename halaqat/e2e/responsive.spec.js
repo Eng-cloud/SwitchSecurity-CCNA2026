@@ -102,3 +102,49 @@ test.describe('الشاشة الكبيرة', () => {
     expect(width).toBeLessThanOrEqual(1200);
   });
 });
+
+/**
+ * القوائم المنسدلة لا تُقصّ عند أي عرض شاشة.
+ *
+ * كانت مثبَّتة من الحافة البادئة لزرّها، وأزرار الشريط مجتمعة عند الحافة
+ * النهائية، فتخرج القائمة من الشاشة ويصير نصها غير مقروء — على الجوال
+ * واللوحي وسطح المكتب معًا. هذا الاختبار يقيس كل قائمة عند كل عرض.
+ */
+test.describe('القوائم المنسدلة داخل الشاشة', () => {
+  const MENUS = [/^تغيير المظهر/, /^فتح الإشعارات/, /^الحساب/];
+  const SIZES = [
+    { width: 320, height: 700 },
+    { width: 390, height: 844 },
+    { width: 640, height: 900 },
+    { width: 820, height: 1180 },
+    { width: 1366, height: 900 },
+  ];
+
+  for (const size of SIZES) {
+    test(`عرض ${size.width}px`, async ({ page }) => {
+      const errors = watchConsole(page);
+      await page.setViewportSize(size);
+      await loginAs(page, 'student');
+
+      for (const name of MENUS) {
+        // eslint-disable-next-line no-await-in-loop
+        await page.locator('.topbar__actions').getByRole('button', { name }).click();
+        // eslint-disable-next-line no-await-in-loop
+        const box = await page.locator('.menu').first().boundingBox();
+        expect(box, `القائمة ${name} لم تُفتح`).not.toBeNull();
+        expect(box.x, `القائمة ${name} مقصوصة من البداية عند ${size.width}px`).toBeGreaterThanOrEqual(-0.5);
+        expect(
+          box.x + box.width,
+          `القائمة ${name} مقصوصة من النهاية عند ${size.width}px`,
+        ).toBeLessThanOrEqual(size.width + 0.5);
+
+        // eslint-disable-next-line no-await-in-loop
+        await page.keyboard.press('Escape');
+        // eslint-disable-next-line no-await-in-loop
+        await expect(page.locator('.menu')).toHaveCount(0);
+      }
+
+      assertNoConsoleErrors(errors);
+    });
+  }
+});

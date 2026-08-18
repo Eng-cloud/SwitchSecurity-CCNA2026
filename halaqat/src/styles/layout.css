@@ -594,11 +594,20 @@ kbd {
 }
 
 /* ---------------- Menus (dropdown) ---------------- */
+/*
+ * كل القوائم المنسدلة تخرج من أزرار الشريط العلوي، وهذه الأزرار مجتمعة عند
+ * الحافة النهائية للسطر (يسار الشاشة في العربية). لذا تُثبَّت القائمة من تلك
+ * الحافة وتنمو نحو داخل الصفحة؛ تثبيتها من الحافة البادئة كان يدفعها خارج
+ * الشاشة فتظهر مقصوصة على الجوال واللوحي وسطح المكتب معًا.
+ */
 .menu {
   position: absolute;
-  inset-inline-start: 0;
+  inset-inline-end: 0;
+  inset-inline-start: auto;
   top: calc(100% + var(--space-2));
-  min-width: 260px;
+  /* لا تتجاوز عرض الشاشة مهما ضاقت — min-width يتغلب على max-width فنقيّده هنا. */
+  min-width: min(260px, calc(100vw - var(--space-6)));
+  max-width: calc(100vw - var(--space-6));
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -609,6 +618,26 @@ kbd {
 
 .menu__wrap {
   position: relative;
+}
+
+/*
+ * على الجوال لا تتسع المسافة لقائمة معلَّقة بزرّها: زر قرب منتصف الشريط
+ * يدفع قائمة عرضها 260px خارج الشاشة. فتُثبَّت القائمة هنا بالشريط العلوي
+ * نفسه وتمتد بعرضه ناقص هامشين — فلا تُقصّ عند أي عرض شاشة.
+ * (الشريط هو الحاوي المرجعي أصلًا: sticky وله backdrop-filter.)
+ */
+@media (max-width: 640px) {
+  .menu__wrap {
+    position: static;
+  }
+
+  .menu {
+    inset-inline-start: var(--space-3);
+    inset-inline-end: var(--space-3);
+    top: calc(100% + var(--space-1));
+    min-width: 0;
+    max-width: none;
+  }
 }
 
 .menu__item {
