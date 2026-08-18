@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as studentService from '../../services/studentService.js';
+import useAssistantDuty from '../../hooks/useAssistantDuty.js';
 import { formatFraction, formatNumber, formatPercent, formatRelative } from '../../lib/format.js';
 import {
   PageHeader,
@@ -28,6 +29,7 @@ export default function StudentDashboard() {
   const { user } = useAuth();
   const toast = useToast();
   const [completing, setCompleting] = useState(null);
+  const { duty } = useAssistantDuty();
 
   const fetcher = useCallback(
     () => studentService.getDashboard(user.studentId),
@@ -94,10 +96,23 @@ export default function StudentDashboard() {
               </div>
             </section>
 
-            {/* الطالب المتميز: مساعد المعلم */}
-            {student.isAssistant ? (
-              <Alert variant="success" title={t('teacher.assistant.yourRole')}>
-                {t('teacher.assistant.yourRoleHint')}
+            {/* مهمة موكَّلة من المعلم — تظهر أثناء التوكيل فقط ثم تختفي. */}
+            {duty?.active ? (
+              <Alert variant="success" title={t('student.assistant.dutyTitle')}>
+                <div className="stack-2">
+                  <p>
+                    {t('student.assistant.banner', {
+                      count: duty.delegation.progress.remaining,
+                    })}
+                  </p>
+                  <Button size="sm" to="/app/student/assistant" data-testid="duty-banner-cta">
+                    {t('student.assistant.bannerCta')}
+                  </Button>
+                </div>
+              </Alert>
+            ) : student.isAssistant ? (
+              <Alert variant="info" title={t('teacher.assistant.badge')}>
+                {t('student.assistant.noDutyHint')}
               </Alert>
             ) : null}
 

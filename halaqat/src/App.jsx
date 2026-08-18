@@ -50,6 +50,7 @@ const TestResult = lazy(() => import('./pages/student/TestResult.jsx'));
 const Goals = lazy(() => import('./pages/student/Goals.jsx'));
 const Progress = lazy(() => import('./pages/student/Progress.jsx'));
 const StudentReports = lazy(() => import('./pages/student/Reports.jsx'));
+const StudentAssistant = lazy(() => import('./pages/student/Assistant.jsx'));
 
 /* المعلم */
 const TeacherDashboard = lazy(() => import('./pages/teacher/Dashboard.jsx'));
@@ -57,6 +58,7 @@ const TeacherCircle = lazy(() => import('./pages/teacher/Circle.jsx'));
 const TeacherStudents = lazy(() => import('./pages/teacher/Students.jsx'));
 const StudentProfile = lazy(() => import('./pages/teacher/StudentProfile.jsx'));
 const TeacherSessions = lazy(() => import('./pages/teacher/Sessions.jsx'));
+const TeacherAssistant = lazy(() => import('./pages/teacher/Assistant.jsx'));
 const TeacherReports = lazy(() => import('./pages/teacher/Reports.jsx'));
 
 /* المشرف */
@@ -156,6 +158,8 @@ export function AppRoutes() {
               <Route path="student/goals" element={<Goals />} />
               <Route path="student/progress" element={<Progress />} />
               <Route path="student/reports" element={<StudentReports />} />
+              {/* مهمة المساعد: صفحة مؤقتة تعتمد على وجود توكيل نشِط لا على الدور */}
+              <Route path="student/assistant" element={<StudentAssistant />} />
             </Route>
 
             {/* المعلم */}
@@ -165,6 +169,7 @@ export function AppRoutes() {
               <Route path="teacher/students" element={<TeacherStudents />} />
               <Route path="teacher/students/:studentId" element={<StudentProfile />} />
               <Route path="teacher/sessions" element={<TeacherSessions />} />
+              <Route path="teacher/assistant" element={<TeacherAssistant />} />
               <Route path="teacher/reports" element={<TeacherReports />} />
             </Route>
 

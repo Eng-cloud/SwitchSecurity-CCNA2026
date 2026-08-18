@@ -18,6 +18,7 @@ export const ACTIONS = {
   CIRCLES_MANAGE: 'circles.manage',
   STUDENTS_MANAGE: 'students.manage',
   ASSISTANT_ASSIGN: 'assistant.assign',
+  DELEGATION_MANAGE: 'delegation.manage',
   ENROLLMENT_CREATE: 'enrollment.create',
   ENROLLMENT_REVIEW: 'enrollment.review',
   ATTENDANCE_RECORD: 'attendance.record',
@@ -30,15 +31,19 @@ const A = ACTIONS;
  * الصلاحيات لكل دور.
  * - المصحف: للطالب والمعلم والمشرف وولي الأمر (الإدارة دورها إداري).
  * - الطباعة: للمعلم والمشرف والإدارة فقط.
+ * - إضافة الطلاب وحذفهم (STUDENTS_MANAGE): للمشرف والإدارة فقط.
+ *   المعلم يعلّم حلقته ويتابعها ولا يبني تشكيلتها، فلا تختلط الأدوار.
  */
 const MATRIX = {
   student: [A.QURAN_READ, A.RECITATION_RECORD],
 
+  // المعلم داخل حلقته: تسميع وحضور وملاحظات وتقارير وتعيين مساعد.
+  // ليس له STUDENTS_MANAGE ولا TEACHERS_MANAGE ولا CIRCLES_MANAGE ولا مراجعة الطلبات.
   teacher: [
     A.QURAN_READ,
     A.REPORTS_PRINT,
-    A.STUDENTS_MANAGE,
     A.ASSISTANT_ASSIGN,
+    A.DELEGATION_MANAGE,
     A.ATTENDANCE_RECORD,
     A.NOTES_WRITE,
   ],

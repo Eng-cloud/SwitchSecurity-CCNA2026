@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { getNavigation, getBottomNavigation, getCommonNavigation } from '../../config/navigation.js';
 import { subscribeOffline, isOffline } from '../../mock/api.js';
 import useMediaQuery, { BREAKPOINTS } from '../../hooks/useMediaQuery.js';
+import useAssistantDuty from '../../hooks/useAssistantDuty.js';
 import { IconButton } from '../ui/Button.jsx';
 import Badge from '../ui/Badge.jsx';
 import Drawer from '../ui/Drawer.jsx';
@@ -57,9 +58,12 @@ export default function AppLayout() {
   const isDesktop = useMediaQuery(BREAKPOINTS.desktopUp);
   const mainRef = useRef(null);
 
-  const navItems = getNavigation(role);
-  const bottomItems = getBottomNavigation(role);
-  const commonItems = getCommonNavigation(role);
+  // مهمة المساعد رايةٌ من البيانات: تُظهر رابط المهمة أثناء التوكيل فقط.
+  const { duty } = useAssistantDuty();
+  const navContext = { assistantDuty: Boolean(duty?.active) };
+  const navItems = getNavigation(role, navContext);
+  const bottomItems = getBottomNavigation(role, navContext);
+  const commonItems = getCommonNavigation(role, navContext);
 
   useEffect(() => subscribeOffline(setOfflineState), []);
 

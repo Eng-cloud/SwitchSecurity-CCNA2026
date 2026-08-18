@@ -42,9 +42,10 @@ test('استعادة موضع التمرير عند الرجوع', async ({ page
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.goBack();
 
-  await page.waitForTimeout(400);
-  const scrollY = await page.evaluate(() => window.scrollY);
-  expect(scrollY).toBeGreaterThan(100);
+  // الاستعادة تنتظر اكتمال تحميل المحتوى، فنستطلع الموضع بدل انتظار مدة ثابتة.
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY), { timeout: 5000 })
+    .toBeGreaterThan(100);
 });
 
 test('نموذج الدخول: تحقق من الحقل الفارغ والصيغة الخاطئة والحساب غير الموجود', async ({ page }) => {

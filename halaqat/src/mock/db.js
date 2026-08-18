@@ -7,7 +7,7 @@
 import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -202,7 +202,9 @@ function generate() {
       const isDemoStudent = circleIndex === 0 && i === 0;
       const id = `student-${circleIndex + 1}-${String(i + 1).padStart(2, '0')}`;
       const memorizedPages = rng.int(12, 380);
-      const mastery = rng.score(58, 98);
+      const masteryRaw = rng.score(58, 98);
+      // الطالب التجريبي متميز دائمًا ليظهر مسار «مساعد المعلم» في العرض التجريبي.
+      const mastery = isDemoStudent ? Math.max(94, masteryRaw) : masteryRaw;
       const attendanceRate = rng.score(62, 100);
       const targetDaily = rng.pick([2, 3, 3, 4]);
       const lastRecitationDays = rng.int(0, 12);
@@ -245,7 +247,8 @@ function generate() {
         currentSurah: rng.pick(SURAHS_WITH_TEXT).number,
         lastReadPage: rng.int(580, 604),
         // الطالب المتميز يُرشَّح مساعدًا للمعلم — أول متميز في كل حلقة.
-        isAssistant: i === 1 && mastery > 90,
+        // المساعد يبقى طالبًا: هذه الراية تفتح له التوكيل بالمراجعة فقط، لا رتبة معلم.
+        isAssistant: isDemoStudent || (i === 1 && mastery > 90),
         district: circle.district,
         // هدف بالأجزاء ضمن مدة محددة
         juzGoal: {
@@ -397,6 +400,39 @@ function generate() {
     activity: rng.int(120, 420),
   }));
 
+  /* --- توكيلات مساعد المعلم ---
+     المساعد طالب متميز يوكّله معلمه بسماع مراجعة زملاء محددين.
+     التوكيل مؤقت ومحدود بقائمة أسماء، وينتهي بانتهائها فيعود الطالب لوضعه الطبيعي. */
+  const assistantDelegations = [];
+  const demoAssistant = students[0];
+  const demoCircle = circles[0];
+  const delegatedPeers = students
+    .filter((student) => student.circleId === demoCircle.id && student.id !== demoAssistant.id)
+    .slice(0, 3);
+
+  if (delegatedPeers.length > 0) {
+    assistantDelegations.push({
+      id: 'delegation-seed-1',
+      assistantStudentId: demoAssistant.id,
+      assistantName: demoAssistant.name,
+      teacherId: demoCircle.teacherId,
+      circleId: demoCircle.id,
+      scope: 'review',
+      status: 'active',
+      note: 'مراجعة جزء عمّ قبل الاختبار الأسبوعي.',
+      createdAt: daysAgo(1),
+      completedAt: null,
+      items: delegatedPeers.map((peer, index) => ({
+        studentId: peer.id,
+        studentName: peer.name,
+        status: index === 0 ? 'done' : 'pending',
+        mastery: index === 0 ? 88 : null,
+        note: index === 0 ? 'حفظ متقن مع تنبيه على المدود.' : '',
+        doneAt: index === 0 ? daysAgo(0) : null,
+      })),
+    });
+  }
+
   /* --- طلبات تسجيل من أولياء الأمور --- */
   const enrollmentRequests = [
     {
@@ -424,6 +460,7 @@ function generate() {
     version: DB_VERSION,
     createdAt: new Date().toISOString(),
     enrollmentRequests,
+    assistantDelegations,
     users,
     circles,
     students,

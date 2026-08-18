@@ -39,10 +39,42 @@ describe('مصفوفة الصلاحيات', () => {
     expect(can('teacher', ACTIONS.ENROLLMENT_REVIEW)).toBe(false);
   });
 
-  it('تعيين المساعد للمعلم وحده', () => {
+  it('تعيين المساعد وتوكيله للمعلم وحده', () => {
     expect(can('teacher', ACTIONS.ASSISTANT_ASSIGN)).toBe(true);
+    expect(can('teacher', ACTIONS.DELEGATION_MANAGE)).toBe(true);
     expect(can('student', ACTIONS.ASSISTANT_ASSIGN)).toBe(false);
+    expect(can('student', ACTIONS.DELEGATION_MANAGE)).toBe(false);
     expect(can('supervisor', ACTIONS.ASSISTANT_ASSIGN)).toBe(false);
+    expect(can('supervisor', ACTIONS.DELEGATION_MANAGE)).toBe(false);
+    expect(can('admin', ACTIONS.ASSISTANT_ASSIGN)).toBe(false);
+  });
+
+  it('المعلم لا يملك صلاحيات المشرف — لا خلط بين الدورين', () => {
+    // إضافة الطلاب وحذفهم للمشرف والإدارة، لا للمعلم.
+    expect(can('teacher', ACTIONS.STUDENTS_MANAGE)).toBe(false);
+    expect(can('teacher', ACTIONS.TEACHERS_MANAGE)).toBe(false);
+    expect(can('teacher', ACTIONS.CIRCLES_MANAGE)).toBe(false);
+    expect(can('teacher', ACTIONS.SUPERVISORS_MANAGE)).toBe(false);
+    expect(can('teacher', ACTIONS.USERS_MANAGE)).toBe(false);
+    expect(can('teacher', ACTIONS.ENROLLMENT_REVIEW)).toBe(false);
+  });
+
+  it('صلاحيات المعلم محصورة في حلقته', () => {
+    expect(permissionsOf('teacher').sort()).toEqual(
+      [
+        ACTIONS.QURAN_READ,
+        ACTIONS.REPORTS_PRINT,
+        ACTIONS.ASSISTANT_ASSIGN,
+        ACTIONS.DELEGATION_MANAGE,
+        ACTIONS.ATTENDANCE_RECORD,
+        ACTIONS.NOTES_WRITE,
+      ].sort(),
+    );
+  });
+
+  it('المشرف لا يعيّن مساعدًا ولا يوكّل — هذه علاقة معلم بطلابه', () => {
+    expect(can('supervisor', ACTIONS.ASSISTANT_ASSIGN)).toBe(false);
+    expect(can('supervisor', ACTIONS.ATTENDANCE_RECORD)).toBe(false);
   });
 
   it('دور غير معروف بلا صلاحيات', () => {

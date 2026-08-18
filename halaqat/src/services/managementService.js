@@ -387,33 +387,11 @@ export async function removeStudent({ role, studentId }) {
   );
 }
 
-/** تعيين طالب متميز مساعدًا للمعلم أو إلغاء التعيين. */
-export async function setAssistant({ role, studentId, isAssistant }) {
-  return request(() =>
-    mutateDb((db) => {
-      assertCan(role, ACTIONS.ASSISTANT_ASSIGN);
-      const student = db.students.find((item) => item.id === studentId);
-      if (!student) throw new ApiError('notFound', 'state.notFoundHint');
-
-      if (isAssistant && student.masteryAvg < 85) {
-        throw new ApiError('notEligible', 'teacher.assistant.notEligible');
-      }
-
-      student.isAssistant = Boolean(isAssistant);
-      if (student.isAssistant) {
-        db.notifications.unshift({
-          id: `notif-${Date.now()}`,
-          typeKey: 'assistant',
-          createdAt: new Date().toISOString(),
-          read: false,
-          link: '/app/student',
-          roles: ['student', 'parent'],
-        });
-      }
-      return { id: studentId, isAssistant: student.isAssistant };
-    }),
-  );
-}
+/**
+ * تعيين المساعد يعيش في خدمة المساعد (assistantService) لأنه يمسّ التوكيلات أيضًا.
+ * يُعاد تصديره هنا فقط حفاظًا على نقطة استدعاء واحدة لواجهات الإدارة.
+ */
+export { setAssistant } from './assistantService.js';
 
 /* ===============================================================
    طلبات تسجيل الأبناء

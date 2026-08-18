@@ -21,6 +21,14 @@ const NAVIGATION = {
     { to: '/app/student', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     QURAN_ITEM,
     { to: '/app/student/recitation', labelKey: 'nav.recitation', icon: '🎙', primary: true },
+    // مؤقت: يظهر فقط أثناء وجود توكيل نشِط من المعلم ويختفي بانتهائه.
+    {
+      to: '/app/student/assistant',
+      labelKey: 'nav.assistantDuty',
+      icon: '⭐',
+      primary: true,
+      requires: 'assistantDuty',
+    },
     { to: '/app/student/review', labelKey: 'nav.review', icon: '🔁' },
     { to: '/app/student/tests', labelKey: 'nav.tests', icon: '📝' },
     { to: '/app/student/goals', labelKey: 'nav.goals', icon: '🎯' },
@@ -31,6 +39,7 @@ const NAVIGATION = {
     { to: '/app/teacher', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/teacher/circle', labelKey: 'nav.circle', icon: '👥', primary: true },
     { to: '/app/teacher/students', labelKey: 'nav.students', icon: '🧑‍🎓', primary: true },
+    { to: '/app/teacher/assistant', labelKey: 'nav.assistant', icon: '⭐' },
     { to: '/app/teacher/sessions', labelKey: 'nav.sessions', icon: '🎙' },
     QURAN_ITEM,
     { to: '/app/teacher/reports', labelKey: 'nav.reports', icon: '📊' },
@@ -69,21 +78,30 @@ export const COMMON_NAV = [
   { to: '/app/settings', labelKey: 'nav.settings', icon: '⚙️' },
 ];
 
-export function getNavigation(role) {
+/**
+ * تنقل الدور.
+ * @param {string} role الدور
+ * @param {object} context رايات مؤقتة مبنية على البيانات لا على الدور،
+ *   مثل `assistantDuty` حين يكون للطالب توكيل نشِط من معلمه.
+ */
+export function getNavigation(role, context = {}) {
   const items = NAVIGATION[role] ?? [];
-  // المصحف يظهر فقط لمن يملك صلاحية قراءته.
-  return items.filter((item) => (item.to === '/app/quran' ? can(role, ACTIONS.QURAN_READ) : true));
+  return items
+    // المصحف يظهر فقط لمن يملك صلاحية قراءته.
+    .filter((item) => (item.to === '/app/quran' ? can(role, ACTIONS.QURAN_READ) : true))
+    // العناصر المشروطة تظهر بوجود شرطها فقط.
+    .filter((item) => (item.requires ? Boolean(context[item.requires]) : true));
 }
 
 /** الروابط المشتركة بلا تكرار لما هو موجود أصلًا في تنقل الدور. */
-export function getCommonNavigation(role) {
-  const existing = new Set(getNavigation(role).map((item) => item.to));
+export function getCommonNavigation(role, context = {}) {
+  const existing = new Set(getNavigation(role, context).map((item) => item.to));
   return COMMON_NAV.filter((item) => !existing.has(item.to));
 }
 
 /** عناصر شريط الجوال السفلي — خمسة عناصر كحد أقصى. */
-export function getBottomNavigation(role) {
-  const items = getNavigation(role).filter((item) => item.primary);
+export function getBottomNavigation(role, context = {}) {
+  const items = getNavigation(role, context).filter((item) => item.primary);
   return [...items.slice(0, 4), { to: '/app/settings', labelKey: 'nav.account', icon: '👤' }];
 }
 

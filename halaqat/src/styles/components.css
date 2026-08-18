@@ -1674,3 +1674,26 @@
   color: var(--gold-400);
   font-size: var(--text-sm);
 }
+
+/* ---------------------------------------------------------------
+   قائمة الطلاب داخل التوكيل — أسطر مفصولة تُقرأ بلمحة
+   --------------------------------------------------------------- */
+.delegation-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.delegation-items > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+}
+
+.delegation-items > li + li {
+  border-block-start: 1px solid var(--border-subtle);
+}

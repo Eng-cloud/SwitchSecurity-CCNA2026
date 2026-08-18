@@ -94,19 +94,22 @@ test('البحث محصور بنطاق الدور', async ({ page }) => {
   assertNoConsoleErrors(errors);
 });
 
-test('الطالب المتميز يُعيَّن مساعدًا للمعلم', async ({ page }) => {
+test('تعيين المساعد قسم مستقل عند المعلم لا زر متناثر في جدول الحلقة', async ({ page }) => {
   const errors = watchConsole(page);
   await loginAs(page, 'teacher');
+
+  // لم يعد التعيين إجراءً في صف الجدول.
   await page.goto('/app/teacher/circle');
   await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'تعيين مساعدًا' })).toHaveCount(0);
 
-  const assignButton = page.getByRole('button', { name: 'تعيين مساعدًا' }).first();
-  await assignButton.click();
-
-  // إما تعيين ناجح أو رسالة اشتراط الإتقان — كلاهما سلوك صحيح ومعلن
-  const success = page.getByText('تم تعيين الطالب مساعدًا للمعلم');
-  const notEligible = page.getByText(/يُشترط ألا يقل متوسط الإتقان/);
-  await expect(success.or(notEligible).first()).toBeVisible();
+  // بل في قسم «الطالب المتميز ومساعد المعلم».
+  await page.goto('/app/teacher/assistant');
+  await expect(
+    page.getByRole('heading', { name: 'الطالب المتميز ومساعد المعلم' }),
+  ).toBeVisible();
+  await page.getByTestId('assign-assistant').first().click();
+  await expect(page.getByText('تم تعيين الطالب مساعدًا للمعلم')).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });
