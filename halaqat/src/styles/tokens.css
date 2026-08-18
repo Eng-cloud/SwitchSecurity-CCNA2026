@@ -1,0 +1,329 @@
+/* =========================================================
+   منصة الحلقات — Design Tokens
+   الهوية: قرآني · هادئ · راقٍ · عريق · Modern Premium
+   ========================================================= */
+
+:root {
+  /* ---------- Typography ---------- */
+  --font-sans: 'Noto Sans Arabic', 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --font-serif: 'Noto Naskh Arabic', 'Amiri', 'Traditional Arabic', Georgia, serif;
+  --font-quran: 'Noto Naskh Arabic', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  --font-mono: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+
+  --font-scale: 1;
+
+  --text-xs: calc(0.75rem * var(--font-scale));
+  --text-sm: calc(0.875rem * var(--font-scale));
+  --text-md: calc(1rem * var(--font-scale));
+  --text-lg: calc(1.125rem * var(--font-scale));
+  --text-xl: calc(1.375rem * var(--font-scale));
+  --text-2xl: calc(1.75rem * var(--font-scale));
+  --text-3xl: calc(2.25rem * var(--font-scale));
+  --text-4xl: calc(3rem * var(--font-scale));
+
+  --leading-tight: 1.3;
+  --leading-normal: 1.7;
+  --leading-loose: 2;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* ---------- Spacing (8pt) ---------- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 112px;
+
+  /* ---------- Radius ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  /* ---------- Layout ---------- */
+  --sidebar-width: 264px;
+  --topbar-height: 64px;
+  --bottomnav-height: 64px;
+  --content-max: 1180px;
+  --content-narrow: 720px;
+  --tap-target: 44px;
+
+  /* ---------- Motion ---------- */
+  --dur-fast: 180ms;
+  --dur-normal: 300ms;
+  --dur-slow: 500ms;
+  --ease-out: cubic-bezier(0.22, 0.8, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ---------- Z-index ---------- */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-sidebar: 200;
+  --z-drawer: 300;
+  --z-modal: 400;
+  --z-palette: 500;
+  --z-toast: 600;
+  --z-skip: 700;
+}
+
+/* =========================================================
+   Light theme (الأساس)
+   ========================================================= */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* Brand */
+  --brand-50: #eef5f2;
+  --brand-100: #d6e8e1;
+  --brand-200: #a9cfc2;
+  --brand-300: #74b09d;
+  --brand-400: #45907a;
+  --brand-500: #1f7360;
+  --brand-600: #0e5245;
+  --brand-700: #0a4038;
+  --brand-800: #072e29;
+  --brand-900: #05201d;
+
+  /* Gold — لمسة الوقار */
+  --gold-100: #f7efd9;
+  --gold-200: #ecdcae;
+  --gold-300: #ddc47c;
+  --gold-400: #cba94f;
+  --gold-500: #ac8b33;
+  --gold-600: #8a6d23;
+
+  /* Surfaces */
+  --bg: #f6f4ee;
+  --bg-subtle: #efece3;
+  --surface: #fffdf9;
+  --surface-2: #f8f6f0;
+  --surface-3: #f0ede4;
+  --surface-inverse: #072e29;
+  --overlay: rgba(7, 46, 41, 0.42);
+
+  /* Text */
+  --text: #1c2422;
+  --text-secondary: #4a5754;
+  --text-muted: #6d7a76;
+  --text-inverse: #fbfaf6;
+  --text-on-brand: #ffffff;
+
+  /* Borders */
+  --border: #e0dccf;
+  --border-strong: #c8c2b0;
+  --border-subtle: #ebe7dc;
+
+  /* Status */
+  --success: #1c7a52;
+  --success-bg: #e6f3ec;
+  --success-border: #b9dfcb;
+  --warning: #97650b;
+  --warning-bg: #fbf1de;
+  --warning-border: #ecd6a8;
+  --danger: #a32a24;
+  --danger-bg: #fbeae9;
+  --danger-border: #f0c5c2;
+  --info: #1c5c86;
+  --info-bg: #e7f1f8;
+  --info-border: #bcd8ea;
+
+  /* Focus */
+  --focus-ring: #1f7360;
+  --focus-ring-offset: #fffdf9;
+
+  /* Charts — متمايزة بالدرجة وليست باللون وحده */
+  --chart-1: #0e5245;
+  --chart-2: #cba94f;
+  --chart-3: #3f7fa6;
+  --chart-4: #8a5a9c;
+  --chart-5: #b4703a;
+  --chart-6: #5c8a4a;
+  --chart-grid: #e3dfd2;
+  --chart-axis: #8b938f;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(20, 40, 35, 0.06);
+  --shadow-sm: 0 2px 6px rgba(20, 40, 35, 0.07);
+  --shadow-md: 0 8px 20px rgba(20, 40, 35, 0.09);
+  --shadow-lg: 0 18px 44px rgba(20, 40, 35, 0.14);
+
+  /* Quran reader */
+  --quran-bg: #fbf7ec;
+  --quran-text: #17211f;
+  --quran-frame: #d8cba6;
+  --quran-highlight: rgba(203, 169, 79, 0.28);
+}
+
+/* =========================================================
+   Dark theme — إعادة ضبط كامل وليس قلب ألوان
+   ========================================================= */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --brand-50: #071f1b;
+  --brand-100: #0a2b26;
+  --brand-200: #0e3a33;
+  --brand-300: #145045;
+  --brand-400: #1d6a5a;
+  --brand-500: #2e8a76;
+  --brand-600: #45a48d;
+  --brand-700: #6cbfab;
+  --brand-800: #9ad7c8;
+  --brand-900: #c8ebe1;
+
+  --gold-100: #3a2f14;
+  --gold-200: #57461d;
+  --gold-300: #8a7030;
+  --gold-400: #b99a4c;
+  --gold-500: #d8b65c;
+  --gold-600: #ecd28c;
+
+  --bg: #0c1513;
+  --bg-subtle: #101a18;
+  --surface: #141f1d;
+  --surface-2: #1a2624;
+  --surface-3: #21302d;
+  --surface-inverse: #eef5f2;
+  --overlay: rgba(2, 8, 7, 0.66);
+
+  --text: #e8efec;
+  --text-secondary: #b3c2bd;
+  --text-muted: #8b9c97;
+  --text-inverse: #10201c;
+  --text-on-brand: #05201d;
+
+  --border: #2a3a36;
+  --border-strong: #3d524d;
+  --border-subtle: #1f2c29;
+
+  --success: #56c493;
+  --success-bg: #10281f;
+  --success-border: #1f5540;
+  --warning: #e0b45f;
+  --warning-bg: #2c2314;
+  --warning-border: #5b4a24;
+  --danger: #f0918b;
+  --danger-bg: #2e1614;
+  --danger-border: #63302c;
+  --info: #79bce6;
+  --info-bg: #12242e;
+  --info-border: #2a4c60;
+
+  --focus-ring: #6cbfab;
+  --focus-ring-offset: #0c1513;
+
+  --chart-1: #45a48d;
+  --chart-2: #d8b65c;
+  --chart-3: #79bce6;
+  --chart-4: #c096d4;
+  --chart-5: #e0a274;
+  --chart-6: #9dc98a;
+  --chart-grid: #263533;
+  --chart-axis: #7e918c;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.58);
+
+  --quran-bg: #121c1a;
+  --quran-text: #ecf3f0;
+  --quran-frame: #35473f;
+  --quran-highlight: rgba(216, 182, 92, 0.22);
+}
+
+/* =========================================================
+   High contrast — يعمل فوق الوضعين
+   ========================================================= */
+:root[data-contrast='high'] {
+  --text: #000000;
+  --text-secondary: #1a1a1a;
+  --text-muted: #333333;
+  --bg: #ffffff;
+  --bg-subtle: #f2f2f2;
+  --surface: #ffffff;
+  --surface-2: #f5f5f5;
+  --surface-3: #ebebeb;
+  --border: #4a4a4a;
+  --border-strong: #000000;
+  --border-subtle: #6a6a6a;
+  --brand-600: #00463a;
+  --brand-500: #005c4c;
+  --focus-ring: #003d33;
+  --focus-ring-offset: #ffffff;
+  --success: #005c33;
+  --warning: #6b4300;
+  --danger: #99000d;
+  --info: #003f66;
+  --quran-bg: #ffffff;
+  --quran-text: #000000;
+  --shadow-xs: 0 0 0 1px #4a4a4a;
+  --shadow-sm: 0 0 0 1px #4a4a4a;
+  --shadow-md: 0 0 0 2px #4a4a4a;
+  --shadow-lg: 0 0 0 2px #000000;
+}
+
+:root[data-theme='dark'][data-contrast='high'] {
+  --text: #ffffff;
+  --text-secondary: #ececec;
+  --text-muted: #d0d0d0;
+  --bg: #000000;
+  --bg-subtle: #0a0a0a;
+  --surface: #0d0d0d;
+  --surface-2: #161616;
+  --surface-3: #202020;
+  --border: #b8b8b8;
+  --border-strong: #ffffff;
+  --border-subtle: #8a8a8a;
+  --brand-600: #7fe0c6;
+  --brand-500: #5ccdb0;
+  --focus-ring: #ffe08a;
+  --focus-ring-offset: #000000;
+  --success: #7fe3ac;
+  --warning: #ffd479;
+  --danger: #ff9d97;
+  --info: #8fd0ff;
+  --quran-bg: #000000;
+  --quran-text: #ffffff;
+}
+
+/* =========================================================
+   Font scaling — لا يكسر Layout لأن كل شيء بوحدات نسبية
+   ========================================================= */
+:root[data-font-scale='large'] {
+  --font-scale: 1.15;
+}
+:root[data-font-scale='xlarge'] {
+  --font-scale: 1.32;
+}
+
+/* =========================================================
+   Reduced motion — من إعدادات المنصة أو من النظام
+   ========================================================= */
+:root[data-motion='reduced'] {
+  --dur-fast: 1ms;
+  --dur-normal: 1ms;
+  --dur-slow: 1ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='normal']) {
+    --dur-fast: 1ms;
+    --dur-normal: 1ms;
+    --dur-slow: 1ms;
+  }
+}

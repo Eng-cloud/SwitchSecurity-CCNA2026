@@ -1,0 +1,595 @@
+/* =========================================================
+   أنماط خاصة بالصفحات
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   ترحيب لوحة الطالب — رسالة قصيرة + إجراء أساسي واحد
+   --------------------------------------------------------- */
+.welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: var(--space-7);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(150deg, var(--brand-700), var(--brand-600));
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome::after {
+  content: '';
+  position: absolute;
+  inset-block-start: -60%;
+  inset-inline-start: -6%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 30px rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.welcome__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: #fff;
+}
+
+.welcome__text {
+  color: rgba(255, 255, 255, 0.88);
+  margin-top: var(--space-2);
+  max-width: 44ch;
+}
+
+.welcome__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .welcome {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--space-6);
+  }
+}
+
+/* ---------------------------------------------------------
+   خطة اليوم
+   --------------------------------------------------------- */
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.plan-item--done {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.plan-item__mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--border-strong);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+}
+
+.plan-item--done .plan-item__mark {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+/* ---------------------------------------------------------
+   المصحف
+   --------------------------------------------------------- */
+.quran-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 5;
+}
+
+.quran-page {
+  background: var(--quran-bg);
+  border: 1px solid var(--quran-frame);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-7);
+  position: relative;
+  box-shadow: var(--shadow-xs);
+}
+
+.quran-page::before {
+  content: '';
+  position: absolute;
+  inset: var(--space-3);
+  border: 1px solid var(--quran-frame);
+  border-radius: var(--radius-md);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.quran-page__head {
+  text-align: center;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--quran-frame);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.quran-page__surah-name {
+  font-family: var(--font-quran);
+  font-size: var(--text-2xl);
+  color: var(--quran-text);
+  font-weight: var(--weight-bold);
+}
+
+.quran-page__basmalah {
+  font-family: var(--font-quran);
+  font-size: calc(var(--quran-font-size, 1.6rem) * 0.85);
+  text-align: center;
+  color: var(--quran-text);
+  margin-bottom: var(--space-6);
+  line-height: 2.2;
+}
+
+.quran-text {
+  font-family: var(--font-quran);
+  font-size: var(--quran-font-size, 1.6rem);
+  line-height: 2.35;
+  color: var(--quran-text);
+  text-align: justify;
+  text-align-last: center;
+  position: relative;
+}
+
+.quran-ayah {
+  display: inline;
+  border-radius: var(--radius-xs);
+  padding: 2px 0;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.quran-ayah:hover,
+.quran-ayah:focus-visible {
+  background: var(--quran-highlight);
+}
+
+.quran-ayah--active {
+  background: var(--quran-highlight);
+  box-shadow: 0 0 0 1px var(--gold-400);
+}
+
+.quran-ayah__number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9em;
+  height: 1.9em;
+  margin: 0 0.3em;
+  border-radius: 50%;
+  border: 1px solid var(--gold-400);
+  color: var(--gold-600);
+  font-family: var(--font-sans);
+  font-size: 0.5em;
+  font-weight: var(--weight-semibold);
+  vertical-align: middle;
+}
+
+.quran-size-sm {
+  --quran-font-size: 1.3rem;
+}
+.quran-size-md {
+  --quran-font-size: 1.65rem;
+}
+.quran-size-lg {
+  --quran-font-size: 2.05rem;
+}
+.quran-size-xl {
+  --quran-font-size: 2.5rem;
+}
+
+.surah-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--text);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+  min-height: var(--tap-target);
+}
+
+.surah-card:hover {
+  border-color: var(--brand-400);
+  transform: translateY(-2px);
+  color: var(--text);
+}
+
+.surah-card__number {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-50);
+  color: var(--brand-600);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+  border: 1px solid var(--brand-200);
+}
+
+.surah-card__name {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+@media (max-width: 620px) {
+  .quran-page {
+    padding: var(--space-6) var(--space-4);
+  }
+  .quran-toolbar {
+    position: static;
+  }
+}
+
+/* ---------------------------------------------------------
+   التسميع
+   --------------------------------------------------------- */
+.mic {
+  display: grid;
+  place-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+.mic__circle {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 2.6rem;
+  background: var(--surface);
+  border: 2px solid var(--border-strong);
+  color: var(--text-muted);
+  transition:
+    background-color var(--dur-normal) var(--ease-out),
+    border-color var(--dur-normal) var(--ease-out);
+}
+
+.mic--active .mic__circle {
+  background: var(--danger-bg);
+  border-color: var(--danger);
+  color: var(--danger);
+  animation: mic-pulse 2s var(--ease-in-out) infinite;
+}
+
+.mic--paused .mic__circle {
+  background: var(--warning-bg);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+@keyframes mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(163, 42, 36, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(163, 42, 36, 0);
+  }
+}
+
+:root[data-motion='reduced'] .mic--active .mic__circle {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='normal']) .mic--active .mic__circle {
+    animation: none;
+  }
+}
+
+.mic__timer {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+
+.waveform {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 64px;
+  width: 100%;
+  max-width: 420px;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.waveform__bar {
+  width: 5px;
+  min-height: 3px;
+  border-radius: var(--radius-full);
+  background: var(--brand-500);
+  transition: height var(--dur-fast) linear;
+}
+
+.mistake-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+}
+
+/* ---------------------------------------------------------
+   الاختبارات
+   --------------------------------------------------------- */
+.test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 5;
+  flex-wrap: wrap;
+}
+
+.test-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+  direction: ltr;
+}
+
+.test-timer--warning {
+  color: var(--danger);
+}
+
+.answer-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  min-height: var(--tap-target);
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+
+.answer-option:hover {
+  border-color: var(--brand-400);
+}
+
+.answer-option:has(input:checked) {
+  border-color: var(--brand-500);
+  background: var(--brand-50);
+  box-shadow: inset 0 0 0 1px var(--brand-500);
+}
+
+.answer-option--correct {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.answer-option--wrong {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.answer-option__text {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  line-height: 2;
+}
+
+.question-nav {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.question-nav__btn {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.question-nav__btn--answered {
+  background: var(--brand-50);
+  border-color: var(--brand-300);
+  color: var(--brand-600);
+  font-weight: var(--weight-semibold);
+}
+
+.question-nav__btn[aria-current='true'] {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+  color: var(--text-on-brand);
+}
+
+/* ---------------------------------------------------------
+   التقارير والطباعة
+   --------------------------------------------------------- */
+.report-toolbar {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+
+.print-header,
+.print-footer {
+  color: var(--text);
+}
+
+[data-print-preview='true'] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+}
+
+/* ---------------------------------------------------------
+   الملف الشخصي وبطاقة الطالب
+   --------------------------------------------------------- */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.info-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.info-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.info-list__label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.info-list__value {
+  font-weight: var(--weight-medium);
+}
+
+/* ---------------------------------------------------------
+   شبكة الحضور
+   --------------------------------------------------------- */
+.attendance-grid {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.attendance-day {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-xs);
+  display: grid;
+  place-items: center;
+  font-size: var(--text-xs);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.attendance-day--present {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+.attendance-day--absent {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.attendance-day--late {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning);
+}
+.attendance-day--excused {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--info);
+}
+
+/* ---------------------------------------------------------
+   الإعدادات
+   --------------------------------------------------------- */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  position: sticky;
+  top: calc(var(--topbar-height) + var(--space-4));
+}
+
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+  }
+  .settings-nav .nav-item {
+    white-space: nowrap;
+  }
+}
