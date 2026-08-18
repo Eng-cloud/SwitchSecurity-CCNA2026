@@ -23,6 +23,13 @@ npm run dev        # http://localhost:5173
 | `npm test` | اختبارات الوحدة (Vitest) |
 | `npm run test:e2e` | اختبارات E2E (Playwright) على سطح المكتب والجوال |
 | `npm run test:all` | الاثنان معًا |
+| `npm run build:single` | بناء نسخة **ملف HTML واحد** مكتفٍ بذاته (`dist-single/halaqat-app.html`) |
+
+### التشغيل على الجوال
+
+`npm run build:single` ينتج ملفًا واحدًا يحوي كل شيء (بلا أصول خارجية ولا خادم)،
+ويستخدم التوجيه بالـhash فتعمل الروابط العميقة وزر الرجوع. يكفي فتحه في أي متصفح
+أو رفعه إلى أي استضافة ساكنة.
 
 ---
 

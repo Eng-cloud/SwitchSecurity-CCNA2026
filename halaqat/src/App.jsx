@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { I18nProvider } from './i18n/index.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
@@ -212,13 +212,19 @@ export function AppProviders({ children }) {
   );
 }
 
+/*
+ * عند النشر كملف واحد (بلا خادم يعيد كتابة المسارات) نستخدم التوجيه بالـhash
+ * حتى تعمل الروابط العميقة وزر الرجوع كما هي.
+ */
+const Router = import.meta.env.VITE_HASH_ROUTER === '1' ? HashRouter : BrowserRouter;
+
 export default function App() {
   return (
     <ErrorBoundary>
       <AppProviders>
-        <BrowserRouter>
+        <Router>
           <AppRoutes />
-        </BrowserRouter>
+        </Router>
       </AppProviders>
     </ErrorBoundary>
   );

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:all": "vitest run && playwright test"
+    "test:all": "vitest run && playwright test",
+    "build:single": "SINGLE_FILE=1 VITE_HASH_ROUTER=1 vite build && node scripts/build-single.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",

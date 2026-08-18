@@ -10,12 +10,12 @@ export function watchConsole(page) {
   const errors = [];
 
   page.on('console', (message) => {
-    if (message.type() === 'error') {
-      const text = message.text();
-      // تجاهل أخطاء الشبكة الخاصة بأيقونة الموقع فقط.
-      if (text.includes('favicon')) return;
-      errors.push(text);
-    }
+    if (message.type() !== 'error') return;
+    const text = message.text();
+    // تجاهل طلب أيقونة الموقع التلقائي من المتصفح (يُقدَّمها المضيف لا التطبيق).
+    const source = message.location?.().url ?? '';
+    if (text.includes('favicon') || source.includes('favicon')) return;
+    errors.push(text);
   });
 
   page.on('pageerror', (error) => {
