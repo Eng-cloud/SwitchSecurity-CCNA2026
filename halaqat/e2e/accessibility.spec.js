@@ -83,7 +83,7 @@ test('لوحة الأوامر تفتح بـCtrl+K وتُغلق بـEscape وتع
   // أمر فعلي: فتح المصحف
   await page.keyboard.press('Control+k');
   await page.getByRole('option', { name: /افتح المصحف/ }).click();
-  await expect(page).toHaveURL(/\/app\/student\/quran/);
+  await expect(page).toHaveURL(/\/app\/quran/);
 
   assertNoConsoleErrors(errors);
 });

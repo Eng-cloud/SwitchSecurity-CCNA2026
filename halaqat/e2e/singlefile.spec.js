@@ -24,12 +24,12 @@ test('نسخة الملف الواحد تعمل على الجوال', async ({ p
 
   // تنقّل + رجوع المتصفح
   await page.locator('[data-app-bottomnav]').getByRole('link', { name: 'المصحف' }).click();
-  await expect(page).toHaveURL(/#\/app\/student\/quran/);
+  await expect(page).toHaveURL(/#\/app\/quran/);
   await page.goBack();
   await expect(page).toHaveURL(/#\/app\/student$/);
 
   // رابط عميق مباشر
-  await page.goto(`${APP}#/app/student/quran/1`);
+  await page.goto(`${APP}#/app/quran/1`);
   await expect(page.getByText('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ')).toBeVisible();
 
   // لا طلبات لأصول خارجية

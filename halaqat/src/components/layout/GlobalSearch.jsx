@@ -13,7 +13,7 @@ import { Spinner } from '../ui/States.jsx';
 export default function GlobalSearch() {
   const t = useT();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const debounced = useDebouncedValue(query, 300);
@@ -22,8 +22,14 @@ export default function GlobalSearch() {
   useOnClickOutside(wrapRef, () => setOpen(false), open);
 
   const { data, loading } = useAsyncData(
-    () => searchService.search(debounced, { role }),
-    [debounced, role],
+    () =>
+      searchService.search(debounced, {
+        role,
+        userId: user?.userId,
+        circleId: user?.circleId,
+        childrenIds: user?.childrenIds ?? [],
+      }),
+    [debounced, role, user],
     { enabled: debounced.trim().length >= 2 },
   );
 
@@ -73,7 +79,13 @@ export default function GlobalSearch() {
                       key={student.id}
                       type="button"
                       className="menu__item"
-                      onClick={() => go(`/app/${role}/students/${student.id}`)}
+                      onClick={() =>
+                        go(
+                          role === 'parent'
+                            ? `/app/parent/children/${student.id}`
+                            : `/app/${role}/students/${student.id}`,
+                        )
+                      }
                     >
                       <span aria-hidden="true">🧑‍🎓</span>
                       <span className="grow">{student.name}</span>
@@ -114,7 +126,7 @@ export default function GlobalSearch() {
                       key={surah.number}
                       type="button"
                       className="menu__item"
-                      onClick={() => go(`/app/student/quran/${surah.number}`)}
+                      onClick={() => go(`/app/quran/${surah.number}`)}
                     >
                       <span aria-hidden="true">📖</span>
                       {surah.name}

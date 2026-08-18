@@ -2,7 +2,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { getNavigation, getBottomNavigation, COMMON_NAV } from '../../config/navigation.js';
+import { getNavigation, getBottomNavigation, getCommonNavigation } from '../../config/navigation.js';
 import { subscribeOffline, isOffline } from '../../mock/api.js';
 import useMediaQuery, { BREAKPOINTS } from '../../hooks/useMediaQuery.js';
 import { IconButton } from '../ui/Button.jsx';
@@ -59,6 +59,7 @@ export default function AppLayout() {
 
   const navItems = getNavigation(role);
   const bottomItems = getBottomNavigation(role);
+  const commonItems = getCommonNavigation(role);
 
   useEffect(() => subscribeOffline(setOfflineState), []);
 
@@ -95,11 +96,10 @@ export default function AppLayout() {
         <NavList items={navItems} unreadCount={unreadCount} />
 
         <div className="sidebar__footer">
-          <NavList items={COMMON_NAV} unreadCount={unreadCount} />
-          <p className="t-xs t-muted" style={{ padding: '0 var(--space-3)' }}>
-            {t('app.mockNotice')}
-          </p>
+          <NavList items={commonItems} unreadCount={unreadCount} />
         </div>
+
+        <p className="sidebar__note">{t('app.mockNotice')}</p>
       </nav>
 
       <header className="topbar" data-app-topbar="">
@@ -170,7 +170,7 @@ export default function AppLayout() {
       <Drawer open={menuOpen} onClose={closeMenu} title={t('nav.menu')}>
         <NavList items={navItems} onNavigate={closeMenu} unreadCount={unreadCount} />
         <div className="menu__divider" />
-        <NavList items={COMMON_NAV} onNavigate={closeMenu} unreadCount={unreadCount} />
+        <NavList items={commonItems} onNavigate={closeMenu} unreadCount={unreadCount} />
       </Drawer>
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />

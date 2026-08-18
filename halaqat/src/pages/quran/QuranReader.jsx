@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ROLE_HOME } from '../../config/navigation.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as quranService from '../../services/quranService.js';
@@ -30,8 +31,10 @@ export default function QuranReader() {
   const t = useT();
   const { surahNumber } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const toast = useToast();
+  // العلامات وآخر موضع والتسميع خاصة بالطالب؛ بقية الأدوار تقرأ فقط.
+  const isStudent = role === 'student' && Boolean(user?.studentId);
 
   const [prefs, setPrefs] = useState(() => quranService.getReaderPrefs());
   const [activeAyah, setActiveAyah] = useState(null);
@@ -51,7 +54,9 @@ export default function QuranReader() {
     () => quranService.getBookmarks(user.studentId),
     [user.studentId],
   );
-  const { data: bookmarkData } = useAsyncData(bookmarksFetcher, [user.studentId]);
+  const { data: bookmarkData } = useAsyncData(bookmarksFetcher, [user.studentId], {
+    enabled: isStudent,
+  });
 
   useEffect(() => {
     if (bookmarkData) setBookmarks(bookmarkData);
@@ -130,17 +135,16 @@ export default function QuranReader() {
             : undefined
         }
         breadcrumb={[
-          { label: t('nav.home'), to: '/app/student' },
-          { label: t('quran.title'), to: '/app/student/quran' },
+          { label: t('nav.home'), to: ROLE_HOME[role] ?? '/app' },
+          { label: t('quran.title'), to: '/app/quran' },
           { label: surah?.name ?? '' },
         ]}
         actions={
-          <Button
-            to={`/app/student/recitation?surah=${number}`}
-            icon="🎙"
-          >
-            {t('quran.startRecitation')}
-          </Button>
+          isStudent ? (
+            <Button to={`/app/student/recitation?surah=${number}`} icon="🎙">
+              {t('quran.startRecitation')}
+            </Button>
+          ) : null
         }
       />
 
@@ -167,9 +171,11 @@ export default function QuranReader() {
           {t('quran.recite')}
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={handleSaveLastRead} icon="📍">
-          {t('quran.saveLastRead')}
-        </Button>
+        {isStudent ? (
+          <Button variant="ghost" size="sm" onClick={handleSaveLastRead} icon="📍">
+            {t('quran.saveLastRead')}
+          </Button>
+        ) : null}
 
         <div className="row row-2 mis-auto">
           {isDownloaded ? (
@@ -248,14 +254,14 @@ export default function QuranReader() {
             <footer className="row row-between row-wrap" style={{ marginTop: 'var(--space-7)' }}>
               <Button
                 variant="ghost"
-                onClick={() => navigate(`/app/student/quran/${prevSurah.number}`)}
+                onClick={() => navigate(`/app/quran/${prevSurah.number}`)}
                 disabled={!prevSurah}
               >
                 → {prevSurah?.name ?? ''}
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => navigate(`/app/student/quran/${nextSurah.number}`)}
+                onClick={() => navigate(`/app/quran/${nextSurah.number}`)}
                 disabled={!nextSurah}
               >
                 {nextSurah?.name ?? ''} ←
@@ -284,14 +290,16 @@ export default function QuranReader() {
           <p className="t-serif t-lg" style={{ lineHeight: 2.2 }}>
             {data?.ayat?.find((item) => item.number === activeAyah)?.text ?? ''}
           </p>
-          <Button
-            variant="secondary"
-            block
-            onClick={() => handleBookmark(activeAyah)}
-            icon={isBookmarked(activeAyah) ? '🔖' : '➕'}
-          >
-            {isBookmarked(activeAyah) ? t('quran.removeBookmark') : t('quran.bookmark')}
-          </Button>
+          {isStudent ? (
+            <Button
+              variant="secondary"
+              block
+              onClick={() => handleBookmark(activeAyah)}
+              icon={isBookmarked(activeAyah) ? '🔖' : '➕'}
+            >
+              {isBookmarked(activeAyah) ? t('quran.removeBookmark') : t('quran.bookmark')}
+            </Button>
+          ) : null}
         </div>
       </Modal>
 

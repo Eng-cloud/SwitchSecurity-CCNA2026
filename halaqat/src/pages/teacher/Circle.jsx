@@ -6,6 +6,7 @@ import useAsyncData from '../../hooks/useAsyncData.js';
 import useListState from '../../hooks/useListState.js';
 import useDebouncedValue from '../../hooks/useDebouncedValue.js';
 import * as teacherService from '../../services/teacherService.js';
+import * as managementService from '../../services/managementService.js';
 import { formatNumber, formatPercent, formatRelative } from '../../lib/format.js';
 import {
   PageHeader,
@@ -42,7 +43,7 @@ const ATTENDANCE_VARIANT = {
  */
 export default function TeacherCircle() {
   const t = useT();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const toast = useToast();
   const [noteFor, setNoteFor] = useState(null);
   const [sort, setSort] = useState(null);
@@ -71,6 +72,23 @@ export default function TeacherCircle() {
     sort,
   ]);
 
+  /** تعيين طالب متميز مساعدًا للمعلم أو إلغاؤه. */
+  const handleAssistant = async (student) => {
+    try {
+      await managementService.setAssistant({
+        role,
+        studentId: student.id,
+        isAssistant: !student.isAssistant,
+      });
+      toast.success(
+        student.isAssistant ? t('teacher.assistant.unassigned') : t('teacher.assistant.assigned'),
+      );
+      refetch();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    }
+  };
+
   const handleAttendance = async (studentId, status) => {
     try {
       await teacherService.setAttendance(studentId, status);
@@ -87,9 +105,14 @@ export default function TeacherCircle() {
       header: t('teacher.tableStudent'),
       sortable: true,
       render: (row) => (
-        <a className="table__name" href={`/app/teacher/students/${row.id}`}>
-          {row.name}
-        </a>
+        <span className="table__name">
+          <a href={`/app/teacher/students/${row.id}`}>{row.name}</a>
+          {row.isAssistant ? (
+            <Badge variant="success" icon="★">
+              {t('teacher.assistant.badge')}
+            </Badge>
+          ) : null}
+        </span>
       ),
     },
     {
@@ -143,6 +166,9 @@ export default function TeacherCircle() {
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setNoteFor(row)}>
             {t('teacher.addNote')}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => handleAssistant(row)}>
+            {row.isAssistant ? t('teacher.assistant.unassign') : t('teacher.assistant.assign')}
           </Button>
         </div>
       ),

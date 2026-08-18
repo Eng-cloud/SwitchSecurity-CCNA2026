@@ -79,6 +79,7 @@ export async function getCircleStudents(
         masteryAvg: student.masteryAvg,
         lastRecitationAt: student.lastRecitationAt,
         status: student.status,
+        isAssistant: Boolean(student.isAssistant),
       };
     });
 
@@ -130,6 +131,7 @@ export async function getStudentProfile(studentId) {
       circleId: circle?.id ?? '',
       teacherName: teacher?.name ?? '',
       status: student.status,
+      isAssistant: Boolean(student.isAssistant),
       memorizedPages: student.memorizedPages,
       memorizedJuz: student.memorizedJuz,
       masteryAvg: student.masteryAvg,

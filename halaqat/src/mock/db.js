@@ -7,7 +7,7 @@
 import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -58,6 +58,16 @@ const CIRCLE_NAMES = [
 ];
 
 const CITIES = ['الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'أبها', 'بريدة'];
+
+const DISTRICTS = [
+  'حي النرجس', 'حي الياسمين', 'حي الملقا', 'حي الروضة', 'حي السلامة',
+  'حي الشاطئ', 'حي العزيزية', 'حي الخالدية', 'حي المروج', 'حي قرطبة',
+];
+
+const MOSQUES = [
+  'جامع الرحمة', 'جامع التقوى', 'جامع الفرقان', 'جامع النور',
+  'جامع السلام', 'جامع الإيمان', 'جامع الهدى',
+];
 
 const SCHEDULES = [
   'الأحد – الخميس · بعد المغرب',
@@ -132,6 +142,7 @@ function generate() {
     email: index === 0 ? 'supervisor@demo.local' : `supervisor${index + 1}@demo.local`,
     phone: `05000000${20 + index}`,
     city: rng.pick(CITIES),
+    district: rng.pick(DISTRICTS),
     joinedAt: daysAgo(540 - index * 30),
     status: 'active',
     title: 'مشرف حلقات',
@@ -146,6 +157,7 @@ function generate() {
     email: index === 0 ? 'teacher@demo.local' : `teacher${index + 1}@demo.local`,
     phone: `05100000${String(index + 10)}`,
     city: rng.pick(CITIES),
+    district: rng.pick(DISTRICTS),
     joinedAt: daysAgo(400 - index * 25),
     status: index === 5 ? 'inactive' : 'active',
     title: 'معلم حلقة',
@@ -161,6 +173,9 @@ function generate() {
       level: LEVELS[index % LEVELS.length],
       schedule: SCHEDULES[index % SCHEDULES.length],
       location: LOCATIONS[index % LOCATIONS.length],
+      city: teachers[index].city,
+      district: teachers[index].district,
+      mosque: MOSQUES[index % MOSQUES.length],
       studentIds: [],
     });
   });
@@ -229,6 +244,16 @@ function generate() {
                 : 'onTrack',
         currentSurah: rng.pick(SURAHS_WITH_TEXT).number,
         lastReadPage: rng.int(580, 604),
+        // الطالب المتميز يُرشَّح مساعدًا للمعلم — أول متميز في كل حلقة.
+        isAssistant: i === 1 && mastery > 90,
+        district: circle.district,
+        // هدف بالأجزاء ضمن مدة محددة
+        juzGoal: {
+          targetJuz: rng.pick([1, 2, 3, 5]),
+          durationDays: rng.pick([30, 60, 90, 180]),
+          startedAt: daysAgo(rng.int(3, 25)),
+          startJuz: Math.floor(memorizedPages / 20),
+        },
       };
 
       students.push(student);
@@ -372,9 +397,33 @@ function generate() {
     activity: rng.int(120, 420),
   }));
 
+  /* --- طلبات تسجيل من أولياء الأمور --- */
+  const enrollmentRequests = [
+    {
+      id: 'req-seed-1',
+      parentId: parent.id,
+      parentName: parent.name,
+      childName: 'سعد الحربي',
+      age: 10,
+      city: 'الرياض',
+      district: DISTRICTS[0],
+      mosque: MOSQUES[0],
+      circleId: circles[0].id,
+      circleName: circles[0].name,
+      note: 'الابن حافظ لجزء عمّ ويرغب بالانتظام في الحلقة.',
+      status: 'pending',
+      createdAt: daysAgo(2),
+      decidedBy: null,
+      decidedByName: null,
+      decidedAt: null,
+      rejectionReason: null,
+    },
+  ];
+
   return {
     version: DB_VERSION,
     createdAt: new Date().toISOString(),
+    enrollmentRequests,
     users,
     circles,
     students,
@@ -463,3 +512,11 @@ export function getCircle(circleId) {
 export function getSurahName(number) {
   return SURAHS.find((surah) => surah.number === Number(number))?.name ?? '';
 }
+
+export function getSupervisorCircles(supervisorId) {
+  return getDb().circles.filter((circle) => circle.supervisorId === supervisorId);
+}
+
+export const CITY_LIST = CITIES;
+export const DISTRICT_LIST = DISTRICTS;
+export const MOSQUE_LIST = MOSQUES;

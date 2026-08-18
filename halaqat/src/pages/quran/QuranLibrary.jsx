@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ROLE_HOME } from '../../config/navigation.js';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useDebouncedValue from '../../hooks/useDebouncedValue.js';
 import useListState from '../../hooks/useListState.js';
@@ -22,7 +23,9 @@ import {
 /** مكتبة المصحف: السور، الأجزاء، العلامات، وآخر موضع. */
 export default function QuranLibrary() {
   const t = useT();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  // العلامات وآخر موضع خاصة بالطالب؛ بقية الأدوار تقرأ المصحف فقط.
+  const isStudent = role === 'student' && Boolean(user?.studentId);
   const { values, setValue } = useListState({ defaults: { tab: 'surahs', q: '' } });
   const query = values.q;
   const debouncedQuery = useDebouncedValue(query, 250);
@@ -41,16 +44,16 @@ export default function QuranLibrary() {
     [user.studentId],
   );
   const { data: bookmarks, refetch: refetchBookmarks } = useAsyncData(bookmarksFetcher, [], {
-    enabled: values.tab === 'bookmarks',
+    enabled: isStudent && values.tab === 'bookmarks',
   });
 
-  const [lastRead] = useState(() => quranService.getLastRead(user.studentId));
+  const [lastRead] = useState(() => (isStudent ? quranService.getLastRead(user.studentId) : null));
   const offlineSurahs = quranService.getOfflineSurahs();
 
   const tabs = [
     { value: 'surahs', label: t('quran.surahs') },
     { value: 'juzs', label: t('quran.juzs') },
-    { value: 'bookmarks', label: t('quran.bookmarks') },
+    ...(isStudent ? [{ value: 'bookmarks', label: t('quran.bookmarks') }] : []),
   ];
 
   return (
@@ -58,7 +61,10 @@ export default function QuranLibrary() {
       <PageHeader
         title={t('quran.title')}
         subtitle={t('quran.subtitle')}
-        breadcrumb={[{ label: t('nav.home'), to: '/app/student' }, { label: t('quran.title') }]}
+        breadcrumb={[
+          { label: t('nav.home'), to: ROLE_HOME[role] ?? '/app' },
+          { label: t('quran.title') },
+        ]}
       />
 
       {lastRead ? (
@@ -69,7 +75,7 @@ export default function QuranLibrary() {
               {lastRead.surahName} · {t('quran.ayahLabel', { number: formatNumber(lastRead.ayahNumber) })}
             </p>
           </div>
-          <Button to={`/app/student/quran/${lastRead.surahNumber}`}>
+          <Button to={`/app/quran/${lastRead.surahNumber}`}>
             {t('student.resumeReading')}
           </Button>
         </Card>
@@ -104,7 +110,7 @@ export default function QuranLibrary() {
                 {(surahs ?? []).map((surah) => (
                   <li key={surah.number}>
                     <Link
-                      to={`/app/student/quran/${surah.number}`}
+                      to={`/app/quran/${surah.number}`}
                       className="surah-card"
                       aria-label={t('quran.openSurah', { name: surah.name })}
                     >
@@ -178,7 +184,7 @@ export default function QuranLibrary() {
                       <Button
                         variant="secondary"
                         size="sm"
-                        to={`/app/student/quran/${bookmark.surahNumber}`}
+                        to={`/app/quran/${bookmark.surahNumber}`}
                       >
                         {t('common.open')}
                       </Button>

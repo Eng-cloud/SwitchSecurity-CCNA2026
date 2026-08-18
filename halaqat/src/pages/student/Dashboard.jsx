@@ -16,6 +16,7 @@ import {
   DataState,
   PageSkeleton,
   Badge,
+  Alert,
 } from '../../components/ui/index.js';
 
 /**
@@ -84,7 +85,7 @@ export default function StudentDashboard() {
                 </p>
               </div>
               <div className="welcome__actions">
-                <Button variant="gold" to="/app/student/quran">
+                <Button variant="gold" to="/app/quran">
                   {t('student.resumeReading')}
                 </Button>
                 <Button variant="secondary" to="/app/student/progress">
@@ -92,6 +93,13 @@ export default function StudentDashboard() {
                 </Button>
               </div>
             </section>
+
+            {/* الطالب المتميز: مساعد المعلم */}
+            {student.isAssistant ? (
+              <Alert variant="success" title={t('teacher.assistant.yourRole')}>
+                {t('teacher.assistant.yourRoleHint')}
+              </Alert>
+            ) : null}
 
             {/* المؤشرات */}
             <div className="grid grid-4">
@@ -132,7 +140,6 @@ export default function StudentDashboard() {
                 value={t('student.streakDays', { count: formatNumber(student.streak) })}
                 meta={t('student.goals.commitment')}
                 icon="🔥"
-                accent
               />
             </div>
 

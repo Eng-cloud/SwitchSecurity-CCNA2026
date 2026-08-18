@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ROLE_HOME } from '../config/navigation.js';
+import { can } from '../config/permissions.js';
 import { LoadingState } from '../components/ui/States.jsx';
 
 /**
@@ -38,4 +39,12 @@ export function RedirectIfAuthenticated({ children }) {
     return <Navigate to={ROLE_HOME[role] ?? '/app'} replace />;
   }
   return children;
+}
+
+/** مسار محكوم بصلاحية لا بدور — مثل المصحف المتاح لأربعة أدوار. */
+export function RequirePermission({ action }) {
+  const { role } = useAuth();
+  if (!role) return <Navigate to="/login" replace />;
+  if (!can(role, action)) return <Navigate to={ROLE_HOME[role] ?? '/app'} replace />;
+  return <Outlet />;
 }

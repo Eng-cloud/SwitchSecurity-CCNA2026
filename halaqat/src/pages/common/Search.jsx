@@ -21,14 +21,21 @@ import {
 /** صفحة بحث كاملة — مكمّلة للبحث السريع في الشريط العلوي. */
 export default function SearchPage() {
   const t = useT();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { values, setValue } = useListState({ defaults: { q: '' } });
   const query = values.q;
   const debounced = useDebouncedValue(query, 300);
 
   const fetcher = useCallback(
-    () => searchService.search(debounced, { role, limit: 12 }),
-    [debounced, role],
+    () =>
+      searchService.search(debounced, {
+        role,
+        limit: 12,
+        userId: user?.userId,
+        circleId: user?.circleId,
+        childrenIds: user?.childrenIds ?? [],
+      }),
+    [debounced, role, user],
   );
   const { data, loading, error, refetch } = useAsyncData(fetcher, [debounced, role], {
     enabled: debounced.trim().length >= 2,
@@ -73,7 +80,14 @@ export default function SearchPage() {
                     <Card className="row row-3">
                       <span aria-hidden="true">🧑‍🎓</span>
                       <div className="grow">
-                        <Link to={`/app/${role}/students/${student.id}`} className="t-medium">
+                        <Link
+                          to={
+                            role === 'parent'
+                              ? `/app/parent/children/${student.id}`
+                              : `/app/${role}/students/${student.id}`
+                          }
+                          className="t-medium"
+                        >
                           {student.name}
                         </Link>
                         <p className="t-xs t-muted">{student.circleName}</p>
@@ -117,13 +131,9 @@ export default function SearchPage() {
                     <Card className="row row-3">
                       <span aria-hidden="true">📖</span>
                       <div className="grow">
-                        {role === 'student' ? (
-                          <Link to={`/app/student/quran/${surah.number}`} className="t-medium t-serif">
-                            {surah.name}
-                          </Link>
-                        ) : (
-                          <span className="t-medium t-serif">{surah.name}</span>
-                        )}
+                        <Link to={`/app/quran/${surah.number}`} className="t-medium t-serif">
+                          {surah.name}
+                        </Link>
                         <p className="t-xs t-muted">
                           {t('quran.ayahCount', { count: formatNumber(surah.ayahCount) })}
                         </p>

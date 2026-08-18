@@ -20,7 +20,7 @@ test.describe('الجوال', () => {
     expect(count).toBeLessThanOrEqual(5);
 
     await bottomNav.getByRole('link', { name: 'المصحف' }).click();
-    await expect(page).toHaveURL(/\/app\/student\/quran/);
+    await expect(page).toHaveURL(/\/app\/quran/);
 
     assertNoConsoleErrors(errors);
   });

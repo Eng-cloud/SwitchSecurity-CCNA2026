@@ -133,7 +133,7 @@ test('البحث: حالة التلميح ثم النتائج ثم الحالة 
 test('المصحف: تحميل دون اتصال ثم محاكاة القطع تُبقي المحتوى متاحًا', async ({ page }) => {
   const errors = watchConsole(page);
   await loginAs(page, 'student');
-  await page.goto('/app/student/quran/1');
+  await page.goto('/app/quran/1');
 
   await page.getByRole('button', { name: 'تحميل للقراءة دون اتصال' }).click();
   await expect(page.getByText('متاح دون اتصال')).toBeVisible({ timeout: 15000 });

@@ -34,10 +34,19 @@ export default defineConfig({
     },
   ],
 
-  webServer: {
-    command: 'npm run preview -- --port 4173 --strictPort',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      command: 'npm run preview -- --port 4173 --strictPort',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+    },
+    // نسخة الملف الواحد تُقدَّم من خادم ساكن بسيط لاختبارها كما تُنشر.
+    {
+      command: 'python3 -m http.server 4180 --directory dist-single',
+      url: 'http://127.0.0.1:4180/halaqat-app.html',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+    },
+  ],
 });

@@ -163,20 +163,21 @@ test('تبديل الدور داخل وضع التجربة يغيّر التنق
   const errors = watchConsole(page);
   await loginAs(page, 'student');
 
-  // تنقل الطالب
-  await expect(page.getByRole('link', { name: 'المصحف' }).first()).toBeVisible();
+  // تنقل الطالب: التسميع خاص به
+  await expect(page.getByRole('link', { name: 'التسميع' }).first()).toBeVisible();
 
   await page.getByRole('button', { name: /الحساب/ }).click();
   await page.getByRole('button', { name: 'تجربة المعلم' }).click();
 
   await expect(page).toHaveURL(/\/app\/teacher/);
   await expect(page.getByRole('heading', { name: 'حلقتي اليوم' })).toBeVisible();
-  // اختفى تنقل الطالب وظهر تنقل المعلم
-  await expect(page.getByRole('link', { name: 'المصحف', exact: true })).toHaveCount(0);
+  // اختفى تنقل الطالب وظهر تنقل المعلم (المصحف مشترك بينهما فلا يصلح للتمييز)
+  await expect(page.getByRole('link', { name: 'التسميع', exact: true })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'الحلقة', exact: true }).first()).toBeVisible();
 
-  // مسار دور آخر يعيد التوجيه بهدوء إلى لوحة الدور الحالي
-  await page.goto('/app/student/quran');
+  // مسار خاص بالطالب يعيد التوجيه بهدوء إلى لوحة الدور الحالي
+  // (المصحف لا يصلح هنا لأنه مشترك بين الطالب والمعلم)
+  await page.goto('/app/student/recitation');
   await expect(page).toHaveURL(/\/app\/teacher/);
 
   assertNoConsoleErrors(errors);

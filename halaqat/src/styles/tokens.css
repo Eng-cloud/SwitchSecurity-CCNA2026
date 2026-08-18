@@ -1,6 +1,10 @@
 /* =========================================================
    منصة الحلقات — Design Tokens
    الهوية: قرآني · هادئ · راقٍ · عريق · Modern Premium
+
+   البالِتة: أخضر زُمُرّدي نظيف كلون أساسي واحد، ونحاسي ذهبي
+   يُستعمل بخيوط رفيعة وعلامات صغيرة فقط — لا كتل ملوّنة.
+   ألوان الرسوم مفصولة عن ألوان الهوية ومُتحقَّق منها لعمى الألوان.
    ========================================================= */
 
 :root {
@@ -54,10 +58,10 @@
   --radius-full: 999px;
 
   /* ---------- Layout ---------- */
-  --sidebar-width: 264px;
+  --sidebar-width: 258px;
   --topbar-height: 64px;
   --bottomnav-height: 64px;
-  --content-max: 1180px;
+  --content-max: 1120px;
   --content-narrow: 720px;
   --tap-target: 44px;
 
@@ -86,86 +90,89 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  /* Brand */
-  --brand-50: #eef5f2;
-  --brand-100: #d6e8e1;
-  --brand-200: #a9cfc2;
-  --brand-300: #74b09d;
-  --brand-400: #45907a;
-  --brand-500: #1f7360;
-  --brand-600: #0e5245;
-  --brand-700: #0a4038;
-  --brand-800: #072e29;
-  --brand-900: #05201d;
+  /* Brand — أخضر زمرّدي نظيف */
+  --brand-50: #eaf5f1;
+  --brand-100: #d2e9e1;
+  --brand-200: #a7d3c5;
+  --brand-300: #71b7a3;
+  --brand-400: #389b83;
+  --brand-500: #12876c;
+  --brand-600: #0d6f58;
+  --brand-700: #0a5847;
+  --brand-800: #074235;
+  --brand-900: #052e25;
 
-  /* Gold — لمسة الوقار */
-  --gold-100: #f7efd9;
-  --gold-200: #ecdcae;
-  --gold-300: #ddc47c;
-  --gold-400: #cba94f;
-  --gold-500: #ac8b33;
-  --gold-600: #8a6d23;
+  /* Brass — لمسة الوقار، بخيوط وعلامات صغيرة لا بكتل */
+  --gold-100: #f7efdc;
+  --gold-200: #ebdfbc;
+  --gold-300: #d9c48c;
+  --gold-400: #c2a24e;
+  --gold-500: #a07e22;
+  --gold-600: #7e6114;
 
-  /* Surfaces */
-  --bg: #f6f4ee;
-  --bg-subtle: #efece3;
-  --surface: #fffdf9;
-  --surface-2: #f8f6f0;
-  --surface-3: #f0ede4;
-  --surface-inverse: #072e29;
-  --overlay: rgba(7, 46, 41, 0.42);
+  /* Surfaces — محايد دافئ خفيف، بلا ميل أصفر */
+  --bg: #f6f5f2;
+  --bg-subtle: #efeeea;
+  --surface: #ffffff;
+  --surface-2: #f7f6f3;
+  --surface-3: #eceae4;
+  --surface-inverse: #0a5847;
+  --overlay: rgba(10, 30, 26, 0.44);
 
   /* Text */
-  --text: #1c2422;
-  --text-secondary: #4a5754;
-  --text-muted: #6d7a76;
-  --text-inverse: #fbfaf6;
+  --text: #16201e;
+  --text-secondary: #4a5654;
+  --text-muted: #6c7875;
+  --text-inverse: #f7f6f3;
   --text-on-brand: #ffffff;
 
   /* Borders */
-  --border: #e0dccf;
-  --border-strong: #c8c2b0;
-  --border-subtle: #ebe7dc;
+  --border: #e3e1da;
+  --border-strong: #c7c4ba;
+  --border-subtle: #edebe5;
 
   /* Status */
-  --success: #1c7a52;
-  --success-bg: #e6f3ec;
-  --success-border: #b9dfcb;
-  --warning: #97650b;
-  --warning-bg: #fbf1de;
-  --warning-border: #ecd6a8;
-  --danger: #a32a24;
-  --danger-bg: #fbeae9;
-  --danger-border: #f0c5c2;
-  --info: #1c5c86;
-  --info-bg: #e7f1f8;
-  --info-border: #bcd8ea;
+  --success: #116b4c;
+  --success-bg: #e6f2ec;
+  --success-border: #b7dcc9;
+  --warning: #8a5d0b;
+  --warning-bg: #fbf0dc;
+  --warning-border: #ebd3a2;
+  --danger: #a32b23;
+  --danger-bg: #fbeae8;
+  --danger-border: #f0c6c1;
+  --info: #1c5a85;
+  --info-bg: #e8f1f8;
+  --info-border: #bdd8ea;
 
   /* Focus */
-  --focus-ring: #1f7360;
-  --focus-ring-offset: #fffdf9;
+  --focus-ring: #0d6f58;
+  --focus-ring-offset: #ffffff;
 
-  /* Charts — متمايزة بالدرجة وليست باللون وحده */
-  --chart-1: #0e5245;
-  --chart-2: #cba94f;
-  --chart-3: #3f7fa6;
-  --chart-4: #8a5a9c;
-  --chart-5: #b4703a;
-  --chart-6: #5c8a4a;
-  --chart-grid: #e3dfd2;
-  --chart-axis: #8b938f;
+  /* Charts — ترتيب ثابت، مُتحقَّق منه لعمى الألوان (OKLab ΔE) */
+  --chart-1: #12876c;
+  --chart-2: #c2532f;
+  --chart-3: #3a6dbf;
+  --chart-4: #b87514;
+  --chart-5: #9c4a8c;
+  --chart-6: #78964a;
+  --chart-grid: #e6e4dd;
+  --chart-axis: #6c7875;
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(20, 40, 35, 0.06);
-  --shadow-sm: 0 2px 6px rgba(20, 40, 35, 0.07);
-  --shadow-md: 0 8px 20px rgba(20, 40, 35, 0.09);
-  --shadow-lg: 0 18px 44px rgba(20, 40, 35, 0.14);
+  /* Shadows — خفيفة وباردة قليلًا */
+  --shadow-xs: 0 1px 2px rgba(18, 32, 29, 0.05);
+  --shadow-sm: 0 2px 8px rgba(18, 32, 29, 0.06);
+  --shadow-md: 0 10px 24px rgba(18, 32, 29, 0.08);
+  --shadow-lg: 0 20px 48px rgba(18, 32, 29, 0.12);
+
+  /* سهم القائمة المنسدلة — أيقونة حقيقية بدل مثلثات متدرجة تتكسر في RTL */
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%236c7875' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 
   /* Quran reader */
-  --quran-bg: #fbf7ec;
-  --quran-text: #17211f;
-  --quran-frame: #d8cba6;
-  --quran-highlight: rgba(203, 169, 79, 0.28);
+  --quran-bg: #fdfcf8;
+  --quran-text: #16201e;
+  --quran-frame: #e0d6bb;
+  --quran-highlight: rgba(194, 162, 78, 0.22);
 }
 
 /* =========================================================
@@ -174,76 +181,79 @@
 :root[data-theme='dark'] {
   color-scheme: dark;
 
-  --brand-50: #071f1b;
-  --brand-100: #0a2b26;
-  --brand-200: #0e3a33;
-  --brand-300: #145045;
-  --brand-400: #1d6a5a;
-  --brand-500: #2e8a76;
-  --brand-600: #45a48d;
-  --brand-700: #6cbfab;
-  --brand-800: #9ad7c8;
-  --brand-900: #c8ebe1;
+  --brand-50: #0f2a24;
+  --brand-100: #14372f;
+  --brand-200: #1a483d;
+  --brand-300: #216050;
+  --brand-400: #2b7f69;
+  --brand-500: #4fc4a1;
+  --brand-600: #3fb08f;
+  --brand-700: #6ccfb2;
+  --brand-800: #9ae2cd;
+  --brand-900: #c6f0e3;
 
-  --gold-100: #3a2f14;
-  --gold-200: #57461d;
-  --gold-300: #8a7030;
-  --gold-400: #b99a4c;
-  --gold-500: #d8b65c;
-  --gold-600: #ecd28c;
+  --gold-100: #33290f;
+  --gold-200: #4c3d17;
+  --gold-300: #7a6228;
+  --gold-400: #b08c3c;
+  --gold-500: #d4b062;
+  --gold-600: #e8cd92;
 
-  --bg: #0c1513;
-  --bg-subtle: #101a18;
-  --surface: #141f1d;
-  --surface-2: #1a2624;
-  --surface-3: #21302d;
-  --surface-inverse: #eef5f2;
-  --overlay: rgba(2, 8, 7, 0.66);
+  --bg: #0e1413;
+  --bg-subtle: #121a18;
+  --surface: #17201e;
+  --surface-2: #1e2926;
+  --surface-3: #26332f;
+  --surface-inverse: #eaf5f1;
+  --overlay: rgba(3, 8, 7, 0.68);
 
-  --text: #e8efec;
-  --text-secondary: #b3c2bd;
-  --text-muted: #8b9c97;
-  --text-inverse: #10201c;
-  --text-on-brand: #05201d;
+  --text: #e9efec;
+  --text-secondary: #b0beb9;
+  --text-muted: #889691;
+  --text-inverse: #0e1413;
+  --text-on-brand: #052e25;
 
-  --border: #2a3a36;
-  --border-strong: #3d524d;
-  --border-subtle: #1f2c29;
+  --border: #2c3a36;
+  --border-strong: #3f524c;
+  --border-subtle: #212d2a;
 
-  --success: #56c493;
+  --success: #4fbf95;
   --success-bg: #10281f;
-  --success-border: #1f5540;
-  --warning: #e0b45f;
-  --warning-bg: #2c2314;
-  --warning-border: #5b4a24;
-  --danger: #f0918b;
+  --success-border: #205544;
+  --warning: #dfb45f;
+  --warning-bg: #2b2314;
+  --warning-border: #5a4a24;
+  --danger: #ef9189;
   --danger-bg: #2e1614;
   --danger-border: #63302c;
-  --info: #79bce6;
+  --info: #7cbde6;
   --info-bg: #12242e;
   --info-border: #2a4c60;
 
-  --focus-ring: #6cbfab;
-  --focus-ring-offset: #0c1513;
+  --focus-ring: #4fc4a1;
+  --focus-ring-offset: #0e1413;
 
-  --chart-1: #45a48d;
-  --chart-2: #d8b65c;
-  --chart-3: #79bce6;
-  --chart-4: #c096d4;
-  --chart-5: #e0a274;
-  --chart-6: #9dc98a;
-  --chart-grid: #263533;
-  --chart-axis: #7e918c;
+  /* ألوان رسوم مُعاد اشتقاقها للخلفية الداكنة (لا قلب آلي) */
+  --chart-1: #2e9c81;
+  --chart-2: #d0674a;
+  --chart-3: #5a8ad8;
+  --chart-4: #b8851f;
+  --chart-5: #b06ba8;
+  --chart-6: #7fa04e;
+  --chart-grid: #273430;
+  --chart-axis: #889691;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.58);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.44);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.48);
+  --shadow-md: 0 10px 24px rgba(0, 0, 0, 0.54);
+  --shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.6);
 
-  --quran-bg: #121c1a;
-  --quran-text: #ecf3f0;
-  --quran-frame: #35473f;
-  --quran-highlight: rgba(216, 182, 92, 0.22);
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23889691' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+
+  --quran-bg: #131b19;
+  --quran-text: #edf3f0;
+  --quran-frame: #33453e;
+  --quran-highlight: rgba(212, 176, 98, 0.2);
 }
 
 /* =========================================================
@@ -261,14 +271,25 @@
   --border: #4a4a4a;
   --border-strong: #000000;
   --border-subtle: #6a6a6a;
-  --brand-600: #00463a;
-  --brand-500: #005c4c;
+  --brand-600: #00473a;
+  --brand-500: #005d4c;
+  --brand-50: #e8f2ef;
+  --text-on-brand: #ffffff;
   --focus-ring: #003d33;
   --focus-ring-offset: #ffffff;
   --success: #005c33;
   --warning: #6b4300;
   --danger: #99000d;
   --info: #003f66;
+  --chart-1: #00483a;
+  --chart-2: #8f2f12;
+  --chart-3: #1a3f8f;
+  --chart-4: #6b4300;
+  --chart-5: #6b2361;
+  --chart-6: #3d5a1f;
+  --chart-grid: #9a9a9a;
+  --chart-axis: #333333;
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23000000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   --quran-bg: #ffffff;
   --quran-text: #000000;
   --shadow-xs: 0 0 0 1px #4a4a4a;
@@ -289,14 +310,25 @@
   --border: #b8b8b8;
   --border-strong: #ffffff;
   --border-subtle: #8a8a8a;
-  --brand-600: #7fe0c6;
-  --brand-500: #5ccdb0;
+  --brand-600: #7fe0c0;
+  --brand-500: #5ccdaa;
+  --brand-50: #06231d;
+  --text-on-brand: #000000;
   --focus-ring: #ffe08a;
   --focus-ring-offset: #000000;
   --success: #7fe3ac;
   --warning: #ffd479;
   --danger: #ff9d97;
   --info: #8fd0ff;
+  --chart-1: #6fdcbc;
+  --chart-2: #ff9c7d;
+  --chart-3: #93b9ff;
+  --chart-4: #ffcc66;
+  --chart-5: #e6a3dc;
+  --chart-6: #b6d987;
+  --chart-grid: #5a5a5a;
+  --chart-axis: #d0d0d0;
+  --select-arrow: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1.5L6 6.5L11 1.5' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   --quran-bg: #000000;
   --quran-text: #ffffff;
 }

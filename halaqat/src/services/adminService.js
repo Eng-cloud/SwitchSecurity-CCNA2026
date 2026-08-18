@@ -38,24 +38,46 @@ export async function getDashboard() {
   });
 }
 
-export async function getUsers({ query = '', role = 'all', status = 'all', page = 1, perPage = 10 } = {}) {
+export async function getUsers({
+  query = '',
+  role = 'all',
+  status = 'all',
+  page = 1,
+  perPage = 10,
+  roles = null,
+} = {}) {
   return request(() => {
     const db = getDb();
-    let users = db.users.filter((user) => user.role !== 'student' || user.studentId);
+    // سجل المستخدمين الإداريين فقط — الطلاب لهم أقسامهم الخاصة.
+    const allowed = roles ?? ['admin', 'supervisor', 'teacher', 'parent'];
+    let users = db.users.filter((user) => allowed.includes(user.role));
 
     if (role !== 'all') users = users.filter((user) => user.role === role);
     if (status !== 'all') users = users.filter((user) => (user.status ?? 'active') === status);
     if (query) users = users.filter((user) => matchesQuery(user.name, query) || matchesQuery(user.email, query));
 
-    const rows = users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      role: user.role,
-      email: user.email,
-      circleName: user.circleId ? (getCircle(user.circleId)?.name ?? '') : '',
-      status: user.status ?? 'active',
-      joinedAt: user.joinedAt,
-    }));
+    // الأحدث أولًا حتى يظهر الحساب المضاف حديثًا في أعلى القائمة.
+    users = [...users].sort((a, b) => new Date(b.joinedAt ?? 0) - new Date(a.joinedAt ?? 0));
+
+    const rows = users.map((user) => {
+      const circle =
+        user.role === 'teacher'
+          ? (db.circles.find((item) => item.teacherId === user.id) ?? null)
+          : user.circleId
+            ? getCircle(user.circleId)
+            : null;
+      return {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        email: user.email,
+        city: user.city ?? '',
+        district: user.district ?? '',
+        circleName: circle?.name ?? '',
+        status: user.status ?? 'active',
+        joinedAt: user.joinedAt,
+      };
+    });
 
     return paginate(rows, { page, perPage });
   });

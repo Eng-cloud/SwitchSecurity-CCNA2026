@@ -6,8 +6,8 @@ import { watchConsole, assertNoConsoleErrors, loginAs } from './helpers.js';
 const ROUTES = {
   student: [
     '/app/student',
-    '/app/student/quran',
-    '/app/student/quran/1',
+    '/app/quran',
+    '/app/quran/1',
     '/app/student/review',
     '/app/student/recitation',
     '/app/student/tests',
@@ -21,22 +21,35 @@ const ROUTES = {
     '/app/teacher/students',
     '/app/teacher/sessions',
     '/app/teacher/reports',
+    '/app/quran',
   ],
   supervisor: [
     '/app/supervisor',
     '/app/supervisor/circles',
     '/app/supervisor/teachers',
+    '/app/supervisor/manage-teachers',
+    '/app/supervisor/requests',
     '/app/supervisor/reports',
+    '/app/quran',
   ],
   admin: [
     '/app/admin',
     '/app/admin/users',
+    '/app/admin/supervisors',
+    '/app/admin/teachers',
     '/app/admin/circles',
+    '/app/admin/requests',
     '/app/admin/reports',
     '/app/admin/analytics',
     '/app/admin/settings',
   ],
-  parent: ['/app/parent', '/app/parent/children', '/app/parent/reports'],
+  parent: [
+    '/app/parent',
+    '/app/parent/children',
+    '/app/parent/requests',
+    '/app/parent/reports',
+    '/app/quran',
+  ],
 };
 
 const SHARED = ['/app/settings', '/app/settings/accessibility', '/app/notifications', '/app/profile', '/app/search'];

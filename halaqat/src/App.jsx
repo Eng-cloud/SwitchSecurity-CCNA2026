@@ -12,7 +12,13 @@ import ErrorBoundary from './components/system/ErrorBoundary.jsx';
 import ScrollRestoration from './components/system/ScrollRestoration.jsx';
 import RouteAnnouncer from './components/system/RouteAnnouncer.jsx';
 import AppLayout from './components/layout/AppLayout.jsx';
-import { RequireAuth, RequireRole, RedirectIfAuthenticated } from './routes/guards.jsx';
+import {
+  RequireAuth,
+  RequireRole,
+  RequirePermission,
+  RedirectIfAuthenticated,
+} from './routes/guards.jsx';
+import { ACTIONS } from './config/permissions.js';
 
 /* صفحات عامة */
 import Landing from './pages/Landing.jsx';
@@ -30,10 +36,12 @@ import { LoadingState } from './components/ui/States.jsx';
  * وكل دور يحمّل صفحاته فقط.
  */
 
+/* المصحف — مشترك بين الأدوار التي تملك صلاحية القراءة */
+const QuranLibrary = lazy(() => import('./pages/quran/QuranLibrary.jsx'));
+const QuranReader = lazy(() => import('./pages/quran/QuranReader.jsx'));
+
 /* الطالب */
 const StudentDashboard = lazy(() => import('./pages/student/Dashboard.jsx'));
-const QuranLibrary = lazy(() => import('./pages/student/QuranLibrary.jsx'));
-const QuranReader = lazy(() => import('./pages/student/QuranReader.jsx'));
 const Review = lazy(() => import('./pages/student/Review.jsx'));
 const Recitation = lazy(() => import('./pages/student/Recitation.jsx'));
 const Tests = lazy(() => import('./pages/student/Tests.jsx'));
@@ -65,18 +73,22 @@ const AdminCircles = lazy(() => import('./pages/admin/Circles.jsx'));
 const AdminReports = lazy(() => import('./pages/admin/Reports.jsx'));
 const AdminAnalytics = lazy(() => import('./pages/admin/Analytics.jsx'));
 const AdminSettings = lazy(() => import('./pages/admin/Settings.jsx'));
+const AdminSupervisors = lazy(() => import('./pages/admin/Supervisors.jsx'));
+const AdminTeachers = lazy(() => import('./pages/admin/Teachers.jsx'));
 
 /* ولي الأمر */
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard.jsx'));
 const ParentChildren = lazy(() => import('./pages/parent/Children.jsx'));
 const ParentChildDetail = lazy(() => import('./pages/parent/ChildDetail.jsx'));
 const ParentReports = lazy(() => import('./pages/parent/Reports.jsx'));
+const ParentRequests = lazy(() => import('./pages/parent/Requests.jsx'));
 
 /* صفحات مشتركة */
 const Settings = lazy(() => import('./pages/common/Settings.jsx'));
 const Profile = lazy(() => import('./pages/common/Profile.jsx'));
 const NotificationsPage = lazy(() => import('./pages/common/Notifications.jsx'));
 const SearchPage = lazy(() => import('./pages/common/Search.jsx'));
+const EnrollmentRequests = lazy(() => import('./pages/common/EnrollmentRequests.jsx'));
 
 export function AppRoutes() {
   return (
@@ -126,11 +138,16 @@ export function AppRoutes() {
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<RoleHomeRedirect />} />
 
+            {/* المصحف: مشترك بين الطالب والمعلم والمشرف وولي الأمر */}
+            <Route element={<RequirePermission action={ACTIONS.QURAN_READ} />}>
+              <Route path="quran" element={<QuranLibrary />} />
+              <Route path="quran/:surahNumber" element={<QuranReader />} />
+            </Route>
+
             {/* الطالب */}
             <Route element={<RequireRole role="student" />}>
               <Route path="student" element={<StudentDashboard />} />
-              <Route path="student/quran" element={<QuranLibrary />} />
-              <Route path="student/quran/:surahNumber" element={<QuranReader />} />
+              <Route path="student/quran" element={<Navigate to="/app/quran" replace />} />
               <Route path="student/review" element={<Review />} />
               <Route path="student/recitation" element={<Recitation />} />
               <Route path="student/tests" element={<Tests />} />
@@ -157,6 +174,8 @@ export function AppRoutes() {
               <Route path="supervisor/circles" element={<SupervisorCircles />} />
               <Route path="supervisor/circles/:circleId" element={<SupervisorCircleDetail />} />
               <Route path="supervisor/teachers" element={<SupervisorTeachers />} />
+              <Route path="supervisor/manage-teachers" element={<AdminTeachers />} />
+              <Route path="supervisor/requests" element={<EnrollmentRequests />} />
               <Route path="supervisor/students/:studentId" element={<StudentProfile />} />
               <Route path="supervisor/reports" element={<SupervisorReports />} />
             </Route>
@@ -165,7 +184,10 @@ export function AppRoutes() {
             <Route element={<RequireRole role="admin" />}>
               <Route path="admin" element={<AdminDashboard />} />
               <Route path="admin/users" element={<AdminUsers />} />
+              <Route path="admin/supervisors" element={<AdminSupervisors />} />
+              <Route path="admin/teachers" element={<AdminTeachers />} />
               <Route path="admin/circles" element={<AdminCircles />} />
+              <Route path="admin/requests" element={<EnrollmentRequests />} />
               <Route path="admin/students/:studentId" element={<StudentProfile />} />
               <Route path="admin/reports" element={<AdminReports />} />
               <Route path="admin/analytics" element={<AdminAnalytics />} />
@@ -177,6 +199,7 @@ export function AppRoutes() {
               <Route path="parent" element={<ParentDashboard />} />
               <Route path="parent/children" element={<ParentChildren />} />
               <Route path="parent/children/:studentId" element={<ParentChildDetail />} />
+              <Route path="parent/requests" element={<ParentRequests />} />
               <Route path="parent/reports" element={<ParentReports />} />
             </Route>
 

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useT } from '../../i18n/index.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { can, ACTIONS } from '../../config/permissions.js';
 import { formatDateTime } from '../../lib/format.js';
 import { Button, SegmentedControl } from '../ui/index.js';
 import Logo from '../layout/Logo.jsx';
@@ -18,6 +20,9 @@ export default function ReportShell({
   actions,
 }) {
   const t = useT();
+  const { role } = useAuth();
+  // الطباعة صلاحية إدارية: المعلم والمشرف والإدارة فقط.
+  const canPrint = can(role, ACTIONS.REPORTS_PRINT);
   const [preview, setPreview] = useState(false);
   const printedAt = formatDateTime(new Date());
 
@@ -53,16 +58,20 @@ export default function ReportShell({
 
         <div className="row row-2 mis-auto">
           {actions}
-          <Button
-            variant="secondary"
-            onClick={() => setPreview((prev) => !prev)}
-            aria-pressed={preview}
-          >
-            {preview ? t('common.exitPrintPreview') : t('common.printPreview')}
-          </Button>
-          <Button onClick={() => window.print()} icon="🖨">
-            {t('common.print')}
-          </Button>
+          {canPrint ? (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => setPreview((prev) => !prev)}
+                aria-pressed={preview}
+              >
+                {preview ? t('common.exitPrintPreview') : t('common.printPreview')}
+              </Button>
+              <Button onClick={() => window.print()} icon="🖨">
+                {t('common.print')}
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 

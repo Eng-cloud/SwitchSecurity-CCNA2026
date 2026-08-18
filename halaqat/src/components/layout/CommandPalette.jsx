@@ -7,6 +7,7 @@ import { useTheme } from '../../context/ThemeContext.jsx';
 import useFocusTrap, { useScrollLock } from '../../hooks/useFocusTrap.js';
 import { normalizeArabic } from '../../mock/api.js';
 import { ROLE_HOME } from '../../config/navigation.js';
+import { can, ACTIONS } from '../../config/permissions.js';
 
 /**
  * لوحة الأوامر (Ctrl + K):
@@ -83,23 +84,25 @@ export default function CommandPalette({ open, onClose }) {
       },
     ];
 
+    // المصحف يظهر لكل دور يملك صلاحية قراءته.
+    if (can(role, ACTIONS.QURAN_READ)) {
+      base.unshift({
+        id: 'quran',
+        section: 'navigation',
+        label: t('palette.commands.openQuran'),
+        icon: '📖',
+        run: () => navigate('/app/quran'),
+      });
+    }
+
     if (role === 'student') {
-      base.unshift(
-        {
-          id: 'quran',
-          section: 'navigation',
-          label: t('palette.commands.openQuran'),
-          icon: '📖',
-          run: () => navigate('/app/student/quran'),
-        },
-        {
-          id: 'reports',
-          section: 'navigation',
-          label: t('palette.commands.openReports'),
-          icon: '📊',
-          run: () => navigate('/app/student/reports'),
-        },
-      );
+      base.unshift({
+        id: 'reports',
+        section: 'navigation',
+        label: t('palette.commands.openReports'),
+        icon: '📊',
+        run: () => navigate('/app/student/reports'),
+      });
     } else if (role === 'parent') {
       base.unshift({
         id: 'reports',

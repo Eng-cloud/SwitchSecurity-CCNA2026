@@ -52,6 +52,7 @@ export async function getDashboard(studentId) {
         lastReadPage: student.lastReadPage,
         currentSurah: student.currentSurah,
         currentSurahName: getSurahName(student.currentSurah),
+        isAssistant: Boolean(student.isAssistant),
       },
       summary: summarizeSessions(sessions),
       recent,
@@ -148,6 +149,59 @@ export async function getProgress(studentId) {
   });
 }
 
+/** حساب حالة هدف الأجزاء: الوتيرة المطلوبة، المنجز، والمتبقي. */
+function computeJuzGoal(student) {
+  const goal = student.juzGoal ?? {
+    targetJuz: 1,
+    durationDays: 90,
+    startedAt: new Date().toISOString(),
+    startJuz: student.memorizedJuz,
+  };
+
+  const PAGES_PER_JUZ = 20;
+  const startedAt = new Date(goal.startedAt);
+  const elapsedDays = Math.max(
+    0,
+    Math.floor((Date.now() - startedAt.getTime()) / (24 * 60 * 60 * 1000)),
+  );
+  const remainingDays = Math.max(0, goal.durationDays - elapsedDays);
+  const achievedJuz = Math.max(0, student.memorizedJuz - (goal.startJuz ?? 0));
+  const requiredPagePerDay = (goal.targetJuz * PAGES_PER_JUZ) / Math.max(1, goal.durationDays);
+  const expectedJuz = (goal.targetJuz * Math.min(elapsedDays, goal.durationDays)) / Math.max(1, goal.durationDays);
+
+  return {
+    ...goal,
+    elapsedDays,
+    remainingDays,
+    achievedJuz,
+    expectedJuz: Math.round(expectedJuz * 10) / 10,
+    requiredPagePerDay: Math.round(requiredPagePerDay * 10) / 10,
+    progressPercent: Math.min(100, Math.round((achievedJuz / Math.max(1, goal.targetJuz)) * 100)),
+    pace: achievedJuz >= expectedJuz + 0.5 ? 'ahead' : achievedJuz + 0.5 < expectedJuz ? 'behind' : 'onTrack',
+  };
+}
+
+export async function updateJuzGoal(studentId, { targetJuz, durationDays }) {
+  return request(() =>
+    mutateDb((db) => {
+      const student = db.students.find((item) => item.id === studentId);
+      if (!student) throw new ApiError('notFound', 'state.notFoundHint');
+
+      const juz = Math.max(1, Math.min(30, Number(targetJuz) || 1));
+      // أقصى مدة للهدف سنة واحدة.
+      const days = Math.max(30, Math.min(365, Number(durationDays) || 90));
+
+      student.juzGoal = {
+        targetJuz: juz,
+        durationDays: days,
+        startedAt: new Date().toISOString(),
+        startJuz: student.memorizedJuz,
+      };
+      return computeJuzGoal(student);
+    }),
+  );
+}
+
 export async function getGoals(studentId) {
   return request(() => {
     const student = getStudent(studentId);
@@ -157,6 +211,8 @@ export async function getGoals(studentId) {
     const presentDays = attendance.filter((row) => row.status === 'present').length;
 
     return {
+      juzGoal: computeJuzGoal(student),
+      memorizedJuz: student.memorizedJuz,
       targetDaily: student.targetDaily,
       targetWeekly: student.targetWeekly,
       todayDone: student.todayDone,

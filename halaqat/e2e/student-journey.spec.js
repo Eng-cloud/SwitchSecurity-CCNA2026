@@ -24,10 +24,10 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   await expect(page.locator('.stat').filter({ hasText: 'هدف اليوم' })).toBeVisible();
 
   // Quran: library → surah reader
-  await page.goto('/app/student/quran');
+  await page.goto('/app/quran');
   await expect(page.getByRole('heading', { name: 'المصحف' })).toBeVisible();
   await page.getByRole('link', { name: /فتح سورة الفاتحة/ }).click();
-  await expect(page).toHaveURL(/\/app\/student\/quran\/1/);
+  await expect(page).toHaveURL(/\/app\/quran\/1/);
   await expect(page.getByText('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ')).toBeVisible();
 
   // Review

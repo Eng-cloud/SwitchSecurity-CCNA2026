@@ -3,6 +3,8 @@
  * النصوص عبر مفاتيح i18n وليست ثابتة هنا.
  */
 
+import { can, ACTIONS } from './permissions.js';
+
 export const ROLE_HOME = {
   student: '/app/student',
   teacher: '/app/teacher',
@@ -11,10 +13,13 @@ export const ROLE_HOME = {
   parent: '/app/parent',
 };
 
+/** المصحف مسار مشترك — يظهر لكل دور يملك صلاحية القراءة. */
+const QURAN_ITEM = { to: '/app/quran', labelKey: 'nav.quran', icon: '📖', primary: true };
+
 const NAVIGATION = {
   student: [
     { to: '/app/student', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
-    { to: '/app/student/quran', labelKey: 'nav.quran', icon: '📖', primary: true },
+    QURAN_ITEM,
     { to: '/app/student/recitation', labelKey: 'nav.recitation', icon: '🎙', primary: true },
     { to: '/app/student/review', labelKey: 'nav.review', icon: '🔁' },
     { to: '/app/student/tests', labelKey: 'nav.tests', icon: '📝' },
@@ -26,27 +31,35 @@ const NAVIGATION = {
     { to: '/app/teacher', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/teacher/circle', labelKey: 'nav.circle', icon: '👥', primary: true },
     { to: '/app/teacher/students', labelKey: 'nav.students', icon: '🧑‍🎓', primary: true },
-    { to: '/app/teacher/sessions', labelKey: 'nav.sessions', icon: '🎙', primary: true },
+    { to: '/app/teacher/sessions', labelKey: 'nav.sessions', icon: '🎙' },
+    QURAN_ITEM,
     { to: '/app/teacher/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
   supervisor: [
     { to: '/app/supervisor', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/supervisor/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
     { to: '/app/supervisor/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫', primary: true },
-    { to: '/app/supervisor/reports', labelKey: 'nav.reports', icon: '📊', primary: true },
+    { to: '/app/supervisor/requests', labelKey: 'nav.requests', icon: '📬', primary: true },
+    QURAN_ITEM,
+    { to: '/app/supervisor/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
   admin: [
     { to: '/app/admin', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/admin/users', labelKey: 'nav.users', icon: '👤', primary: true },
+    { to: '/app/admin/supervisors', labelKey: 'nav.supervisors', icon: '🧭' },
+    { to: '/app/admin/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫' },
     { to: '/app/admin/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
+    { to: '/app/admin/requests', labelKey: 'nav.requests', icon: '📬' },
     { to: '/app/admin/reports', labelKey: 'nav.reports', icon: '📊' },
     { to: '/app/admin/analytics', labelKey: 'nav.analytics', icon: '📈', primary: true },
-    { to: '/app/admin/settings', labelKey: 'nav.settings', icon: '⚙️' },
+    { to: '/app/admin/settings', labelKey: 'nav.platformSettings', icon: '🛠' },
   ],
   parent: [
     { to: '/app/parent', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     { to: '/app/parent/children', labelKey: 'nav.children', icon: '🧑‍🎓', primary: true },
-    { to: '/app/parent/reports', labelKey: 'nav.reports', icon: '📊', primary: true },
+    { to: '/app/parent/requests', labelKey: 'nav.requests', icon: '📬', primary: true },
+    QURAN_ITEM,
+    { to: '/app/parent/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
 };
 
@@ -57,7 +70,15 @@ export const COMMON_NAV = [
 ];
 
 export function getNavigation(role) {
-  return NAVIGATION[role] ?? [];
+  const items = NAVIGATION[role] ?? [];
+  // المصحف يظهر فقط لمن يملك صلاحية قراءته.
+  return items.filter((item) => (item.to === '/app/quran' ? can(role, ACTIONS.QURAN_READ) : true));
+}
+
+/** الروابط المشتركة بلا تكرار لما هو موجود أصلًا في تنقل الدور. */
+export function getCommonNavigation(role) {
+  const existing = new Set(getNavigation(role).map((item) => item.to));
+  return COMMON_NAV.filter((item) => !existing.has(item.to));
 }
 
 /** عناصر شريط الجوال السفلي — خمسة عناصر كحد أقصى. */
