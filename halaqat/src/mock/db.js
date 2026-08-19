@@ -6,8 +6,9 @@
 
 import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
+import { seedTajweedItems } from './tajweed.js';
 
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -131,6 +132,8 @@ function generate() {
     joinedAt: daysAgo(720),
     status: 'active',
     title: 'مديرة المنصة',
+    // مستوى الإداري: العليا تملك كل شيء، والمحدود يُقيَّد بما يُسنَد إليه.
+    adminLevel: 'super',
   };
   users.push(admin);
 
@@ -370,6 +373,15 @@ function generate() {
       availableFrom: daysAgo(0),
       status: 'available',
     },
+    {
+      id: 'test-tajweed-1',
+      scope: 'tajweed',
+      titleKey: 'tests.tajweed',
+      durationMinutes: 12,
+      questionCount: 6,
+      availableFrom: daysAgo(0),
+      status: 'available',
+    },
   ];
 
   /* --- الإشعارات --- */
@@ -470,6 +482,8 @@ function generate() {
     circleAttendance: [],
     // الإنابات: من يقود الحلقة يوم غياب معلّمها.
     deputations: [],
+    // مكتبة التجويد: تُضاف من الإدارة العليا وحدها، ويقرأها الجميع.
+    tajweedItems: seedTajweedItems(new Date().toISOString()),
     users,
     circles,
     students,

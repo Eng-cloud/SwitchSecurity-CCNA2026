@@ -16,11 +16,15 @@ export const ROLE_HOME = {
 /** المصحف مسار مشترك — يظهر لكل دور يملك صلاحية القراءة. */
 const QURAN_ITEM = { to: '/app/quran', labelKey: 'nav.quran', icon: '📖', primary: true };
 
+/** التجويد مسار مشترك — يظهر لكل دور يملك مشاهدته. */
+const TAJWEED_ITEM = { to: '/app/tajweed', labelKey: 'nav.tajweed', icon: '🔉' };
+
 const NAVIGATION = {
   student: [
     { to: '/app/student', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     QURAN_ITEM,
     { to: '/app/student/recitation', labelKey: 'nav.recitation', icon: '🎙', primary: true },
+    TAJWEED_ITEM,
     // مؤقت: يظهر فقط أثناء وجود توكيل نشِط من المعلم ويختفي بانتهائه.
     {
       to: '/app/student/assistant',
@@ -40,6 +44,7 @@ const NAVIGATION = {
     { to: '/app/teacher/assistant', labelKey: 'nav.assistant', icon: '⭐' },
     { to: '/app/teacher/sessions', labelKey: 'nav.sessions', icon: '🎙' },
     QURAN_ITEM,
+    TAJWEED_ITEM,
     { to: '/app/teacher/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
   supervisor: [
@@ -59,6 +64,7 @@ const NAVIGATION = {
     { to: '/app/admin/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
     { to: '/app/admin/coverage', labelKey: 'nav.coverage', icon: '🛡' },
     { to: '/app/admin/requests', labelKey: 'nav.requests', icon: '📬' },
+    TAJWEED_ITEM,
     { to: '/app/admin/reports', labelKey: 'nav.reports', icon: '📊' },
     { to: '/app/admin/analytics', labelKey: 'nav.analytics', icon: '📈', primary: true },
     { to: '/app/admin/settings', labelKey: 'nav.platformSettings', icon: '🛠' },

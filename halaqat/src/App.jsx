@@ -36,7 +36,8 @@ import { LoadingState } from './components/ui/States.jsx';
  * وكل دور يحمّل صفحاته فقط.
  */
 
-/* المصحف — مشترك بين الأدوار التي تملك صلاحية القراءة */
+/* المصحف والتجويد — مشتركان بين الأدوار التي تملك صلاحيتهما */
+const Tajweed = lazy(() => import('./pages/tajweed/Tajweed.jsx'));
 const QuranLibrary = lazy(() => import('./pages/quran/QuranLibrary.jsx'));
 const QuranReader = lazy(() => import('./pages/quran/QuranReader.jsx'));
 
@@ -140,7 +141,12 @@ export function AppRoutes() {
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<RoleHomeRedirect />} />
 
-            {/* المصحف: مشترك بين الطالب والمعلم والمشرف وولي الأمر */}
+            {/* التجويد: للطالب والمعلم والإدارة — حارسه غير حارس المصحف */}
+            <Route element={<RequirePermission action={ACTIONS.TAJWEED_VIEW} />}>
+              <Route path="tajweed" element={<Tajweed />} />
+            </Route>
+
+            {/* المصحف: مشترك بين الطالب والمعلم وولي الأمر */}
             <Route element={<RequirePermission action={ACTIONS.QURAN_READ} />}>
               <Route path="quran" element={<QuranLibrary />} />
               <Route path="quran/:surahNumber" element={<QuranReader />} />

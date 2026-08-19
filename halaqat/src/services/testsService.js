@@ -6,6 +6,7 @@
 import { request, ApiError } from '../mock/api.js';
 import { getDb, mutateDb, getStudent } from '../mock/db.js';
 import { SURAHS_WITH_TEXT, getSurahAyat } from '../mock/quran.js';
+import { TAJWEED_RULES } from '../mock/tajweed.js';
 
 function shuffleDeterministic(items, seed) {
   const array = [...items];
@@ -16,6 +17,65 @@ function shuffleDeterministic(items, seed) {
     [array[i], array[j]] = [array[j], array[i]];
   }
   return array;
+}
+
+/**
+ * أسئلة التجويد تُبنى من الأحكام نفسها التي يعرضها قسم التجويد، فلا
+ * يُختبر الطالب في غير ما قرأ. ثلاثة أوجه: التعريف، والحروف، والمثال.
+ */
+function buildTajweedQuestions(seed, count) {
+  const questions = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const rule = TAJWEED_RULES[(seed + index * 3) % TAJWEED_RULES.length];
+    const others = TAJWEED_RULES.filter((item) => item.id !== rule.id);
+    const kind = (seed + index) % 3;
+
+    if (kind === 0) {
+      questions.push({
+        id: `q-${index}`,
+        type: 'tajweedDefinition',
+        prompt: 'أيُّ حكمٍ ينطبق عليه هذا التعريف؟',
+        context: rule.definition,
+        options: shuffleDeterministic(
+          [rule.name, ...others.slice(0, 3).map((item) => item.name)],
+          seed + index,
+        ),
+        correct: rule.name,
+        meta: rule.name,
+      });
+    } else if (kind === 1) {
+      questions.push({
+        id: `q-${index}`,
+        type: 'tajweedLetters',
+        prompt: `ما حروف ${rule.name}؟`,
+        context: null,
+        options: shuffleDeterministic(
+          [
+            ...new Set([rule.letters, ...others.slice(0, 4).map((item) => item.letters)]),
+          ].slice(0, 4),
+          seed + index,
+        ),
+        correct: rule.letters,
+        meta: rule.name,
+      });
+    } else {
+      questions.push({
+        id: `q-${index}`,
+        type: 'tajweedExample',
+        prompt: 'ما الحكم في هذا المثال؟',
+        context: rule.example,
+        options: shuffleDeterministic(
+          [rule.name, ...others.slice(1, 4).map((item) => item.name)],
+          seed + index,
+        ),
+        correct: rule.name,
+        meta: rule.example,
+      });
+    }
+  }
+
+  return questions;
 }
 
 function buildQuestions(seed, count) {
@@ -110,14 +170,23 @@ export async function listTests(studentId) {
   });
 }
 
+/** بذرة الأسئلة وبانيها — من نطاق الاختبار وحده، فلا تتفرق القاعدة. */
+const SEEDS = { weekly: 41, monthly: 97, tajweed: 63 };
+
+function questionsFor(test) {
+  const seed = SEEDS[test.scope] ?? SEEDS.monthly;
+  return test.scope === 'tajweed'
+    ? buildTajweedQuestions(seed, test.questionCount)
+    : buildQuestions(seed, test.questionCount);
+}
+
 export async function getTest(testId) {
   return request(() => {
     const test = getDb().tests.find((item) => item.id === testId);
     if (!test) throw new ApiError('notFound', 'state.notFoundHint');
-    const seed = test.scope === 'weekly' ? 41 : 97;
     return {
       ...test,
-      questions: buildQuestions(seed, test.questionCount),
+      questions: questionsFor(test),
     };
   });
 }
@@ -127,8 +196,7 @@ export async function submitTest(testId, studentId, answers) {
     mutateDb((db) => {
       const test = db.tests.find((item) => item.id === testId);
       if (!test) throw new ApiError('notFound', 'state.notFoundHint');
-      const seed = test.scope === 'weekly' ? 41 : 97;
-      const questions = buildQuestions(seed, test.questionCount);
+      const questions = questionsFor(test);
 
       const details = questions.map((question) => ({
         id: question.id,

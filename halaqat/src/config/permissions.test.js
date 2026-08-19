@@ -73,6 +73,7 @@ describe('مصفوفة الصلاحيات', () => {
         ACTIONS.TASKS_ASSIGN,
         ACTIONS.ATTENDANCE_RECORD,
         ACTIONS.COVERAGE_MANAGE,
+        ACTIONS.TAJWEED_VIEW,
         ACTIONS.NOTES_WRITE,
       ].sort(),
     );
@@ -115,6 +116,21 @@ describe('مصفوفة الصلاحيات', () => {
     }
     for (const role of ['student', 'parent']) {
       expect(can(role, ACTIONS.COVERAGE_MANAGE)).toBe(false);
+    }
+  });
+
+  it('التجويد: يشاهده الطالب والمعلم والإدارة، ويضيفه من الإدارة فقط', () => {
+    for (const role of ['student', 'teacher', 'admin']) {
+      expect(can(role, ACTIONS.TAJWEED_VIEW)).toBe(true);
+    }
+    for (const role of ['supervisor', 'parent']) {
+      expect(can(role, ACTIONS.TAJWEED_VIEW)).toBe(false);
+    }
+
+    // الإضافة صلاحية إدارية، ثم تضيق داخل الخدمة على الإدارة العليا.
+    expect(can('admin', ACTIONS.TAJWEED_MANAGE)).toBe(true);
+    for (const role of ['student', 'teacher', 'supervisor', 'parent']) {
+      expect(can(role, ACTIONS.TAJWEED_MANAGE)).toBe(false);
     }
   });
 

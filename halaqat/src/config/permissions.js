@@ -36,6 +36,8 @@ export const ACTIONS = {
   ENROLLMENT_REVIEW: 'enrollment.review',
   ATTENDANCE_RECORD: 'attendance.record',
   COVERAGE_MANAGE: 'coverage.manage',
+  TAJWEED_VIEW: 'tajweed.view',
+  TAJWEED_MANAGE: 'tajweed.manage',
   NOTES_WRITE: 'notes.write',
 };
 
@@ -53,9 +55,12 @@ const A = ACTIONS;
  *   المشرف مسؤول عن انعقاد الحلقة، ومن يُسأل عن انعقادها يملك تسجيله.
  * - التغطية (COVERAGE_MANAGE): المعلم يطلب نائبًا ويردّ على الطلبات،
  *   والمشرف يعيّن بديلًا أو يتولّى الحلقة بنفسه.
+ * - التجويد: المشاهدة (TAJWEED_VIEW) للطالب والمعلم والإدارة، والإضافة
+ *   (TAJWEED_MANAGE) للإدارة وحدها — ثم تضيق أكثر داخل الخدمة على
+ *   الإدارة العليا دون الإداري المحدود.
  */
 const MATRIX = {
-  student: [A.QURAN_READ, A.RECITATION_RECORD],
+  student: [A.QURAN_READ, A.RECITATION_RECORD, A.TAJWEED_VIEW],
 
   // المعلم داخل حلقته: تسميع وحضور وملاحظات وتقارير وتعيين مساعد.
   // ليس له STUDENTS_MANAGE ولا TEACHERS_MANAGE ولا CIRCLES_MANAGE ولا مراجعة الطلبات.
@@ -67,6 +72,7 @@ const MATRIX = {
     A.TASKS_ASSIGN,
     A.ATTENDANCE_RECORD,
     A.COVERAGE_MANAGE,
+    A.TAJWEED_VIEW,
     A.NOTES_WRITE,
   ],
 
@@ -93,6 +99,8 @@ const MATRIX = {
     A.DISTINGUISHED_VIEW,
     A.ATTENDANCE_RECORD,
     A.COVERAGE_MANAGE,
+    A.TAJWEED_VIEW,
+    A.TAJWEED_MANAGE,
   ],
 
   parent: [A.QURAN_READ, A.ENROLLMENT_CREATE],

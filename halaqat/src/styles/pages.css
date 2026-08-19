@@ -821,3 +821,26 @@
     width: 100%;
   }
 }
+
+/* =========================================================
+   التجويد — بطاقة الحكم
+
+   المثال هو ما يُنظر إليه، فله حجم النص القرآني وخطُّه، ويُفصل عن
+   الشرح بخطٍّ خفيف حتى يُقرأ متنًا لا حاشية.
+   ========================================================= */
+.tajweed-rule {
+  height: 100%;
+}
+
+.tajweed-example {
+  margin-block-start: auto;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+  font-size: var(--quran-size);
+  line-height: var(--quran-leading);
+  color: var(--brand-700);
+}
+
+:root[data-theme='dark'] .tajweed-example {
+  color: var(--brand-300);
+}
