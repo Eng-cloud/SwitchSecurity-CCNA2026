@@ -20,8 +20,12 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
 
   // Dashboard
   await expect(page).toHaveURL(/\/app\/student/);
-  await expect(page.getByText(/مرحبًا/)).toBeVisible();
-  await expect(page.locator('.stat').filter({ hasText: 'هدف اليوم' })).toBeVisible();
+  // اللوحة تبدأ بالإنسان لا بالأرقام: تحية، ثم وردُ اليوم بفعله الواحد.
+  await expect(page.getByText(/صباح الخير|مساء الخير/)).toBeVisible();
+  await expect(page.getByTestId('ward')).toBeVisible();
+  await expect(page.getByTestId('ward-start')).toBeVisible();
+  // ثم رحلة الأسبوع بثلاثة أرقام.
+  await expect(page.getByRole('heading', { name: 'رحلتك هذا الأسبوع' })).toBeVisible();
 
   // Quran: library → surah reader
   await page.goto('/app/quran');

@@ -5,12 +5,12 @@ import { useToast } from '../../context/ToastContext.jsx';
 import useOnClickOutside from '../../hooks/useOnClickOutside.js';
 import { IconButton } from '../ui/Button.jsx';
 
-const ICONS = { light: '☀', dark: '🌙', system: '🖥' };
+const ICONS = { calm: '🌿', focus: '🎯', night: '🌙', system: '🖥' };
 
 /** مبدّل المظهر: فاتح / داكن / النظام — مع إعلان التغيير لقارئ الشاشة. */
 export default function ThemeToggle() {
   const t = useT();
-  const { mode, resolved, setMode } = useTheme();
+  const { mode, resolvedMode, setMode } = useTheme();
   const { announce } = useToast();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
@@ -31,12 +31,12 @@ export default function ThemeToggle() {
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        {ICONS[mode === 'system' ? resolved : mode]}
+        {ICONS[mode === 'system' ? resolvedMode : mode]}
       </IconButton>
 
       {open ? (
         <div className="menu" role="menu" aria-label={t('theme.label')}>
-          {['light', 'dark', 'system'].map((option) => (
+          {['calm', 'focus', 'night', 'system'].map((option) => (
             <button
               key={option}
               type="button"

@@ -1,0 +1,88 @@
+/* =========================================================
+   الزخرفة الهندسية — عنصر ثانوي لا محور
+
+   قاعدة الاستعمال: مواضع معدودة فقط (واجهة الدخول، رأس المصحف،
+   الحالات الفارغة، الفواصل). لا زخرفة في البطاقات ولا حول العناوين.
+   الشفافية منخفضة جدًا حتى تُحسّ ولا تُقرأ، ولا تنافس النص أبدًا.
+   ========================================================= */
+
+:root {
+  /*
+   * نجمة ثمانية متكررة (tessellation) — أبسط الأنماط الإسلامية وأكثرها
+   * هدوءًا. رُسمت بخط واحد بلا تعبئة كي تبقى خفيفة على المحرك.
+   */
+  --pattern-star: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><g fill='none' stroke='%23215243' stroke-width='1'><path d='M36 4 L48 16 L64 16 L64 32 L76 44 M36 4 L24 16 L8 16 L8 32 L-4 44'/><path d='M36 68 L48 56 L64 56 L64 40 M36 68 L24 56 L8 56 L8 40'/><rect x='24' y='24' width='24' height='24' transform='rotate(45 36 36)'/><rect x='24' y='24' width='24' height='24'/></g></svg>");
+  --pattern-opacity: 0.05;
+}
+
+:root[data-theme='dark'] {
+  --pattern-star: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'><g fill='none' stroke='%238fd8bc' stroke-width='1'><path d='M36 4 L48 16 L64 16 L64 32 L76 44 M36 4 L24 16 L8 16 L8 32 L-4 44'/><path d='M36 68 L48 56 L64 56 L64 40 M36 68 L24 56 L8 56 L8 40'/><rect x='24' y='24' width='24' height='24' transform='rotate(45 36 36)'/><rect x='24' y='24' width='24' height='24'/></g></svg>");
+  --pattern-opacity: 0.07;
+}
+
+/*
+ * الحامل: طبقة خلفية مستقلة بـ::before حتى تُضبط شفافيتها وحدها
+ * دون أن ترث شفافية المحتوى فوقها.
+ */
+.ornament {
+  position: relative;
+  isolation: isolate;
+}
+
+.ornament::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--pattern-star);
+  background-repeat: repeat;
+  background-size: 72px 72px;
+  opacity: var(--pattern-opacity);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* تلاشٍ نحو الأسفل: الزخرفة تُستهل بها الصفحة ثم تخفت لتترك المجال للنص. */
+.ornament--fade::before {
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 78%);
+}
+
+/* زاوية واحدة فقط — للحالات الفارغة ورؤوس الأقسام. */
+.ornament--corner::before {
+  background-size: 88px 88px;
+  mask-image: radial-gradient(
+    120% 120% at var(--ornament-x, 100%) var(--ornament-y, 0%),
+    rgba(0, 0, 0, 0.85),
+    transparent 62%
+  );
+}
+
+/* ---------------------------------------------------------
+   الفاصل المزخرف — بديل هادئ للخط الأفقي بين أقسام الصفحة
+   --------------------------------------------------------- */
+.divider-ornate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--gold-400);
+}
+
+.divider-ornate::before,
+.divider-ornate::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to left, transparent, var(--border), transparent);
+}
+
+.divider-ornate__mark {
+  font-size: var(--text-sm);
+  line-height: 1;
+  opacity: 0.75;
+}
+
+/* الطباعة: لا زخرفة على الورق. */
+@media print {
+  .ornament::before {
+    display: none;
+  }
+}

@@ -1,34 +1,38 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as studentService from '../../services/studentService.js';
+import * as taskService from '../../services/taskService.js';
 import useAssistantDuty from '../../hooks/useAssistantDuty.js';
-import { formatFraction, formatNumber, formatPercent, formatRelative } from '../../lib/format.js';
+import { formatNumber, formatPercent, formatRelative } from '../../lib/format.js';
 import {
   PageHeader,
   Section,
-  Stat,
   Card,
   Button,
-  ProgressBar,
   DataState,
   PageSkeleton,
   Badge,
   Alert,
 } from '../../components/ui/index.js';
 
+/** تحية بحسب الوقت — لمسة إنسانية قبل أي رقم. */
+function greetingKey() {
+  const hour = new Date().getHours();
+  return hour < 12 ? 'student.home.morning' : 'student.home.evening';
+}
+
 /**
- * لوحة الطالب — مختصرة عمدًا:
- * تحية، هدف اليوم، أربعة مؤشرات، إجراء أساسي واحد، ثم آخر النشاطات.
+ * لوحة الطالب — ترتيب إنساني لا إداري.
+ *
+ * تبدأ بمن يقرأ: تحية ودعاء، ثم وردُ اليوم بفعله الواحد، ثم رحلة الأسبوع
+ * بثلاثة أرقام بلا بطاقات. التفاصيل والإحصاءات تأتي بعد ذلك لا قبله.
  */
 export default function StudentDashboard() {
   const t = useT();
   const { user } = useAuth();
-  const toast = useToast();
-  const [completing, setCompleting] = useState(null);
   const { duty } = useAssistantDuty();
 
   const fetcher = useCallback(
@@ -37,22 +41,11 @@ export default function StudentDashboard() {
   );
   const { data, loading, error, refetch } = useAsyncData(fetcher, [user.studentId]);
 
-  /** تبديل حالة بند الخطة — الضغطة الخاطئة يتراجع عنها بضغطة مثلها. */
-  const handleToggle = async (item) => {
-    setCompleting(item.id);
-    try {
-      const result = await studentService.completePlanItem(user.studentId, item.id, {
-        done: !item.done,
-      });
-      toast.success(result.done ? t('student.plan.marked') : t('student.plan.unmarked'));
-      refetch();
-    } catch {
-      toast.error(t('state.errorHint'));
-    } finally {
-      setCompleting(null);
-    }
-  };
+  // ورد اليوم من نواة المهام — مصدر واحد لما ينبغي فعله الآن.
+  const tasksFetcher = useCallback(() => taskService.listToday(user.studentId), [user.studentId]);
+  const today = useAsyncData(tasksFetcher, [user.studentId]);
 
+  /** تبديل حالة بند الخطة — الضغطة الخاطئة يتراجع عنها بضغطة مثلها. */
   const student = data?.student;
   const goalDone = student ? student.todayDone >= student.targetDaily : false;
 
@@ -77,27 +70,94 @@ export default function StudentDashboard() {
       >
         {student ? (
           <div className="stack-6">
-            {/* الترحيب + هدف اليوم */}
-            <section className="welcome">
-              <div>
-                <h2 className="welcome__title">{t('student.greeting', { name: student.name })}</h2>
-                <p className="welcome__text">
-                  {goalDone
-                    ? t('student.goalDone')
-                    : t('student.goalRemaining', {
-                        count: formatNumber(student.targetDaily - student.todayDone),
-                      })}
-                </p>
-              </div>
-              <div className="welcome__actions">
-                <Button variant="gold" to="/app/quran">
-                  {t('student.resumeReading')}
-                </Button>
-                <Button variant="secondary" to="/app/student/progress">
-                  {t('student.viewProgress')}
-                </Button>
-              </div>
+            {/* التحية والدعاء — افتتاح هادئ بلا أرقام */}
+            <section className="daily-hero ornament ornament--fade">
+              <h2 className="daily-hero__greeting">
+                {t(greetingKey(), { name: student.name })}
+              </h2>
+              <p className="daily-hero__quote">{t('student.home.quote')}</p>
             </section>
+
+            {/* وردك اليوم — الفعل الواحد الذي جاء من أجله */}
+            {(() => {
+              const tasks = today.data?.tasks ?? [];
+              const pending = tasks.filter((task) => task.status === 'pending');
+              const current = pending[0] ?? null;
+              const rest = pending.slice(1);
+
+              if (!current) {
+                return (
+                  <section className="ward">
+                    <div>
+                      <p className="ward__label">{t('student.home.wardLabel')}</p>
+                      <p className="ward__title">{t('student.home.wardEmpty')}</p>
+                      <p className="ward__range">{t('student.home.wardEmptyHint')}</p>
+                    </div>
+                    <div className="ward__actions">
+                      <Button variant="secondary" to="/app/student/progress">
+                        {t('student.home.viewProgress')}
+                      </Button>
+                    </div>
+                  </section>
+                );
+              }
+
+              return (
+                <>
+                  <section className="ward" data-testid="ward">
+                    <div>
+                      <p className="ward__label">
+                        {t('student.home.wardLabel')} ·{' '}
+                        {t(`tasks.types.${current.type}`)}
+                        {current.source === 'teacher' ? ` · ${t('tasks.fromTeacher')}` : ''}
+                      </p>
+                      <p className="ward__title">{current.surahName}</p>
+                      <p className="ward__range">
+                        {t('tasks.range', {
+                          surah: current.surahName,
+                          from: formatNumber(current.fromAyah),
+                          to: formatNumber(current.toAyah),
+                        })}
+                      </p>
+                    </div>
+                    <div className="ward__actions">
+                      <Button variant="gold" to="/app/student/recitation" data-testid="ward-start">
+                        {t(`tasks.start.${current.type}`)}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        to={`/app/quran/${current.surahNumber}?from=${current.fromAyah}&to=${current.toAyah}`}
+                      >
+                        {t('tasks.viewAyat')}
+                      </Button>
+                    </div>
+                  </section>
+
+                  {rest.length > 0 ? (
+                    <div className="stack-3">
+                      <p className="t-sm t-muted">{t('student.home.restLabel')}</p>
+                      <ul className="ward-rest">
+                        {rest.map((task) => (
+                          <li key={task.id}>
+                            <span className="ward-rest__mark" aria-hidden="true" />
+                            <div className="ward-rest__body">
+                              <p className="t-medium">{t(`tasks.types.${task.type}`)}</p>
+                              <p className="t-sm t-muted">
+                                {t('tasks.range', {
+                                  surah: task.surahName,
+                                  from: formatNumber(task.fromAyah),
+                                  to: formatNumber(task.toAyah),
+                                })}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </>
+              );
+            })()}
 
             {/* مهمة موكَّلة من المعلم — تظهر أثناء التوكيل فقط ثم تختفي. */}
             {duty?.active ? (
@@ -113,85 +173,29 @@ export default function StudentDashboard() {
                   </Button>
                 </div>
               </Alert>
-            ) : student.isAssistant ? (
-              <Alert variant="info" title={t('teacher.assistant.badge')}>
-                {t('student.assistant.noDutyHint')}
-              </Alert>
             ) : null}
 
-            {/* المؤشرات */}
-            <div className="grid grid-4 stagger">
-              <Stat
-                label={t('student.todayGoal')}
-                value={formatFraction(student.todayDone, student.targetDaily)}
-                meta={t('common.pages')}
-                icon="🎯"
-              >
-                <ProgressBar
-                  value={student.todayDone}
-                  max={student.targetDaily}
-                  showValue={false}
-                  variant={goalDone ? 'success' : 'brand'}
-                />
-              </Stat>
-
-              <Stat
-                label={t('student.review')}
-                value={formatPercent(student.reviewRate)}
-                meta={t('reports.averageMastery')}
-                icon="🔁"
-                href="/app/student/review"
-                linkLabel={t('common.details')}
-              />
-
-              <Stat
-                label={t('student.recitation')}
-                value={formatPercent(student.masteryAvg)}
-                meta={t('recitation.result.mastery')}
-                icon="🎙"
-                href="/app/student/recitation"
-                linkLabel={t('recitation.start')}
-              />
-
-              <Stat
-                label={t('student.streak')}
-                value={t('student.streakDays', { count: formatNumber(student.streak) })}
-                meta={t('student.goals.commitment')}
-                icon="🔥"
-              />
-            </div>
-
-            {/* خطة اليوم */}
-            <Section title={t('student.plan.title')} id="today-plan">
-              <div className="stack-3">
-                {data.plan.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`plan-item${item.done ? ' plan-item--done' : ''}`}
-                  >
-                    <span className="plan-item__mark" aria-hidden="true">
-                      {item.done ? '✓' : '•'}
-                    </span>
-                    <div className="grow">
-                      <p className="t-medium">{t(`student.plan.${item.kind}`)}</p>
-                      <p className="t-sm t-muted">
-                        {item.surahName} · {formatNumber(item.fromAyah)}–{formatNumber(item.toAyah)}
-                      </p>
-                    </div>
-                    <div className="row row-2">
-                      {item.done ? <Badge variant="success">{t('student.plan.done')}</Badge> : null}
-                      <Button
-                        variant={item.done ? 'ghost' : 'secondary'}
-                        size="sm"
-                        status={completing === item.id ? 'loading' : 'idle'}
-                        onClick={() => handleToggle(item)}
-                        data-testid={item.done ? 'plan-undo' : 'plan-done'}
-                      >
-                        {item.done ? t('student.plan.undo') : t('student.plan.markDone')}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            {/* رحلة الأسبوع — ثلاثة أرقام في سطر، بلا بطاقات */}
+            <Section title={t('student.home.journeyTitle')} id="journey">
+              <div className="journey">
+                <div className="journey__item">
+                  <span className="journey__value">
+                    🔥 {t('student.streakDays', { count: formatNumber(student.streak) })}
+                  </span>
+                  <span className="journey__label">{t('student.home.journeyStreak')}</span>
+                </div>
+                <div className="journey__item">
+                  <span className="journey__value">
+                    📖 {formatNumber(student.memorizedPages)}
+                  </span>
+                  <span className="journey__label">{t('reports.pagesMemorized')}</span>
+                </div>
+                <div className="journey__item">
+                  <span className="journey__value">
+                    ✓ {formatPercent(student.masteryAvg)}
+                  </span>
+                  <span className="journey__label">{t('student.home.journeyMastery')}</span>
+                </div>
               </div>
             </Section>
 

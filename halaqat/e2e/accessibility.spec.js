@@ -135,19 +135,27 @@ test('إعدادات الوصول: حجم الخط والتباين وتقليل
   assertNoConsoleErrors(errors);
 });
 
-test('المظهر: فاتح وداكن والنظام مع الحفظ بعد إعادة الفتح', async ({ page }) => {
+test('أوضاع الواجهة الثلاثة تُطبَّق وتُحفظ بعد إعادة الفتح', async ({ page }) => {
   const errors = watchConsole(page);
   await loginAs(page, 'student');
-
   await page.goto('/app/settings/appearance');
-  await page.getByRole('radio', { name: 'داكن' }).click();
+
+  // الليل: لوحة داكنة تصمد بعد إعادة التحميل.
+  await page.getByRole('radio', { name: 'الليل' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'night');
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
-  await page.getByRole('radio', { name: 'فاتح' }).click();
+  // السكينة والتركيز: لوحة فاتحة واحدة ووضعان مختلفان.
+  await page.getByRole('radio', { name: 'السكينة' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'calm');
+
+  await page.getByRole('radio', { name: 'التركيز' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'focus');
 
   assertNoConsoleErrors(errors);
 });

@@ -178,8 +178,9 @@ function AppearanceSection() {
             announce(t('theme.changed', { mode: t(`theme.${next}`) }));
           }}
           options={[
-            { value: 'light', label: t('theme.light'), icon: '☀' },
-            { value: 'dark', label: t('theme.dark'), icon: '🌙' },
+            { value: 'calm', label: t('theme.calm'), icon: '🌿' },
+            { value: 'focus', label: t('theme.focus'), icon: '🎯' },
+            { value: 'night', label: t('theme.night'), icon: '🌙' },
             { value: 'system', label: t('theme.system'), icon: '🖥' },
           ]}
         />
@@ -306,8 +307,9 @@ function AccessibilitySection() {
             value={mode}
             onChange={setMode}
             options={[
-              { value: 'light', label: t('theme.light'), icon: '☀' },
-              { value: 'dark', label: t('theme.dark'), icon: '🌙' },
+              { value: 'calm', label: t('theme.calm'), icon: '🌿' },
+              { value: 'focus', label: t('theme.focus'), icon: '🎯' },
+              { value: 'night', label: t('theme.night'), icon: '🌙' },
               { value: 'system', label: t('theme.system'), icon: '🖥' },
             ]}
           />

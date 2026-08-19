@@ -106,10 +106,13 @@ h6 {
   font-weight: var(--weight-semibold);
   color: var(--text);
   text-wrap: balance;
+  letter-spacing: var(--tracking-tight);
 }
 
+/* فوارق محسوسة بين المستويات — الترتيب يُقرأ من نظرة واحدة. */
 h1 {
-  font-size: var(--text-2xl);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-bold);
 }
 h2 {
   font-size: var(--text-xl);
@@ -119,6 +122,7 @@ h3 {
 }
 h4 {
   font-size: var(--text-md);
+  letter-spacing: var(--tracking-normal);
 }
 
 p {
