@@ -30,6 +30,31 @@ function assertSuperAdmin(db, actorId) {
   if (!isSuperAdmin(db, actorId)) throw new ApiError('forbidden', 'admin.errors.superOnly');
 }
 
+/** وقتٌ صالح: HH:MM ضمن اليوم. */
+function normalizeTime(value, fallback) {
+  const time = String(value ?? '').trim() || fallback;
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    throw new ApiError('invalidTime', 'admin.errors.invalidTime');
+  }
+  return time;
+}
+
+/**
+ * موعد الحلقة: أيامها ووقتها.
+ * البداية قبل النهاية شرطٌ لا تنبيه — موعدٌ ينتهي قبل أن يبدأ لا يُحضَر.
+ */
+function normalizeSchedule(payload, current = {}) {
+  const startTime = normalizeTime(payload.startTime, current.startTime ?? '18:30');
+  const endTime = normalizeTime(payload.endTime, current.endTime ?? '20:00');
+  if (endTime <= startTime) throw new ApiError('invalidRange', 'admin.errors.timeOrder');
+
+  return {
+    days: String(payload.days ?? current.days ?? 'الأحد – الخميس').trim(),
+    startTime,
+    endTime,
+  };
+}
+
 function circleStats(circleId) {
   const db = getDb();
   const students = db.students.filter((student) => student.circleId === circleId);
@@ -209,7 +234,7 @@ export async function createUser({ role, actorId, payload }) {
           teacherId: user.id,
           supervisorId: payload.supervisorId ?? actorId,
           level: payload.level ?? 'beginner',
-          schedule: payload.schedule ?? 'الأحد – الخميس · بعد المغرب',
+          ...normalizeSchedule(payload),
           location: payload.mosque ?? '',
           city: payload.city ?? '',
           district: payload.district ?? '',
@@ -335,7 +360,7 @@ export async function createCircle({ role, actorId, payload }) {
         teacherId: payload.teacherId ?? null,
         supervisorId: role === 'supervisor' ? actorId : (payload.supervisorId ?? null),
         level: payload.level ?? 'beginner',
-        schedule: payload.schedule ?? 'الأحد – الخميس · بعد المغرب',
+        ...normalizeSchedule(payload),
         location: payload.mosque ?? '',
         city: payload.city ?? '',
         district: payload.district ?? '',
@@ -410,6 +435,23 @@ export async function assignCircleRole({ role, actorId, circleId, slot, userId }
       }
 
       circle[slot === 'teacher' ? 'teacherId' : 'supervisorId'] = userId;
+      return shapeCircle(db, circle);
+    }),
+  );
+}
+
+/** تعديل موعد حلقة قائمة — أيامها ووقتها. */
+export async function updateCircleSchedule({ role, actorId, circleId, days, startTime, endTime }) {
+  return request(() =>
+    mutateDb((db) => {
+      assertCan(role, ACTIONS.CIRCLES_MANAGE);
+      const circle = db.circles.find((item) => item.id === circleId);
+      if (!circle) throw new ApiError('notFound', 'state.notFoundHint');
+      if (role === 'supervisor' && circle.supervisorId !== actorId) {
+        throw new ApiError('forbidden', 'state.forbiddenHint');
+      }
+
+      Object.assign(circle, normalizeSchedule({ days, startTime, endTime }, circle));
       return shapeCircle(db, circle);
     }),
   );

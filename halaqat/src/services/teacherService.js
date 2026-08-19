@@ -26,7 +26,14 @@ export async function getDashboard(teacherId) {
     );
 
     return {
-      circle: { id: circle.id, name: circle.name, schedule: circle.schedule, level: circle.level },
+      circle: {
+        id: circle.id,
+        name: circle.name,
+        days: circle.days ?? '',
+        startTime: circle.startTime ?? '',
+        endTime: circle.endTime ?? '',
+        level: circle.level,
+      },
       studentsCount: students.length,
       presentCount,
       absentCount: Math.max(0, students.length - presentCount),

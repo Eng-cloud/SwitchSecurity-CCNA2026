@@ -456,3 +456,117 @@ describe('تعيين معلّم الحلقة ومشرفها', () => {
     }
   });
 });
+
+describe('موعد الحلقة — أيامٌ ووقتٌ صريح', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  it('الحلقة تُنشأ بموعدها، وتُقرأ أوقاتها من البيانات لا من وصفٍ نصّي', async () => {
+    const circle = await managementService.createCircle({
+      role: 'admin',
+      actorId: 'user-admin',
+      payload: {
+        name: 'حلقة الفجر',
+        days: 'السبت – الأربعاء',
+        startTime: '05:15',
+        endTime: '06:30',
+      },
+    });
+
+    expect(circle.days).toBe('السبت – الأربعاء');
+    expect(circle.startTime).toBe('05:15');
+    expect(circle.endTime).toBe('06:30');
+  });
+
+  it('موعدٌ ينتهي قبل أن يبدأ يُرفض، وكذلك الوقت غير الصحيح', async () => {
+    const base = { role: 'admin', actorId: 'user-admin' };
+
+    await expect(
+      managementService.createCircle({
+        ...base,
+        payload: { name: 'حلقة مقلوبة', startTime: '20:00', endTime: '18:00' },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.timeOrder' });
+
+    // ونفس الوقت للطرفين ليس مدّة.
+    await expect(
+      managementService.createCircle({
+        ...base,
+        payload: { name: 'حلقة بلا مدة', startTime: '18:00', endTime: '18:00' },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.timeOrder' });
+
+    for (const bad of ['25:00', '7:5', 'المغرب', '18:60']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        managementService.createCircle({
+          ...base,
+          payload: { name: 'حلقة بوقت خاطئ', startTime: bad, endTime: '20:00' },
+        }),
+      ).rejects.toMatchObject({ messageKey: 'admin.errors.invalidTime' });
+    }
+  });
+
+  it('الموعد يُعدَّل على حلقة قائمة', async () => {
+    const circle = getDb().circles[0];
+
+    const updated = await managementService.updateCircleSchedule({
+      role: 'admin',
+      actorId: 'user-admin',
+      circleId: circle.id,
+      days: 'السبت – الخميس',
+      startTime: '17:00',
+      endTime: '18:45',
+    });
+
+    expect(updated.days).toBe('السبت – الخميس');
+    expect(updated.startTime).toBe('17:00');
+    expect(getDb().circles[0].endTime).toBe('18:45');
+  });
+
+  it('المشرف يعدّل موعد حلقاته وحدها، ومن لا يملك الحلقات لا يعدّل', async () => {
+    const db = getDb();
+    const mine = db.circles.find((circle) => circle.supervisorId === 'user-supervisor-1');
+    const notMine = db.circles.find((circle) => circle.supervisorId !== 'user-supervisor-1');
+    const payload = { days: 'السبت – الأربعاء', startTime: '16:00', endTime: '17:30' };
+
+    await expect(
+      managementService.updateCircleSchedule({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: mine.id,
+        ...payload,
+      }),
+    ).resolves.toMatchObject({ startTime: '16:00' });
+
+    await expect(
+      managementService.updateCircleSchedule({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: notMine.id,
+        ...payload,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+
+    for (const role of ['teacher', 'student', 'parent']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        managementService.updateCircleSchedule({
+          role,
+          actorId: 'x',
+          circleId: mine.id,
+          ...payload,
+        }),
+      ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+    }
+  });
+
+  it('كل حلقة مبذورة لها موعد كامل', () => {
+    for (const circle of getDb().circles) {
+      expect(circle.days).toBeTruthy();
+      expect(circle.startTime).toMatch(/^([01]\d|2[0-3]):[0-5]\d$/);
+      expect(circle.endTime > circle.startTime).toBe(true);
+    }
+  });
+});

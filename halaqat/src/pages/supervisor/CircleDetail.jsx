@@ -12,7 +12,7 @@ import CoveragePanel from '../../components/coverage/CoveragePanel.jsx';
 import * as supervisorService from '../../services/supervisorService.js';
 import * as managementService from '../../services/managementService.js';
 import { can, ACTIONS } from '../../config/permissions.js';
-import { formatNumber, formatPercent, formatShortDate } from '../../lib/format.js';
+import { formatNumber, formatPercent, formatShortDate, formatSchedule } from '../../lib/format.js';
 import {
   PageHeader,
   Card,
@@ -59,6 +59,8 @@ export default function CircleDetail() {
 
   const mayManageStudents = can(role, ACTIONS.STUDENTS_MANAGE);
   const mayRecordAttendance = can(role, ACTIONS.ATTENDANCE_RECORD);
+  // تغطية اليوم عملٌ ميداني: من لا يديرها لا يرى لوحتها ولا أزرارها.
+  const mayManageCoverage = can(role, ACTIONS.COVERAGE_MANAGE);
   const mayManageTeachers = can(role, ACTIONS.TEACHERS_MANAGE);
 
   /** ينفّذ إجراءً ويعرض نتيجته، ثم يحدّث الصفحة. */
@@ -185,7 +187,7 @@ export default function CircleDetail() {
       <PageHeader
         title={data?.name ?? t('nav.circle')}
         documentTitle={data?.name}
-        subtitle={data ? `${data.schedule} · ${data.location}` : undefined}
+        subtitle={data ? [formatSchedule(data), data.location].filter(Boolean).join(' · ') : undefined}
         breadcrumb={[
           { label: t('nav.home'), to: `/app/${role}` },
           { label: t('nav.circles'), to: `/app/${role}/circles` },
@@ -237,7 +239,9 @@ export default function CircleDetail() {
               />
             </div>
 
-            <CoveragePanel circleId={circleId} onChange={refetch} />
+            {mayManageCoverage ? (
+              <CoveragePanel circleId={circleId} onChange={refetch} />
+            ) : null}
 
             {data.teacher ? (
               <Card className="row row-4 row-wrap">

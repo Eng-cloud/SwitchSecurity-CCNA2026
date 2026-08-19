@@ -8,7 +8,7 @@ import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 import { seedTajweedItems } from './tajweed.js';
 
-const DB_VERSION = 9;
+const DB_VERSION = 10;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -70,10 +70,18 @@ const MOSQUES = [
   'جامع السلام', 'جامع الإيمان', 'جامع الهدى',
 ];
 
+/** أيام الانعقاد ووقته — الوقت رقمٌ لا وصف، فيُقارَن ويُرتَّب ويُذكَّر به. */
 const SCHEDULES = [
-  'الأحد – الخميس · بعد المغرب',
-  'السبت – الأربعاء · بعد العصر',
-  'الأحد – الخميس · بعد الفجر',
+  { days: 'الأحد – الخميس', startTime: '18:30', endTime: '20:00' },
+  { days: 'السبت – الأربعاء', startTime: '16:00', endTime: '17:30' },
+  { days: 'الأحد – الخميس', startTime: '05:15', endTime: '06:30' },
+];
+
+export const SCHEDULE_DAYS = [
+  'الأحد – الخميس',
+  'السبت – الأربعاء',
+  'السبت – الخميس',
+  'الجمعة والسبت',
 ];
 
 const LOCATIONS = ['جامع الرحمة', 'جامع التقوى', 'جامع الفرقان', 'مركز الحلقات النموذجي'];
@@ -174,7 +182,9 @@ function generate() {
       teacherId: teachers[index].id,
       supervisorId: supervisors[index % supervisors.length].id,
       level: LEVELS[index % LEVELS.length],
-      schedule: SCHEDULES[index % SCHEDULES.length],
+      days: SCHEDULES[index % SCHEDULES.length].days,
+      startTime: SCHEDULES[index % SCHEDULES.length].startTime,
+      endTime: SCHEDULES[index % SCHEDULES.length].endTime,
       location: LOCATIONS[index % LOCATIONS.length],
       city: teachers[index].city,
       district: teachers[index].district,

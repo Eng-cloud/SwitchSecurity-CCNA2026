@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as coverageService from '../../services/coverageService.js';
+import { can, ACTIONS } from '../../config/permissions.js';
 import AttendanceSelect from '../attendance/AttendanceSelect.jsx';
 import { Card, Badge, Button, Select, Field, Skeleton, Alert } from '../ui/index.js';
 
@@ -63,8 +64,10 @@ export default function CoveragePanel({ circleId, onChange }) {
   if (loading) return <Skeleton variant="card" height={120} />;
   if (error || !data) return null;
 
-  const mayRecord = data.authority === 'teacher' || data.authority === 'supervisor' || data.authority === 'admin';
-  const maySupervise = data.authority === 'supervisor' || data.authority === 'admin';
+  // شرطان: صلاحية الميدان في المصفوفة، وسلطةٌ على هذه الحلقة بعينها.
+  const inField = can(role, ACTIONS.COVERAGE_MANAGE);
+  const mayRecord = inField && (data.authority === 'teacher' || data.authority === 'supervisor');
+  const maySupervise = inField && data.authority === 'supervisor';
   const isDeputy = data.authority === 'deputy';
   const needsCover = data.state === 'needsCover' || data.state === 'escalated';
   const deputation = data.deputation;

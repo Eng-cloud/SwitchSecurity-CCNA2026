@@ -178,7 +178,9 @@ function shapeDay(db, circle, date) {
     circleId: circle.id,
     circleName: circle.name,
     date,
-    schedule: circle.schedule,
+    days: circle.days ?? '',
+    startTime: circle.startTime ?? '',
+    endTime: circle.endTime ?? '',
     // موقع الحلقة يسافر مع صفّها: التغطية تُقرأ جغرافيًّا لا بأسماء الحلقات.
     city: circle.city ?? '',
     district: circle.district ?? '',

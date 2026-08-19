@@ -74,7 +74,9 @@ export async function getCircles(supervisorId, { query = '', page = 1, perPage =
       teacherName: getUser(circle.teacherId)?.name ?? '',
       teacherId: circle.teacherId,
       level: circle.level,
-      schedule: circle.schedule,
+      days: circle.days ?? '',
+      startTime: circle.startTime ?? '',
+      endTime: circle.endTime ?? '',
       ...circleStats(circle.id),
     }));
 
@@ -95,7 +97,9 @@ export async function getCircleDetail(circleId) {
       id: circle.id,
       name: circle.name,
       level: circle.level,
-      schedule: circle.schedule,
+      days: circle.days ?? '',
+      startTime: circle.startTime ?? '',
+      endTime: circle.endTime ?? '',
       location: circle.location,
       teacher: teacher
         ? {

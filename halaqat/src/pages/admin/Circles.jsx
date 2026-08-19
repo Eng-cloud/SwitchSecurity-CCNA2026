@@ -7,8 +7,8 @@ import useListState from '../../hooks/useListState.js';
 import useDebouncedValue from '../../hooks/useDebouncedValue.js';
 import * as adminService from '../../services/adminService.js';
 import * as managementService from '../../services/managementService.js';
-import { CITY_LIST, DISTRICT_LIST, MOSQUE_LIST } from '../../mock/db.js';
-import { formatNumber, formatPercent } from '../../lib/format.js';
+import { CITY_LIST, DISTRICT_LIST, MOSQUE_LIST, SCHEDULE_DAYS } from '../../mock/db.js';
+import { formatNumber, formatPercent, formatSchedule } from '../../lib/format.js';
 import {
   PageHeader,
   SearchInput,
@@ -31,7 +31,9 @@ const EMPTY_CIRCLE = {
   district: '',
   mosque: '',
   level: 'beginner',
-  schedule: 'الأحد – الخميس · بعد المغرب',
+  days: SCHEDULE_DAYS[0],
+  startTime: '18:30',
+  endTime: '20:00',
   teacherId: '',
   supervisorId: '',
 };
@@ -54,6 +56,8 @@ export default function AdminCircles() {
   const [form, setForm] = useState(EMPTY_CIRCLE);
   const [assigning, setAssigning] = useState(null);
   const [assignee, setAssignee] = useState('');
+  const [scheduling, setScheduling] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState(EMPTY_CIRCLE);
   const [deleting, setDeleting] = useState(null);
   const [status, setStatus] = useState('idle');
 
@@ -171,6 +175,27 @@ export default function AdminCircles() {
       key: 'location',
       header: t('admin.form.city'),
       render: (row) => [row.city, row.district].filter(Boolean).join(' · ') || '—',
+    },
+    {
+      key: 'schedule',
+      header: t('circles.schedule'),
+      render: (row) => (
+        <Button
+          size="sm"
+          variant="ghost"
+          data-testid={`edit-schedule-${row.id}`}
+          onClick={() => {
+            setScheduling(row);
+            setScheduleForm({
+              days: row.days || SCHEDULE_DAYS[0],
+              startTime: row.startTime || '18:30',
+              endTime: row.endTime || '20:00',
+            });
+          }}
+        >
+          {formatSchedule(row) || t('circles.noSchedule')}
+        </Button>
+      ),
     },
     {
       key: 'level',
@@ -344,6 +369,41 @@ export default function AdminCircles() {
             </Field>
           </div>
 
+          {/* الموعد: أيامٌ ووقتٌ صريح — حلقةٌ بلا وقتٍ موعدٌ لا يُحضَر */}
+          <div className="grid grid-3 stagger">
+            <Field label={t('circles.days')} required>
+              <Select
+                value={form.days}
+                data-testid="circle-days"
+                onChange={(event) => setForm((prev) => ({ ...prev, days: event.target.value }))}
+              >
+                {SCHEDULE_DAYS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label={t('circles.startTime')} required>
+              <Input
+                type="time"
+                value={form.startTime}
+                data-testid="circle-start"
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, startTime: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label={t('circles.endTime')} required>
+              <Input
+                type="time"
+                value={form.endTime}
+                data-testid="circle-end"
+                onChange={(event) => setForm((prev) => ({ ...prev, endTime: event.target.value }))}
+              />
+            </Field>
+          </div>
+
           <div className="grid grid-2 stagger">
             <Field label={t('circles.teacher')} optional hint={t('circles.assignLater')}>
               <Select
@@ -418,6 +478,81 @@ export default function AdminCircles() {
             ))}
           </Select>
         </Field>
+      </Modal>
+
+      {/* تعديل موعد حلقة قائمة */}
+      <Modal
+        open={Boolean(scheduling)}
+        onClose={() => setScheduling(null)}
+        title={t('circles.editSchedule')}
+        description={scheduling?.name}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setScheduling(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              status={status}
+              data-testid="submit-schedule"
+              onClick={async () => {
+                const ok = await run(
+                  () =>
+                    managementService.updateCircleSchedule({
+                      role,
+                      actorId: user.userId,
+                      circleId: scheduling.id,
+                      ...scheduleForm,
+                    }),
+                  'circles.scheduleUpdated',
+                );
+                if (ok) setScheduling(null);
+              }}
+            >
+              {t('common.save')}
+            </Button>
+          </>
+        }
+      >
+        <div className="stack-4">
+          <Field label={t('circles.days')}>
+            <Select
+              value={scheduleForm.days}
+              data-testid="schedule-days"
+              onChange={(event) =>
+                setScheduleForm((prev) => ({ ...prev, days: event.target.value }))
+              }
+            >
+              {SCHEDULE_DAYS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <div className="grid grid-2 stagger">
+            <Field label={t('circles.startTime')}>
+              <Input
+                type="time"
+                value={scheduleForm.startTime}
+                data-testid="schedule-start"
+                onChange={(event) =>
+                  setScheduleForm((prev) => ({ ...prev, startTime: event.target.value }))
+                }
+              />
+            </Field>
+            <Field label={t('circles.endTime')}>
+              <Input
+                type="time"
+                value={scheduleForm.endTime}
+                data-testid="schedule-end"
+                onChange={(event) =>
+                  setScheduleForm((prev) => ({ ...prev, endTime: event.target.value }))
+                }
+              />
+            </Field>
+          </div>
+        </div>
       </Modal>
 
       <ConfirmDialog

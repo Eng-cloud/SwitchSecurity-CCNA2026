@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { watchConsole, assertNoConsoleErrors, loginAs } from './helpers.js';
+import { watchConsole, assertNoConsoleErrors, loginAs, logout } from './helpers.js';
 
 /** الإدارة والإشراف: طلبات التسجيل، إضافة وحذف، وتغيير الأدوار. */
 
@@ -162,6 +162,10 @@ test('الإدارة تُنشئ حلقة وتعيّن لها معلمًا ثم �
   await page.getByTestId('create-circle').click();
   await page.getByTestId('circle-name').fill('حلقة الفجر الجديدة');
   await page.getByTestId('circle-city').selectOption({ index: 1 });
+  // موعدٌ صريح: حلقةٌ بلا وقتٍ موعدٌ لا يُحضَر.
+  await page.getByTestId('circle-days').selectOption('السبت – الأربعاء');
+  await page.getByTestId('circle-start').fill('16:00');
+  await page.getByTestId('circle-end').fill('17:30');
   await page.getByTestId('submit-circle').click();
   await expect(page.getByText('أُنشئت الحلقة').first()).toBeVisible();
 
@@ -227,6 +231,47 @@ test('تقرير تغطية اليوم يُفتح من التقارير ويُص
 
   // ويُصدَّر كغيره من التقارير.
   await expect(page.getByTestId('open-export')).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});
+
+test('موعد الحلقة يُعرض ويُعدَّل، ولا يُقبل منتهيًا قبل بدايته', async ({ page }) => {
+  const errors = watchConsole(page);
+  await loginAs(page, 'admin');
+  await page.goto('/app/admin/circles');
+
+  // كل حلقة تُظهر موعدها في عمود مستقل.
+  const first = page.getByTestId(/^edit-schedule-/).first();
+  await expect(first).toBeVisible();
+  await expect(first).not.toHaveText('بلا موعد');
+
+  await first.click();
+  await page.getByTestId('schedule-start').fill('20:00');
+  await page.getByTestId('schedule-end').fill('18:00');
+  await page.getByTestId('submit-schedule').click();
+  await expect(page.getByText('وقت النهاية يجب أن يكون بعد البداية.').first()).toBeVisible();
+
+  await page.getByTestId('schedule-end').fill('21:30');
+  await page.getByTestId('submit-schedule').click();
+  await expect(page.getByText('حُدِّث موعد الحلقة').first()).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});
+
+test('الإدارة لا ترى لوحة تغطية اليوم داخل الحلقة، والمشرف يراها', async ({ page }) => {
+  const errors = watchConsole(page);
+
+  await loginAs(page, 'admin');
+  await page.goto('/app/admin/circles/circle-1');
+  await expect(page.getByRole('table').first()).toBeVisible();
+  // لا لوحة ولا أزرار تصرّف: التصرّف نفسه سقط عنها لا شكله فقط.
+  await expect(page.getByTestId('teacher-attendance')).toHaveCount(0);
+  await expect(page.getByTestId('claim-coverage')).toHaveCount(0);
+  await logout(page);
+
+  await loginAs(page, 'supervisor');
+  await page.goto('/app/supervisor/circles/circle-1');
+  await expect(page.getByTestId('teacher-attendance')).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });

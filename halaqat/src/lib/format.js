@@ -139,3 +139,28 @@ export function clamp(value, min, max) {
   if (!Number.isFinite(n)) return min;
   return Math.min(max, Math.max(min, n));
 }
+
+/**
+ * موعد الحلقة: أيامها ووقتها في سطر واحد.
+ *
+ * الوقت يُخزَّن رقمًا (HH:MM) ويُعرض بصيغة القارئ، فيبقى قابلًا للمقارنة
+ * والترتيب في البيانات ومقروءًا في الشاشة.
+ */
+export function formatClock(value) {
+  if (!value || !/^\d{1,2}:\d{2}$/.test(value)) return '';
+  const [hour, minute] = value.split(':').map(Number);
+  const date = new Date(2000, 0, 1, hour, minute);
+  return new Intl.DateTimeFormat('ar-SA', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+export function formatSchedule({ days, startTime, endTime } = {}) {
+  const time =
+    startTime && endTime
+      ? `${formatClock(startTime)} – ${formatClock(endTime)}`
+      : formatClock(startTime);
+  return [days, time].filter(Boolean).join(' · ');
+}

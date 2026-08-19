@@ -104,7 +104,9 @@ export async function getCircles({ query = '', page = 1, perPage = 10 } = {}) {
         district: circle.district ?? '',
         mosque: circle.mosque ?? '',
         level: circle.level,
-        schedule: circle.schedule,
+        days: circle.days ?? '',
+        startTime: circle.startTime ?? '',
+        endTime: circle.endTime ?? '',
         studentsCount: students.length,
         performance: Math.round(
           students.reduce((sum, student) => sum + student.masteryAvg, 0) / (students.length || 1),
