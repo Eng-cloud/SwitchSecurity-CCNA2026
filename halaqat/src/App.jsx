@@ -68,6 +68,7 @@ const CircleDetail = lazy(() => import('./pages/supervisor/CircleDetail.jsx'));
 const SupervisorTeachers = lazy(() => import('./pages/supervisor/Teachers.jsx'));
 const SupervisorDistinguished = lazy(() => import('./pages/supervisor/Distinguished.jsx'));
 const SupervisorCoverage = lazy(() => import('./pages/supervisor/Coverage.jsx'));
+const CoverageReport = lazy(() => import('./pages/supervisor/CoverageReport.jsx'));
 const SupervisorReports = lazy(() => import('./pages/supervisor/Reports.jsx'));
 
 /* الإدارة */
@@ -196,6 +197,7 @@ export function AppRoutes() {
               <Route path="supervisor/manage-teachers" element={<AdminTeachers />} />
               <Route path="supervisor/distinguished" element={<SupervisorDistinguished />} />
               <Route path="supervisor/coverage" element={<SupervisorCoverage />} />
+              <Route path="supervisor/reports/coverage" element={<CoverageReport />} />
               <Route path="supervisor/requests" element={<EnrollmentRequests />} />
               <Route path="supervisor/students/:studentId" element={<StudentProfile />} />
               <Route path="supervisor/reports" element={<SupervisorReports />} />
@@ -210,6 +212,7 @@ export function AppRoutes() {
               <Route path="admin/circles" element={<AdminCircles />} />
               <Route path="admin/circles/:circleId" element={<CircleDetail />} />
               <Route path="admin/coverage" element={<SupervisorCoverage />} />
+              <Route path="admin/reports/coverage" element={<CoverageReport />} />
               <Route path="admin/requests" element={<EnrollmentRequests />} />
               <Route path="admin/students/:studentId" element={<StudentProfile />} />
               <Route path="admin/reports" element={<AdminReports />} />

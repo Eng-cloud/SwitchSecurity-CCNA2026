@@ -4,8 +4,9 @@ import { CITY_LIST, DISTRICT_LIST, MOSQUE_LIST } from '../../mock/db.js';
 import { Modal, Button, Field, Input, Select } from '../ui/index.js';
 
 /**
- * نموذج إضافة مشرف أو معلم.
+ * نموذج إضافة مشرف أو معلم أو إداري.
  * المعلم يمكن إنشاء حلقته مباشرة (اسم الحلقة + المسجد) حتى لا يبقى بلا حلقة.
+ * والإداري يُسأل عن مستواه صراحةً، فالفارق بين العليا والمحدود ليس تفصيلًا.
  */
 export default function UserFormModal({
   open,
@@ -26,6 +27,7 @@ export default function UserFormModal({
     circleName: '',
     supervisorId: '',
     level: 'beginner',
+    adminLevel: 'limited',
   });
   const [error, setError] = useState(null);
 
@@ -51,11 +53,16 @@ export default function UserFormModal({
       circleName: '',
       supervisorId: '',
       level: 'beginner',
+      adminLevel: 'limited',
     });
   };
 
   const title =
-    targetRole === 'supervisor' ? t('admin.supervisors.addTitle') : t('admin.teachers.addTitle');
+    targetRole === 'admin'
+      ? t('admin.users.addTitle')
+      : targetRole === 'supervisor'
+        ? t('admin.supervisors.addTitle')
+        : t('admin.teachers.addTitle');
 
   return (
     <Modal
@@ -130,6 +137,19 @@ export default function UserFormModal({
             </Select>
           </Field>
         </div>
+
+        {targetRole === 'admin' ? (
+          <Field label={t('admin.users.level')} hint={t('admin.users.levelHint')} required>
+            <Select
+              value={form.adminLevel}
+              data-testid="admin-level"
+              onChange={(event) => update('adminLevel', event.target.value)}
+            >
+              <option value="limited">{t('admin.users.levels.limited')}</option>
+              <option value="super">{t('admin.users.levels.super')}</option>
+            </Select>
+          </Field>
+        ) : null}
 
         {targetRole === 'teacher' ? (
           <>

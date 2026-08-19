@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { sortRoles } from '../../config/permissions.js';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -29,25 +28,25 @@ import {
 import UserFormModal from '../../components/management/UserFormModal.jsx';
 
 /**
- * مستخدمو المنصة الإداريون: الإدارة والمشرفون والمعلمون.
- * الطلاب وأولياء الأمور يُدارون من قسم المعلمين ومن طلبات التسجيل،
- * فلا يختلط سجل المستخدمين بسجل الطلاب.
+ * حسابات الإدارة وحدها.
+ *
+ * للمشرفين قسمهم وللمعلمين قسمهم، فلا معنى لأن يُعادوا هنا مرةً أخرى:
+ * قائمةٌ تجمع الجميع لا تُدار منها، إنما تُتصفَّح. وهذه الصفحة تُدار:
+ * تُنشئ إداريًّا وتحدّد مستواه وتحذفه.
  */
-const MANAGED_ROLES = sortRoles(['admin', 'supervisor', 'teacher']);
+const MANAGED_ROLES = ['admin'];
 
 export default function AdminUsers() {
   const t = useT();
   const { role, user } = useAuth();
   const toast = useToast();
   const { values, setValue, resetAll, isFiltered } = useListState({
-    defaults: { q: '', role: 'all', status: 'all', page: 1 },
+    defaults: { q: '', status: 'all', page: 1 },
   });
   const debouncedQuery = useDebouncedValue(values.q, 300);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [addRole, setAddRole] = useState('supervisor');
-  const [roleChangeFor, setRoleChangeFor] = useState(null);
-  const [nextRole, setNextRole] = useState('supervisor');
+  const [addRole] = useState('admin');
   const [deleting, setDeleting] = useState(null);
   const [status, setStatus] = useState('idle');
 
@@ -55,17 +54,15 @@ export default function AdminUsers() {
     () =>
       adminService.getUsers({
         query: debouncedQuery,
-        role: values.role,
         status: values.status,
         page: values.page,
         perPage: 10,
         roles: MANAGED_ROLES,
       }),
-    [debouncedQuery, values.role, values.status, values.page],
+    [debouncedQuery, values.status, values.page],
   );
   const { data, loading, error, refetch } = useAsyncData(fetcher, [
     debouncedQuery,
-    values.role,
     values.status,
     values.page,
   ]);
@@ -88,9 +85,13 @@ export default function AdminUsers() {
   const columns = [
     { key: 'name', header: t('admin.tableName') },
     {
-      key: 'role',
-      header: t('admin.tableRole'),
-      render: (row) => <Badge variant="neutral">{t(`roles.${row.role}`)}</Badge>,
+      key: 'adminLevel',
+      header: t('admin.users.level'),
+      render: (row) => (
+        <Badge variant={row.adminLevel === 'super' ? 'brand' : 'neutral'}>
+          {t(`admin.users.levels.${row.adminLevel ?? 'limited'}`)}
+        </Badge>
+      ),
     },
     {
       key: 'location',
@@ -121,16 +122,6 @@ export default function AdminUsers() {
       header: t('teacher.tableActions'),
       render: (row) => (
         <div className="table__actions">
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              setRoleChangeFor(row);
-              setNextRole(row.role);
-            }}
-          >
-            {t('admin.users.changeRole')}
-          </Button>
           <Button
             size="sm"
             variant="ghost"
@@ -165,26 +156,9 @@ export default function AdminUsers() {
         subtitle={t('admin.users.subtitle')}
         breadcrumb={[{ label: t('nav.home'), to: '/app/admin' }, { label: t('nav.users') }]}
         actions={
-          <div className="row row-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setAddRole('supervisor');
-                setAddOpen(true);
-              }}
-            >
-              {t('admin.supervisors.add')}
-            </Button>
-            <Button
-              onClick={() => {
-                setAddRole('teacher');
-                setAddOpen(true);
-              }}
-              data-testid="add-user"
-            >
-              {t('admin.teachers.add')}
-            </Button>
-          </div>
+          <Button onClick={() => setAddOpen(true)} data-testid="add-user">
+            {t('admin.users.add')}
+          </Button>
         }
       />
 
@@ -199,17 +173,6 @@ export default function AdminUsers() {
             label={t('search.label')}
           />
         </div>
-
-        <Field label={t('admin.tableRole')}>
-          <Select value={values.role} onChange={(event) => setValue('role', event.target.value)}>
-            <option value="all">{t('common.all')}</option>
-            {MANAGED_ROLES.map((item) => (
-              <option key={item} value={item}>
-                {t(`roles.${item}`)}
-              </option>
-            ))}
-          </Select>
-        </Field>
 
         <Field label={t('admin.tableStatus')}>
           <Select value={values.status} onChange={(event) => setValue('status', event.target.value)}>
@@ -279,54 +242,12 @@ export default function AdminUsers() {
         status={status}
       />
 
-      {/* تغيير الدور: ترقية أو تنزيل */}
-      <Modal
-        open={Boolean(roleChangeFor)}
-        onClose={() => setRoleChangeFor(null)}
-        title={t('admin.users.changeRoleTitle', { name: roleChangeFor?.name ?? '' })}
-        description={t('admin.users.changeRoleHint')}
-        size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setRoleChangeFor(null)}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              status={status}
-              data-testid="confirm-role-change"
-              onClick={async () => {
-                const ok = await run(
-                  () =>
-                    managementService.changeUserRole({
-                      role,
-                      userId: roleChangeFor.id,
-                      nextRole,
-                    }),
-                  'admin.users.roleChanged',
-                );
-                if (ok) setRoleChangeFor(null);
-              }}
-            >
-              {t('common.save')}
-            </Button>
-          </>
-        }
-      >
-        <RadioGroup
-          legend={t('admin.tableRole')}
-          name="next-role"
-          value={nextRole}
-          onChange={setNextRole}
-          options={MANAGED_ROLES.map((item) => ({ value: item, label: t(`roles.${item}`) }))}
-        />
-      </Modal>
-
       <ConfirmDialog
         open={Boolean(deleting)}
         onClose={() => setDeleting(null)}
         onConfirm={async () => {
           const ok = await run(
-            () => managementService.deleteUser({ role, userId: deleting.id }),
+            () => managementService.deleteUser({ role, userId: deleting.id, actorId: user.userId }),
             'admin.users.deleted',
           );
           if (ok) setDeleting(null);

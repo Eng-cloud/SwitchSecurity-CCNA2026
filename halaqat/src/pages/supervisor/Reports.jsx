@@ -7,6 +7,7 @@ import * as supervisorService from '../../services/supervisorService.js';
 import { formatNumber, formatPercent } from '../../lib/format.js';
 import {
   PageHeader,
+  Button,
   Stat,
   Card,
   Table,
@@ -60,6 +61,11 @@ export default function SupervisorReports() {
         title={t('reports.title')}
         subtitle={t('supervisor.circlesTitle')}
         breadcrumb={[{ label: t('nav.home'), to: '/app/supervisor' }, { label: t('reports.title') }]}
+        actions={
+          <Button variant="secondary" to="/app/supervisor/reports/coverage">
+            {t('coverage.openReport')}
+          </Button>
+        }
       />
 
       <ReportShell

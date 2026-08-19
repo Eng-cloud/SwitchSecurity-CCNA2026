@@ -169,6 +169,10 @@ function shapeDay(db, circle, date) {
     circleName: circle.name,
     date,
     schedule: circle.schedule,
+    // موقع الحلقة يسافر مع صفّها: التغطية تُقرأ جغرافيًّا لا بأسماء الحلقات.
+    city: circle.city ?? '',
+    district: circle.district ?? '',
+    mosque: circle.mosque ?? '',
     supervisorId: circle.supervisorId,
     teacher: teacher ? { id: teacher.id, name: teacher.name, status: teacher.status } : null,
     teacherStatus,
@@ -513,26 +517,56 @@ export async function getCircleDay({ role, userId, circleId, date = today() }) {
  * لوحة التغطية عند المشرف: حلقاته اليوم مرتّبة بإلحاحها.
  * ما يحتاج تدخّلًا يتصدّر، لأن اللوحة تُقرأ من أعلاها.
  */
-export async function listCoverage({ role, userId, date = today() }) {
+export async function listCoverage({
+  role,
+  userId,
+  date = today(),
+  city = 'all',
+  district = 'all',
+  mosque = 'all',
+} = {}) {
   return request(() => {
     const db = getDb();
     if (!can(role, ACTIONS.COVERAGE_MANAGE)) {
       throw new ApiError('forbidden', 'state.forbiddenHint');
     }
 
-    const circles =
+    const scope =
       role === 'admin'
         ? db.circles
         : db.circles.filter((circle) => circle.supervisorId === userId);
 
-    const rows = circles
+    // خيارات الفلاتر تُشتق من النطاق قبل تصفيته، وإلا اختفى الخيار الذي
+    // يقف عليه المستخدم من قائمته.
+    const optionsOf = (key) =>
+      [...new Set(scope.map((circle) => circle[key]).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, 'ar'),
+      );
+
+    const filtered = scope.filter(
+      (circle) =>
+        (city === 'all' || circle.city === city) &&
+        (district === 'all' || circle.district === district) &&
+        (mosque === 'all' || circle.mosque === mosque),
+    );
+
+    const rows = filtered
       .map((circle) => shapeDay(db, circle, date))
       .sort(
-        (a, b) => COVERAGE_ORDER.indexOf(a.state) - COVERAGE_ORDER.indexOf(b.state),
+        (a, b) =>
+          COVERAGE_ORDER.indexOf(a.state) - COVERAGE_ORDER.indexOf(b.state) ||
+          a.city.localeCompare(b.city, 'ar') ||
+          a.district.localeCompare(b.district, 'ar'),
       );
 
     return {
       date,
+      filters: { city, district, mosque },
+      options: {
+        cities: optionsOf('city'),
+        districts: optionsOf('district'),
+        mosques: optionsOf('mosque'),
+      },
       rows,
       gaps: rows.filter((row) => row.needsSupervisor).length,
       covered: rows.filter((row) => row.state === 'onSite' || row.state === 'deputized').length,

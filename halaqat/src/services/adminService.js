@@ -70,6 +70,7 @@ export async function getUsers({
         id: user.id,
         name: user.name,
         role: user.role,
+        adminLevel: user.adminLevel ?? null,
         email: user.email,
         city: user.city ?? '',
         district: user.district ?? '',
@@ -94,8 +95,14 @@ export async function getCircles({ query = '', page = 1, perPage = 10 } = {}) {
       return {
         id: circle.id,
         name: circle.name,
+        // المعرِّفان لازمان للتعيين: الاسم يُعرض، والمعرِّف يُسنَد.
+        teacherId: circle.teacherId ?? null,
+        supervisorId: circle.supervisorId ?? null,
         teacherName: getUser(circle.teacherId)?.name ?? '',
         supervisorName: getUser(circle.supervisorId)?.name ?? '',
+        city: circle.city ?? '',
+        district: circle.district ?? '',
+        mosque: circle.mosque ?? '',
         level: circle.level,
         schedule: circle.schedule,
         studentsCount: students.length,
@@ -148,16 +155,30 @@ export async function updatePlatformSettings(changes) {
   );
 }
 
-export async function getAdminReport({ period = 'monthly' } = {}) {
+/**
+ * تقرير الإدارة بنطاقين.
+ *
+ *  circles: صفٌّ لكل حلقة — التقرير الخاص، يُقرأ لمتابعة حلقةٍ بعينها.
+ *  cities : صفٌّ لكل مدينة — التقرير العام، يُقرأ لمقارنة المدن ببعضها.
+ *
+ * والفلترة بالمدينة تعمل في النطاقين: عامٌّ في مدينة، وخاصٌّ داخلها.
+ */
+export async function getAdminReport({ period = 'monthly', scope = 'circles', city = 'all' } = {}) {
   return request(() => {
     const db = getDb();
-    const rows = db.circles.map((circle) => {
+    const scoped =
+      city === 'all' ? db.circles : db.circles.filter((circle) => circle.city === city);
+
+    const perCircle = scoped.map((circle) => {
       const students = db.students.filter((student) => student.circleId === circle.id);
       const avg = (key) =>
         Math.round(students.reduce((sum, s) => sum + s[key], 0) / (students.length || 1));
       return {
         id: circle.id,
         name: circle.name,
+        city: circle.city ?? '',
+        district: circle.district ?? '',
+        mosque: circle.mosque ?? '',
         teacherName: getUser(circle.teacherId)?.name ?? '',
         supervisorName: getUser(circle.supervisorId)?.name ?? '',
         studentsCount: students.length,
@@ -167,18 +188,61 @@ export async function getAdminReport({ period = 'monthly' } = {}) {
       };
     });
 
+    const rows = scope === 'cities' ? groupByCity(perCircle) : perCircle;
+
     return {
       period,
+      scope,
+      city,
       rows,
+      cities: [...new Set(db.circles.map((circle) => circle.city).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, 'ar'),
+      ),
       series: db.weeklySeries,
       totals: {
-        circles: db.circles.length,
-        students: db.students.length,
+        circles: scoped.length,
+        students: db.students.filter((student) =>
+          scoped.some((circle) => circle.id === student.circleId),
+        ).length,
         teachers: db.users.filter((user) => user.role === 'teacher').length,
-        performance: Math.round(
-          rows.reduce((sum, row) => sum + row.performance, 0) / (rows.length || 1),
-        ),
+        performance: weightedAverage(perCircle, 'performance'),
       },
     };
   });
+}
+
+/**
+ * تجميع الحلقات في صفٍّ لكل مدينة.
+ * المتوسطات موزونة بعدد الطلاب لا حسابية: حلقةٌ فيها ثلاثون طالبًا لا
+ * تساوي حلقةً فيها ثلاثة عند قياس مدينة.
+ */
+function groupByCity(rows) {
+  const byCity = new Map();
+
+  rows.forEach((row) => {
+    const key = row.city || '—';
+    const bucket = byCity.get(key) ?? { name: key, circles: [] };
+    bucket.circles.push(row);
+    byCity.set(key, bucket);
+  });
+
+  return [...byCity.values()]
+    .map((bucket) => ({
+      id: `city-${bucket.name}`,
+      name: bucket.name,
+      circlesCount: bucket.circles.length,
+      studentsCount: bucket.circles.reduce((sum, row) => sum + row.studentsCount, 0),
+      attendanceRate: weightedAverage(bucket.circles, 'attendanceRate'),
+      performance: weightedAverage(bucket.circles, 'performance'),
+      testsAverage: weightedAverage(bucket.circles, 'testsAverage'),
+    }))
+    .sort((a, b) => b.studentsCount - a.studentsCount);
+}
+
+function weightedAverage(rows, key) {
+  const weight = rows.reduce((sum, row) => sum + row.studentsCount, 0);
+  if (weight === 0) return 0;
+  return Math.round(
+    rows.reduce((sum, row) => sum + row[key] * row.studentsCount, 0) / weight,
+  );
 }

@@ -4,6 +4,7 @@ import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
+import useListState from '../../hooks/useListState.js';
 import * as coverageService from '../../services/coverageService.js';
 import { formatNumber } from '../../lib/format.js';
 import {
@@ -13,6 +14,8 @@ import {
   Badge,
   Button,
   Table,
+  Field,
+  Select,
   Alert,
   DataState,
   PageSkeleton,
@@ -38,12 +41,28 @@ export default function SupervisorCoverage() {
   const { role, user } = useAuth();
   const toast = useToast();
   const [busy, setBusy] = useState(null);
+  const { values, setValue } = useListState({
+    defaults: { city: 'all', district: 'all', mosque: 'all' },
+  });
 
   const fetcher = useCallback(
-    () => coverageService.listCoverage({ role, userId: user?.userId }),
-    [role, user?.userId],
+    () =>
+      coverageService.listCoverage({
+        role,
+        userId: user?.userId,
+        city: values.city,
+        district: values.district,
+        mosque: values.mosque,
+      }),
+    [role, user?.userId, values.city, values.district, values.mosque],
   );
-  const { data, loading, error, refetch } = useAsyncData(fetcher, [role, user?.userId]);
+  const { data, loading, error, refetch } = useAsyncData(fetcher, [
+    role,
+    user?.userId,
+    values.city,
+    values.district,
+    values.mosque,
+  ]);
 
   const claim = async (row) => {
     setBusy(row.circleId);
@@ -70,6 +89,11 @@ export default function SupervisorCoverage() {
       render: (row) => (
         <Link to={`/app/${role}/circles/${row.circleId}`}>{row.circleName}</Link>
       ),
+    },
+    {
+      key: 'location',
+      header: t('coverage.location'),
+      render: (row) => [row.city, row.district, row.mosque].filter(Boolean).join(' · ') || '—',
     },
     {
       key: 'teacher',
@@ -140,6 +164,52 @@ export default function SupervisorCoverage() {
       >
         {data ? (
           <div className="stack-6">
+            {/* التغطية تُقرأ جغرافيًّا: المشرف يتحرّك بين أحياء لا بين أسماء */}
+            <Card className="row row-4 row-wrap">
+              <Field label={t('coverage.city')} className="grow">
+                <Select
+                  value={values.city}
+                  data-testid="coverage-city"
+                  onChange={(event) => setValue('city', event.target.value)}
+                >
+                  <option value="all">{t('common.all')}</option>
+                  {data.options.cities.map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t('coverage.district')} className="grow">
+                <Select
+                  value={values.district}
+                  data-testid="coverage-district"
+                  onChange={(event) => setValue('district', event.target.value)}
+                >
+                  <option value="all">{t('common.all')}</option>
+                  {data.options.districts.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label={t('coverage.mosque')} className="grow">
+                <Select
+                  value={values.mosque}
+                  data-testid="coverage-mosque"
+                  onChange={(event) => setValue('mosque', event.target.value)}
+                >
+                  <option value="all">{t('common.all')}</option>
+                  {data.options.mosques.map((mosque) => (
+                    <option key={mosque} value={mosque}>
+                      {mosque}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </Card>
+
             {data.gaps > 0 ? (
               <Alert variant="danger" title={t('coverage.gapsTitle', { count: data.gaps })}>
                 {t('coverage.gapsHint')}

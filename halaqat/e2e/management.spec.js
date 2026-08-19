@@ -83,13 +83,18 @@ test('الإدارة: ثلاثة أقسام مع إضافة معلم وتغيي�
   await expect(page.getByText('تمت إضافة المعلم').first()).toBeVisible();
   await expect(page.getByText('معلم جديد للاختبار')).toBeVisible();
 
-  // تغيير دور مستخدم
+  // «المستخدمون» صارت حسابات الإدارة وحدها: للمعلم قسمه وللمشرف قسمه،
+  // فلا يُعاد سردهم هنا. والإضافة من هنا تُنشئ إداريًّا بمستوى صريح.
   await page.goto('/app/admin/users');
-  await page.getByRole('button', { name: 'تغيير الدور' }).first().click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await page.getByRole('radio', { name: 'المشرف' }).check();
-  await page.getByTestId('confirm-role-change').click();
-  await expect(page.getByText(/تم تغيير الدور/).first()).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByText('معلم جديد للاختبار')).toHaveCount(0);
+
+  await page.getByTestId('add-user').click();
+  await page.getByTestId('user-name').fill('إداري للاختبار');
+  await page.getByTestId('admin-level').selectOption('limited');
+  await page.getByTestId('submit-user').click();
+  await expect(page.getByText('إداري للاختبار')).toBeVisible();
+  await expect(page.getByText('إداري محدود').first()).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });
@@ -138,6 +143,90 @@ test('هدف الأجزاء: تحديد عدد أجزاء ومدة وحساب ا
   // أقصى مدة سنة
   const options = await page.getByTestId('goal-duration').locator('option').allInnerTexts();
   expect(options.some((value) => value.includes('سنة'))).toBe(true);
+
+  assertNoConsoleErrors(errors);
+});
+
+test('الإدارة تُنشئ حلقة وتعيّن لها معلمًا ثم تُلغي التعيين', async ({ page }) => {
+  const errors = watchConsole(page);
+  await loginAs(page, 'admin');
+
+  // معلمٌ بلا حلقة أولًا، وإلا لم يبقَ من يُسنَد.
+  await page.goto('/app/admin/teachers');
+  await page.getByTestId('add-teacher').click();
+  await page.getByTestId('user-name').fill('معلم بلا حلقة');
+  await page.getByTestId('submit-user').click();
+  await expect(page.getByText('معلم بلا حلقة')).toBeVisible();
+
+  await page.goto('/app/admin/circles');
+  await page.getByTestId('create-circle').click();
+  await page.getByTestId('circle-name').fill('حلقة الفجر الجديدة');
+  await page.getByTestId('circle-city').selectOption({ index: 1 });
+  await page.getByTestId('submit-circle').click();
+  await expect(page.getByText('أُنشئت الحلقة').first()).toBeVisible();
+
+  // الحلقة تولد بلا تعيين، وهي حالة مشروعة لا خطأ.
+  const row = page.getByRole('row').filter({ hasText: 'حلقة الفجر الجديدة' });
+  await expect(row.getByText('بلا تعيين').first()).toBeVisible();
+
+  await row.getByRole('button', { name: 'بلا تعيين' }).first().click();
+  await page.getByTestId('assignee-select').selectOption({ label: 'معلم بلا حلقة' });
+  await page.getByTestId('submit-assign').click();
+  await expect(page.getByText('تم التعيين').first()).toBeVisible();
+  await expect(
+    page.getByRole('row').filter({ hasText: 'حلقة الفجر الجديدة' }).getByText('معلم بلا حلقة'),
+  ).toBeVisible();
+
+  // وإلغاء التعيين يُفرغ الخانة.
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'حلقة الفجر الجديدة' })
+    .getByRole('button', { name: 'معلم بلا حلقة' })
+    .click();
+  await page.getByTestId('assignee-select').selectOption('');
+  await page.getByTestId('submit-assign').click();
+  await expect(page.getByText('أُلغي التعيين').first()).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});
+
+test('تقرير الإدارة بنطاقين: حسب الحلقات وحسب المدن', async ({ page }) => {
+  const errors = watchConsole(page);
+  await loginAs(page, 'admin');
+  await page.goto('/app/admin/reports');
+
+  // الخلايا تُلتقط بوسمها لا برأس الجدول: الجوال يطوي الرأس داخل الخلايا.
+  await expect(page.locator('td[data-label="المعلم"]').first()).toBeVisible();
+
+  // «حسب المدن» زرٌّ بدور radio لا مربّع اختيار، فيُنقر ويُفحص بـaria-checked.
+  await page.getByRole('radio', { name: 'حسب المدن' }).click();
+  await expect(page.getByRole('radio', { name: 'حسب المدن' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+
+  // أعمدة أخرى لسؤال آخر: المدينة تُقاس بعدد حلقاتها لا بمعلّمها.
+  await expect(page.locator('td[data-label="الحلقات"]').first()).toBeVisible();
+  await expect(page.locator('td[data-label="المعلم"]')).toHaveCount(0);
+
+  assertNoConsoleErrors(errors);
+});
+
+test('تقرير تغطية اليوم يُفتح من التقارير ويُصفّى بالموقع', async ({ page }) => {
+  const errors = watchConsole(page);
+  await loginAs(page, 'supervisor');
+
+  await page.goto('/app/supervisor/reports');
+  await page.getByRole('link', { name: 'تقرير التغطية' }).click();
+  await expect(page).toHaveURL(/\/app\/supervisor\/reports\/coverage/);
+  await expect(page.getByRole('heading', { name: 'تقرير تغطية اليوم' })).toBeVisible();
+
+  const before = await page.getByRole('row').count();
+  await page.getByTestId('report-city').selectOption({ index: 1 });
+  await expect(page.getByRole('row')).not.toHaveCount(before);
+
+  // ويُصدَّر كغيره من التقارير.
+  await expect(page.getByTestId('open-export')).toBeVisible();
 
   assertNoConsoleErrors(errors);
 });

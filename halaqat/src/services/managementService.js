@@ -14,6 +14,22 @@ function assertCan(role, action) {
   if (!can(role, action)) throw new ApiError('forbidden', 'state.forbiddenHint');
 }
 
+/** مستويا الإداري: العليا تملك كل شيء، والمحدود يُسنَد إليه بعضه. */
+export const ADMIN_LEVELS = ['super', 'limited'];
+
+export function isSuperAdmin(db, userId) {
+  const user = db.users.find((item) => item.id === userId);
+  return user?.role === 'admin' && user.adminLevel === 'super';
+}
+
+/**
+ * حساب الإداري لا يُنشئه ولا يحذفه إلا إداريٌّ أعلى.
+ * لو ملك المحدودُ إنشاءَ إداريٍّ لَملك تجاوزَ حدّه بخطوة واحدة.
+ */
+function assertSuperAdmin(db, actorId) {
+  if (!isSuperAdmin(db, actorId)) throw new ApiError('forbidden', 'admin.errors.superOnly');
+}
+
 function circleStats(circleId) {
   const db = getDb();
   const students = db.students.filter((student) => student.circleId === circleId);
@@ -149,6 +165,16 @@ export async function createUser({ role, actorId, payload }) {
       else if (targetRole === 'teacher') assertCan(role, ACTIONS.TEACHERS_MANAGE);
       else assertCan(role, ACTIONS.USERS_MANAGE);
 
+      // إداريٌّ جديد: من الإدارة العليا وحدها، وبمستوى صريح.
+      let adminLevel = null;
+      if (targetRole === 'admin') {
+        assertSuperAdmin(db, actorId);
+        adminLevel = payload.adminLevel ?? 'limited';
+        if (!ADMIN_LEVELS.includes(adminLevel)) {
+          throw new ApiError('invalidLevel', 'admin.errors.invalidAdminLevel');
+        }
+      }
+
       const name = String(payload.name ?? '').trim();
       if (name.length < 3) throw new ApiError('invalidName', 'auth.errors.nameShort');
 
@@ -162,7 +188,15 @@ export async function createUser({ role, actorId, payload }) {
         district: payload.district || '',
         status: 'active',
         joinedAt: new Date().toISOString(),
-        title: targetRole === 'teacher' ? 'معلم حلقة' : 'مشرف حلقات',
+        title:
+          targetRole === 'teacher'
+            ? 'معلم حلقة'
+            : targetRole === 'admin'
+              ? adminLevel === 'super'
+                ? 'إدارة عليا'
+                : 'إداري'
+              : 'مشرف حلقات',
+        ...(adminLevel ? { adminLevel } : {}),
         createdBy: actorId,
       };
       db.users.push(user);
@@ -190,13 +224,24 @@ export async function createUser({ role, actorId, payload }) {
 }
 
 /** حذف مستخدم — يمنع حذف حلقة عامرة بالطلاب دون نقلهم. */
-export async function deleteUser({ role, userId }) {
+export async function deleteUser({ role, userId, actorId }) {
   return request(() =>
     mutateDb((db) => {
       const user = db.users.find((item) => item.id === userId);
       if (!user) throw new ApiError('notFound', 'state.notFoundHint');
 
-      if (user.role === 'supervisor') assertCan(role, ACTIONS.SUPERVISORS_MANAGE);
+      if (user.role === 'admin') {
+        assertCan(role, ACTIONS.USERS_MANAGE);
+        assertSuperAdmin(db, actorId);
+        if (user.id === actorId) throw new ApiError('self', 'admin.errors.deleteSelf');
+        // آخر إدارةٍ عليا لا تُحذف: منصةٌ بلا من يملك مفاتيحها مقفلة.
+        if (user.adminLevel === 'super') {
+          const supers = db.users.filter(
+            (item) => item.role === 'admin' && item.adminLevel === 'super',
+          );
+          if (supers.length <= 1) throw new ApiError('lastSuper', 'admin.errors.lastSuperAdmin');
+        }
+      } else if (user.role === 'supervisor') assertCan(role, ACTIONS.SUPERVISORS_MANAGE);
       else if (user.role === 'teacher') assertCan(role, ACTIONS.TEACHERS_MANAGE);
       else assertCan(role, ACTIONS.USERS_MANAGE);
 
@@ -313,6 +358,94 @@ export async function deleteCircle({ role, circleId }) {
       return { id: circleId };
     }),
   );
+}
+
+/**
+ * تعيين معلّم الحلقة أو مشرفها — أو إلغاء التعيين.
+ *
+ * التعيين وإلغاؤه فعلٌ واحد بقيمتين: تمرير معرِّف يُسنِد، وتمرير null
+ * يُفرِغ الخانة. وحلقةٌ بلا معلّم حالةٌ مشروعة لا خطأ: تظهر عند المشرف
+ * في «تغطية اليوم» بلا تغطية، وهذا هو المقصود.
+ */
+export async function assignCircleRole({ role, actorId, circleId, slot, userId }) {
+  return request(() =>
+    mutateDb((db) => {
+      assertCan(role, ACTIONS.CIRCLES_MANAGE);
+
+      if (!['teacher', 'supervisor'].includes(slot)) {
+        throw new ApiError('invalidSlot', 'admin.errors.invalidSlot');
+      }
+
+      const circle = db.circles.find((item) => item.id === circleId);
+      if (!circle) throw new ApiError('notFound', 'state.notFoundHint');
+
+      // المشرف يعيّن داخل حلقاته وحدها؛ الإدارة في كلّها.
+      if (role === 'supervisor' && circle.supervisorId !== actorId) {
+        throw new ApiError('forbidden', 'state.forbiddenHint');
+      }
+
+      if (userId === null || userId === '') {
+        // المشرف لا يُخرج نفسه من حلقته فتصير بلا مشرف يتابعها.
+        if (slot === 'supervisor' && role === 'supervisor') {
+          throw new ApiError('forbidden', 'state.forbiddenHint');
+        }
+        circle[slot === 'teacher' ? 'teacherId' : 'supervisorId'] = null;
+        return shapeCircle(db, circle);
+      }
+
+      const user = db.users.find((item) => item.id === userId);
+      if (!user || user.role !== slot) {
+        throw new ApiError('invalidUser', 'admin.errors.invalidAssignee');
+      }
+      if (user.status !== 'active') {
+        throw new ApiError('suspended', 'admin.errors.assigneeSuspended');
+      }
+
+      // معلمٌ واحد لحلقة واحدة: من يُعطى حلقتين لا يقود أيًّا منهما.
+      if (slot === 'teacher') {
+        const busy = db.circles.find(
+          (item) => item.id !== circleId && item.teacherId === userId,
+        );
+        if (busy) throw new ApiError('teacherBusy', 'admin.errors.teacherHasCircle');
+      }
+
+      circle[slot === 'teacher' ? 'teacherId' : 'supervisorId'] = userId;
+      return shapeCircle(db, circle);
+    }),
+  );
+}
+
+/** مرشّحو التعيين: النشِطون من الدور المطلوب، والمعلم الموكّل يُوسم بحلقته. */
+export async function listAssignable({ role, slot }) {
+  return request(() => {
+    assertCan(role, ACTIONS.CIRCLES_MANAGE);
+    const db = getDb();
+
+    return db.users
+      .filter((user) => user.role === slot && (user.status ?? 'active') === 'active')
+      .map((user) => {
+        const own = db.circles.find((circle) =>
+          slot === 'teacher' ? circle.teacherId === user.id : circle.supervisorId === user.id,
+        );
+        return {
+          id: user.id,
+          name: user.name,
+          city: user.city ?? '',
+          circleName: own?.name ?? '',
+          // المعلم المرتبط بحلقة لا يُعيَّن لثانية؛ المشرف يشرف على عدّة.
+          busy: slot === 'teacher' && Boolean(own),
+        };
+      })
+      .sort((a, b) => Number(a.busy) - Number(b.busy) || a.name.localeCompare(b.name, 'ar'));
+  });
+}
+
+function shapeCircle(db, circle) {
+  return {
+    ...circle,
+    teacherName: db.users.find((user) => user.id === circle.teacherId)?.name ?? '',
+    supervisorName: db.users.find((user) => user.id === circle.supervisorId)?.name ?? '',
+  };
 }
 
 /* ===============================================================

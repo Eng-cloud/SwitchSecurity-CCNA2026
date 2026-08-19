@@ -209,3 +209,250 @@ describe('خدمة الإدارة والإشراف', () => {
     expect(notification ?? created).toBeTruthy();
   });
 });
+
+describe('الإداريون: مستويان لا مستوى واحد', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  const SUPER = 'user-admin';
+
+  const NEW_ADMIN = { role: 'admin', name: 'نورة السالم', email: 'n@halaqat.sa' };
+
+  function limitedAdmin() {
+    const db = getDb();
+    const admin = {
+      id: 'user-admin-limited',
+      name: 'إداري محدود',
+      role: 'admin',
+      email: 'limited@halaqat.sa',
+      status: 'active',
+      adminLevel: 'limited',
+      joinedAt: new Date().toISOString(),
+    };
+    db.users.push(admin);
+    return admin;
+  }
+
+  it('الإدارة العليا تُنشئ إداريًّا بمستوى صريح', async () => {
+    const created = await managementService.createUser({
+      role: 'admin',
+      actorId: SUPER,
+      payload: { ...NEW_ADMIN, adminLevel: 'limited' },
+    });
+    expect(created.adminLevel).toBe('limited');
+
+    const senior = await managementService.createUser({
+      role: 'admin',
+      actorId: SUPER,
+      payload: { ...NEW_ADMIN, email: 's@halaqat.sa', adminLevel: 'super' },
+    });
+    expect(senior.adminLevel).toBe('super');
+
+    await expect(
+      managementService.createUser({
+        role: 'admin',
+        actorId: SUPER,
+        payload: { ...NEW_ADMIN, adminLevel: 'owner' },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.invalidAdminLevel' });
+  });
+
+  it('الإداري المحدود لا يُنشئ إداريًّا ولا يحذفه', async () => {
+    const limited = limitedAdmin();
+
+    // لو ملك المحدودُ إنشاءَ إداريٍّ لَملك تجاوزَ حدّه بخطوة واحدة.
+    await expect(
+      managementService.createUser({
+        role: 'admin',
+        actorId: limited.id,
+        payload: { ...NEW_ADMIN, adminLevel: 'super' },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.superOnly' });
+
+    await expect(
+      managementService.deleteUser({ role: 'admin', userId: SUPER, actorId: limited.id }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.superOnly' });
+  });
+
+  it('لا يُحذف آخر حساب إدارة عليا ولا يحذف الإداري نفسه', async () => {
+    await expect(
+      managementService.deleteUser({ role: 'admin', userId: SUPER, actorId: SUPER }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.deleteSelf' });
+
+    const limited = limitedAdmin();
+    await expect(
+      managementService.deleteUser({ role: 'admin', userId: SUPER, actorId: limited.id }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.superOnly' });
+
+    // ومع وجود عليا ثانية يصير الحذف ممكنًا.
+    const second = await managementService.createUser({
+      role: 'admin',
+      actorId: SUPER,
+      payload: { ...NEW_ADMIN, adminLevel: 'super' },
+    });
+    await expect(
+      managementService.deleteUser({ role: 'admin', userId: second.id, actorId: SUPER }),
+    ).resolves.toMatchObject({ id: second.id });
+  });
+});
+
+describe('تعيين معلّم الحلقة ومشرفها', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  function freeTeacher() {
+    const db = getDb();
+    const teacher = {
+      id: 'user-teacher-free',
+      name: 'معلم بلا حلقة',
+      role: 'teacher',
+      status: 'active',
+      email: 'free@halaqat.sa',
+    };
+    db.users.push(teacher);
+    return teacher;
+  }
+
+  it('الإدارة تُسنِد معلمًا شاغرًا وتُلغي الإسناد', async () => {
+    const db = getDb();
+    const circle = db.circles[0];
+    const teacher = freeTeacher();
+
+    const assigned = await managementService.assignCircleRole({
+      role: 'admin',
+      actorId: 'user-admin',
+      circleId: circle.id,
+      slot: 'teacher',
+      userId: teacher.id,
+    });
+    expect(assigned.teacherId).toBe(teacher.id);
+    expect(assigned.teacherName).toBe('معلم بلا حلقة');
+
+    // خانةٌ فارغة حالةٌ مشروعة لا خطأ.
+    const cleared = await managementService.assignCircleRole({
+      role: 'admin',
+      actorId: 'user-admin',
+      circleId: circle.id,
+      slot: 'teacher',
+      userId: null,
+    });
+    expect(cleared.teacherId).toBeNull();
+  });
+
+  it('معلمٌ واحد لحلقة واحدة', async () => {
+    const db = getDb();
+    const [first, second] = db.circles;
+
+    await expect(
+      managementService.assignCircleRole({
+        role: 'admin',
+        actorId: 'user-admin',
+        circleId: second.id,
+        slot: 'teacher',
+        userId: first.teacherId,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.teacherHasCircle' });
+  });
+
+  it('لا يُسنَد موقوف، ولا من هو من دورٍ آخر', async () => {
+    const db = getDb();
+    const circle = db.circles[0];
+    const suspended = freeTeacher();
+    suspended.status = 'suspended';
+
+    await expect(
+      managementService.assignCircleRole({
+        role: 'admin',
+        actorId: 'user-admin',
+        circleId: circle.id,
+        slot: 'teacher',
+        userId: suspended.id,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.assigneeSuspended' });
+
+    await expect(
+      managementService.assignCircleRole({
+        role: 'admin',
+        actorId: 'user-admin',
+        circleId: circle.id,
+        slot: 'teacher',
+        userId: circle.supervisorId,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'admin.errors.invalidAssignee' });
+  });
+
+  it('المشرف يعيّن داخل حلقاته وحدها ولا يُخرج نفسه منها', async () => {
+    const db = getDb();
+    const mine = db.circles.find((circle) => circle.supervisorId === 'user-supervisor-1');
+    const notMine = db.circles.find((circle) => circle.supervisorId !== 'user-supervisor-1');
+    const teacher = freeTeacher();
+
+    await expect(
+      managementService.assignCircleRole({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: mine.id,
+        slot: 'teacher',
+        userId: teacher.id,
+      }),
+    ).resolves.toMatchObject({ teacherId: teacher.id });
+
+    await expect(
+      managementService.assignCircleRole({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: notMine.id,
+        slot: 'teacher',
+        userId: null,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+
+    // حلقةٌ بلا مشرف لا يُتابعها أحد، فلا يُفرغ المشرف خانته بنفسه.
+    await expect(
+      managementService.assignCircleRole({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: mine.id,
+        slot: 'supervisor',
+        userId: null,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+  });
+
+  it('المرشّحون: المعلم المرتبط بحلقة يُوسم بها', async () => {
+    const teacher = freeTeacher();
+
+    const candidates = await managementService.listAssignable({
+      role: 'admin',
+      slot: 'teacher',
+    });
+    const free = candidates.find((item) => item.id === teacher.id);
+    expect(free.busy).toBe(false);
+    expect(candidates.some((item) => item.busy && item.circleName)).toBe(true);
+
+    // والمشرف يشرف على عدّة حلقات فلا يُوسم مرتبطًا.
+    const supervisors = await managementService.listAssignable({
+      role: 'admin',
+      slot: 'supervisor',
+    });
+    expect(supervisors.every((item) => item.busy === false)).toBe(true);
+  });
+
+  it('من لا يملك إدارة الحلقات لا يعيّن', async () => {
+    const circle = getDb().circles[0];
+    for (const role of ['teacher', 'student', 'parent']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        managementService.assignCircleRole({
+          role,
+          actorId: 'x',
+          circleId: circle.id,
+          slot: 'teacher',
+          userId: null,
+        }),
+      ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+    }
+  });
+});

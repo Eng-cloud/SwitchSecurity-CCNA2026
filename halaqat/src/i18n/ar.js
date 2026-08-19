@@ -277,11 +277,17 @@ const ar = {
   coverage: {
     title: 'معلّم الحلقة اليوم',
     pageTitle: 'تغطية اليوم',
+    reportTitle: 'تقرير تغطية اليوم',
+    openReport: 'تقرير التغطية',
     pageSubtitle: 'حلقاتك اليوم مرتّبةً بإلحاحها — ما فقد معلّمه أولًا.',
     noTeacher: 'لا معلّم مسنَد',
     teacherAttendance: 'حضور المعلم',
     teacherAttendanceLabel: 'حضور المعلم {name} اليوم',
     stateHeader: 'التغطية',
+    location: 'الموقع',
+    city: 'المدينة',
+    district: 'الحي',
+    mosque: 'الجامع',
     deputy: 'النائب',
     recordedBy: 'سجّله {name} ({role})',
 
@@ -789,6 +795,10 @@ const ar = {
   },
 
   reports: {
+    scope: 'نطاق التقرير',
+    scopeCircles: 'حسب الحلقات',
+    scopeCities: 'حسب المدن',
+    scopeCoverage: 'تغطية اليوم',
     export: 'تصدير',
     exportTitle: 'تصدير التقرير',
     exportHint: 'سيُصدَّر {count} صفًّا بالفلاتر الحالية.',
@@ -1055,6 +1065,14 @@ const ar = {
   admin: {
     dashboardTitle: 'لوحة الإدارة',
     errors: {
+      superOnly: 'هذا الإجراء للإدارة العليا وحدها.',
+      invalidAdminLevel: 'اختر مستوى الإداري.',
+      deleteSelf: 'لا تحذف حسابك من هنا.',
+      lastSuperAdmin: 'لا يمكن حذف آخر حساب إدارة عليا.',
+      invalidSlot: 'خانة تعيين غير معروفة.',
+      invalidAssignee: 'اختر شخصًا من الدور المطلوب.',
+      assigneeSuspended: 'الحساب موقوف، فعّله أولًا.',
+      teacherHasCircle: 'هذا المعلم مسنَد إلى حلقة أخرى.',
       circleNotEmpty: 'لا يمكن الحذف: الحلقة بها طلاب. انقلهم أو احذفهم أولًا.',
       supervisorHasCircles: 'لا يمكن حذف مشرف مسؤول عن حلقات. أسند حلقاته لمشرف آخر أولًا.',
       roleChangeUnsupported: 'تغيير الدور متاح بين الإدارة والمشرف والمعلم فقط.',
@@ -1066,6 +1084,15 @@ const ar = {
       teachers: 'المعلمون',
     },
     users: {
+      level: 'المستوى',
+      levelHint: 'العليا تملك كل شيء؛ المحدود يدير ولا يُنشئ إداريًّا ولا يضيف في التجويد.',
+      levels: {
+        super: 'إدارة عليا',
+        limited: 'إداري محدود',
+      },
+      add: 'إضافة إداري',
+      addTitle: 'إضافة إداري',
+
       title: 'مستخدمو المنصة',
       subtitle: 'حسابات الإدارة والإشراف والتعليم — إضافة وحذف وتغيير الدور.',
       add: 'إضافة مستخدم',
@@ -1244,6 +1271,20 @@ const ar = {
   },
 
   circles: {
+    create: 'إنشاء حلقة',
+    created: 'أُنشئت الحلقة',
+    assignTeacher: 'معلّم حلقة {circle}',
+    assignSupervisor: 'مشرف حلقة {circle}',
+    assignee: 'الاسم',
+    assigned: 'تم التعيين',
+    unassigned: 'أُلغي التعيين',
+    unassignedSlot: 'بلا تعيين',
+    unassignHint: 'اختيار «بلا تعيين» يُفرغ الخانة، والحلقة تظهر عندها بلا تغطية.',
+    assignLater: 'يمكن تركها الآن وتعيينها لاحقًا.',
+    deleteTitle: 'حذف الحلقة',
+    deleteConfirm: 'سيُحذف «{name}» نهائيًا. لا تُحذف حلقةٌ فيها طلاب.',
+    deleted: 'حُذفت الحلقة',
+
     open: 'فتح الحلقة',
     title: 'الحلقات',
     subtitle: 'كل الحلقات وأدائها.',

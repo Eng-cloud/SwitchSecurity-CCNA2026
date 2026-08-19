@@ -126,10 +126,9 @@ test('رحلة الإدارة: المستخدمون → الحلقات → ال�
   // Users + filters
   await page.goto('/app/admin/users');
   await expect(page.getByRole('table')).toBeVisible();
-  await page.getByLabel('الدور').selectOption('teacher');
-  await expect(page).toHaveURL(/role=teacher/);
-  const roleCells = page.locator('td[data-label="الدور"]');
-  await expect(roleCells.first()).toContainText('المعلم');
+  // كلّهم إداريون، والفارق مستواهم لا دورهم.
+  const levelCells = page.locator('td[data-label="المستوى"]');
+  await expect(levelCells.first()).toContainText(/إدارة عليا|إداري محدود/);
 
   // البحث مع حالة "لا نتائج"
   await page.getByPlaceholder('ابحث...').fill('زززز');
