@@ -69,6 +69,7 @@ describe('مصفوفة الصلاحيات', () => {
         ACTIONS.DISTINGUISHED_VIEW,
         ACTIONS.TASKS_ASSIGN,
         ACTIONS.ATTENDANCE_RECORD,
+        ACTIONS.COVERAGE_MANAGE,
         ACTIONS.NOTES_WRITE,
       ].sort(),
     );
@@ -91,7 +92,27 @@ describe('مصفوفة الصلاحيات', () => {
 
   it('المشرف لا يعيّن مساعدًا ولا يوكّل — هذه علاقة معلم بطلابه', () => {
     expect(can('supervisor', ACTIONS.ASSISTANT_ASSIGN)).toBe(false);
-    expect(can('supervisor', ACTIONS.ATTENDANCE_RECORD)).toBe(false);
+    expect(can('supervisor', ACTIONS.DELEGATION_MANAGE)).toBe(false);
+    expect(can('supervisor', ACTIONS.TASKS_ASSIGN)).toBe(false);
+  });
+
+  it('الحضور بيد من يُسأل عن انعقاد الحلقة: المعلم ومشرفه', () => {
+    // المشرف مسؤول عن انعقاد حلقاته، فيملك تسجيل الحضور فيها كاملًا.
+    for (const role of ['teacher', 'supervisor', 'admin']) {
+      expect(can(role, ACTIONS.ATTENDANCE_RECORD)).toBe(true);
+    }
+    for (const role of ['student', 'parent']) {
+      expect(can(role, ACTIONS.ATTENDANCE_RECORD)).toBe(false);
+    }
+  });
+
+  it('التغطية والإنابة: المعلم يطلب ويردّ، والمشرف يعيّن أو يتولّى', () => {
+    for (const role of ['teacher', 'supervisor', 'admin']) {
+      expect(can(role, ACTIONS.COVERAGE_MANAGE)).toBe(true);
+    }
+    for (const role of ['student', 'parent']) {
+      expect(can(role, ACTIONS.COVERAGE_MANAGE)).toBe(false);
+    }
   });
 
   it('دور غير معروف بلا صلاحيات', () => {

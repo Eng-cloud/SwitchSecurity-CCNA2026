@@ -779,3 +779,45 @@
     gap: var(--space-6);
   }
 }
+
+/* =========================================================
+   لوحة التغطية — من يقود الحلقة اليوم؟
+
+   تجلس أعلى صفحة الحلقة، فهي أول ما يُسأل عنه اليوم. الحدّ الجانبي
+   يحمل لون الحالة كي يُقرأ الإلحاح من طرف العين قبل قراءة النص.
+   ========================================================= */
+.coverage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.coverage__head {
+  align-items: flex-end;
+}
+
+.coverage__request {
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--border);
+}
+
+.coverage__active {
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+/* الحقول داخل اللوحة لا تتمدد كحقول النماذج: هي إجراءات لا استمارة. */
+.coverage .field {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .coverage__head {
+    align-items: stretch;
+  }
+
+  .coverage__head .select--attendance {
+    width: 100%;
+  }
+}

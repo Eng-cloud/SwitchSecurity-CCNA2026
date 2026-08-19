@@ -5,7 +5,10 @@ import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useGoBack from '../../hooks/useGoBack.js';
+import useAttendance from '../../hooks/useAttendance.js';
 import SectionBoundary from '../../components/system/SectionBoundary.jsx';
+import AttendanceSelect from '../../components/attendance/AttendanceSelect.jsx';
+import CoveragePanel from '../../components/coverage/CoveragePanel.jsx';
 import * as supervisorService from '../../services/supervisorService.js';
 import * as managementService from '../../services/managementService.js';
 import { can, ACTIONS } from '../../config/permissions.js';
@@ -52,7 +55,10 @@ export default function CircleDetail() {
   const fetcher = useCallback(() => supervisorService.getCircleDetail(circleId), [circleId]);
   const { data, loading, error, refetch } = useAsyncData(fetcher, [circleId]);
 
+  const { pending, setAttendance } = useAttendance({ onSaved: refetch });
+
   const mayManageStudents = can(role, ACTIONS.STUDENTS_MANAGE);
+  const mayRecordAttendance = can(role, ACTIONS.ATTENDANCE_RECORD);
   const mayManageTeachers = can(role, ACTIONS.TEACHERS_MANAGE);
 
   /** ينفّذ إجراءً ويعرض نتيجته، ثم يحدّث الصفحة. */
@@ -104,6 +110,24 @@ export default function CircleDetail() {
 
   const columns = [
     { key: 'name', header: t('teacher.tableStudent') },
+    // المشرف مسؤول عن انعقاد الحلقة، فيملك تسجيل حضورها من داخلها.
+    ...(mayRecordAttendance
+      ? [
+          {
+            key: 'attendanceToday',
+            header: t('teacher.tableAttendance'),
+            render: (row) => (
+              <AttendanceSelect
+                data-testid={`attendance-${row.id}`}
+                name={row.name}
+                value={pending[row.id] ?? row.attendanceToday}
+                busy={Boolean(pending[row.id])}
+                onChange={(status) => setAttendance(row, status)}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       key: 'memorizedPages',
       header: t('reports.pagesMemorized'),
@@ -212,6 +236,8 @@ export default function CircleDetail() {
                 icon="!"
               />
             </div>
+
+            <CoveragePanel circleId={circleId} onChange={refetch} />
 
             {data.teacher ? (
               <Card className="row row-4 row-wrap">

@@ -98,6 +98,7 @@ const ar = {
   },
 
   nav: {
+    coverage: 'تغطية اليوم',
     menu: 'القائمة',
     openMenu: 'فتح القائمة الرئيسية',
     closeMenu: 'إغلاق القائمة',
@@ -266,6 +267,93 @@ const ar = {
     switched: 'تم التبديل إلى {role}',
     notice: 'تبديل الدور يغيّر ما تراه من أقسام المنصة.',
     otpNotice: 'رمز التحقق للدخول السريع: {code}.',
+  },
+
+  /* ---------------------------------------------------------------
+     التغطية والإنابة — من يقود الحلقة اليوم؟
+     --------------------------------------------------------------- */
+  coverage: {
+    title: 'معلّم الحلقة اليوم',
+    pageTitle: 'تغطية اليوم',
+    pageSubtitle: 'حلقاتك اليوم مرتّبةً بإلحاحها — ما فقد معلّمه أولًا.',
+    noTeacher: 'لا معلّم مسنَد',
+    teacherAttendance: 'حضور المعلم',
+    teacherAttendanceLabel: 'حضور المعلم {name} اليوم',
+    stateHeader: 'التغطية',
+    deputy: 'النائب',
+    recordedBy: 'سجّله {name} ({role})',
+
+    state: {
+      onSite: 'المعلم حاضر',
+      deputized: 'يقودها نائب',
+      pending: 'بانتظار ردّ النائب',
+      needsCover: 'بلا معلّم',
+      escalated: 'تحتاج المشرف',
+      unknown: 'لم يُسجَّل بعد',
+    },
+
+    alert: {
+      needsCover: 'الحلقة اليوم بلا معلّم',
+      escalated: 'اعتُذر عن الإنابة — المسؤولية على المشرف',
+    },
+    alertHint: 'اختر معلمًا ينوب اليوم. إن لم يقبل أحد انتقلت المسؤولية إلى المشرف.',
+    declinedBecause: 'اعتذر {name}: {reason}',
+
+    pickDeputy: 'من ينوب اليوم؟',
+    pickDeputyPlaceholder: 'اختر معلمًا…',
+    requestDeputy: 'طلب إنابة',
+    claim: 'أتولّاها بنفسي',
+    end: 'إنهاء الإنابة',
+    openCircle: 'فتح الحلقة',
+    accept: 'أقبل الإنابة',
+    decline: 'أعتذر',
+    declineTitle: 'الاعتذار عن الإنابة',
+    declineReason: 'سبب الاعتذار',
+    declineReasonPlaceholder: 'يصل السبب إلى المشرف ليتصرّف…',
+
+    waitingOn: 'طلب إنابة عند {name} بانتظار الردّ.',
+    ledBy: 'يقود الحلقة اليوم: {name} ({role}).',
+    deputyBannerTitle: 'أنت نائب اليوم',
+    deputyBannerText: 'تنوب عن {teacher} في هذه الحلقة اليوم فقط، وتنتهي إنابتك بانتهاء اليوم أو بعودته.',
+
+    busy: {
+      deputizing: 'ينوب في حلقة أخرى',
+      away: 'غائب اليوم',
+    },
+
+    inbox: {
+      title: 'طُلب منك أن تنوب اليوم',
+      text: 'غاب {teacher} عن {circle}، وطلب {by} أن تنوب عنه اليوم.',
+      active: 'تنوب اليوم عن {teacher} في {circle}.',
+    },
+
+    saved: 'حُدِّث حضور المعلم',
+    cleared: 'أُلغي تسجيل حضور المعلم',
+    requested: 'أُرسل طلب الإنابة',
+    accepted: 'قبلت الإنابة — الحلقة لك اليوم',
+    declined: 'أُرسل اعتذارك إلى المشرف',
+    claimed: 'تولّيت الحلقة اليوم',
+    ended: 'أُنهيت الإنابة',
+
+    gapsTitle: 'حلقات بلا معلّم اليوم: {count}',
+    gapsHint: 'تولَّ الحلقة بنفسك أو ادخلها لتعيّن نائبًا.',
+    gapsStat: 'تحتاج تدخّلك',
+    unknownStat: 'لم يسجّل معلّمها',
+    circlesStat: 'حلقاتك',
+    emptyTitle: 'لا حلقات تحت إشرافك',
+    emptyText: 'ستظهر هنا حلقاتك وتغطيتها اليومية.',
+
+    errors: {
+      invalidStatus: 'حالة حضور غير معروفة',
+      invalidDeputy: 'لا يصلح هذا الاسم للإنابة',
+      selfDeputy: 'لا ينوب المعلم عن نفسه',
+      deputyBusy: 'هذا المعلم مرتبط بإنابة أخرى اليوم',
+      notNeeded: 'لا حاجة إلى إنابة: المعلم لم يُسجَّل غائبًا',
+      alreadyCovered: 'للحلقة نائب يقودها اليوم',
+      alreadyAnswered: 'رُدَّ على هذا الطلب من قبل',
+      alreadyEnded: 'انتهت هذه الإنابة',
+      hasOpenDeputation: 'أنهِ الإنابة القائمة قبل مسح تسجيل الغياب',
+    },
   },
 
   roles: {
@@ -1107,6 +1195,9 @@ const ar = {
       delegationChosen: 'اختار المساعد الطلاب الذين سيسمع لهم',
       taskAssigned: 'عيّن لك معلمك مهمة جديدة',
       taskDone: 'أنجز طالبك المهمة المسندة إليه',
+      deputyRequest: 'طُلب منك أن تنوب عن معلم غائب اليوم',
+      deputyAccepted: 'قُبلت الإنابة — للحلقة من يقودها اليوم',
+      deputyDeclined: 'اعتُذر عن الإنابة — حلقة تحتاج تدخّل المشرف',
     },
   },
 

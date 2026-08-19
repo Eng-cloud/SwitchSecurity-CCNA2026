@@ -7,7 +7,7 @@
 import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -466,6 +466,10 @@ function generate() {
     assistantDelegations,
     // مهام الطلاب — تُولَّد ليوم الطالب عند أول فتح وتُضاف إليها تعيينات المعلم.
     tasks: [],
+    // حضور المعلم نفسه — سجل منفصل عن حضور الطلاب لأن غيابه يترك حلقةً بلا قائد.
+    circleAttendance: [],
+    // الإنابات: من يقود الحلقة يوم غياب معلّمها.
+    deputations: [],
     users,
     circles,
     students,

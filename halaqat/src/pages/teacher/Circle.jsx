@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useListState from '../../hooks/useListState.js';
 import useDebouncedValue from '../../hooks/useDebouncedValue.js';
+import useAttendance from '../../hooks/useAttendance.js';
 import * as teacherService from '../../services/teacherService.js';
 import { formatNumber, formatPercent, formatRelative } from '../../lib/format.js';
 import {
@@ -22,6 +23,8 @@ import {
   Card,
 } from '../../components/ui/index.js';
 import AddNoteModal from '../../components/teacher/AddNoteModal.jsx';
+import AttendanceSelect from '../../components/attendance/AttendanceSelect.jsx';
+import CoveragePanel from '../../components/coverage/CoveragePanel.jsx';
 
 const STATUS_VARIANT = {
   excellent: 'success',
@@ -29,17 +32,6 @@ const STATUS_VARIANT = {
   behind: 'warning',
   atRisk: 'danger',
 };
-
-const ATTENDANCE_VARIANT = {
-  notRecorded: 'neutral',
-  present: 'success',
-  absent: 'danger',
-  late: 'warning',
-  excused: 'info',
-};
-
-/** «لم يُسجَّل» أولًا: هي حالة اليوم قبل أن يلمسه المعلم، وهي أيضًا طريق التراجع. */
-const ATTENDANCE_OPTIONS = ['notRecorded', 'present', 'late', 'absent', 'excused'];
 
 /**
  * جدول الحلقة — الحالة والحضور والإجراءات.
@@ -49,9 +41,12 @@ export default function TeacherCircle() {
   const t = useT();
   const { user } = useAuth();
   const toast = useToast();
+  const { circleId: coveredCircleId } = useParams();
+  // مسار «cover/:circleId» يفتح حلقة الإنابة؛ وبلا معرِّف تُفتح حلقة المعلم.
+  const circleId = coveredCircleId ?? user.circleId;
+
   const [noteFor, setNoteFor] = useState(null);
   const [sort, setSort] = useState(null);
-  const [pending, setPending] = useState({});
 
   const { values, setValue } = useListState({
     defaults: { q: '', status: 'all', page: 1 },
@@ -60,54 +55,24 @@ export default function TeacherCircle() {
 
   const fetcher = useCallback(
     () =>
-      teacherService.getCircleStudents(user.circleId, {
+      teacherService.getCircleStudents(circleId, {
         query: debouncedQuery,
         status: values.status,
         page: values.page,
         perPage: 8,
         sort,
       }),
-    [user.circleId, debouncedQuery, values.status, values.page, sort],
+    [circleId, debouncedQuery, values.status, values.page, sort],
   );
   const { data, loading, error, refetch } = useAsyncData(fetcher, [
-    user.circleId,
+    circleId,
     debouncedQuery,
     values.status,
     values.page,
     sort,
   ]);
 
-  /**
-   * ضبط الحضور — لا «تسجيله».
-   * الحالة السابقة تُحفظ ثم تُعاد إن فشل الحفظ، فلا يبقى الاختيار في الشاشة
-   * على قيمة لم تُكتب في البيانات.
-   */
-  const handleAttendance = async (row, status) => {
-    const previous = row.attendanceToday;
-    if (status === previous) return;
-
-    setPending((current) => ({ ...current, [row.id]: status }));
-    try {
-      await teacherService.setAttendance(row.id, status);
-      toast.success(
-        status === 'notRecorded'
-          ? t('teacher.attendanceCleared', { name: row.name })
-          : t('teacher.attendanceSaved', {
-              name: row.name,
-              status: t(`teacher.attendanceStatus.${status}`),
-            }),
-      );
-      await refetch();
-    } catch (err) {
-      toast.error(t(err?.messageKey ?? 'state.errorHint'));
-    } finally {
-      setPending((current) => {
-        const next = { ...current };
-        delete next[row.id];
-        return next;
-      });
-    }
-  };
+  const { pending, setAttendance } = useAttendance({ onSaved: refetch });
 
   const columns = [
     {
@@ -131,27 +96,15 @@ export default function TeacherCircle() {
       header: t('teacher.tableAttendance'),
       // الحضور يُضبط من مكانه في الجدول: الحالة المعروضة هي نفسها أداة تغييرها،
       // فالتصحيح خطوة واحدة لا رحلة إلى شاشة أخرى.
-      render: (row) => {
-        const value = pending[row.id] ?? row.attendanceToday;
-        return (
-          <Select
-            className="select--attendance"
-            // اللون من نفس سُلَّم الشارات، فلا يفترق معنى الأخضر بين عمود وآخر.
-            data-variant={ATTENDANCE_VARIANT[value]}
-            data-testid={`attendance-${row.id}`}
-            aria-label={t('teacher.attendanceLabel', { name: row.name })}
-            value={value}
-            disabled={Boolean(pending[row.id])}
-            onChange={(event) => handleAttendance(row, event.target.value)}
-          >
-            {ATTENDANCE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {t(`teacher.attendanceStatus.${option}`)}
-              </option>
-            ))}
-          </Select>
-        );
-      },
+      render: (row) => (
+        <AttendanceSelect
+          data-testid={`attendance-${row.id}`}
+          name={row.name}
+          value={pending[row.id] ?? row.attendanceToday}
+          busy={Boolean(pending[row.id])}
+          onChange={(status) => setAttendance(row, status)}
+        />
+      ),
     },
     {
       key: 'memorizedPages',
@@ -210,6 +163,8 @@ export default function TeacherCircle() {
           </>
         }
       />
+
+      <CoveragePanel circleId={circleId} onChange={refetch} />
 
       <Card variant="quiet" className="row row-4 row-wrap">
         <div className="grow" style={{ minWidth: '240px' }}>

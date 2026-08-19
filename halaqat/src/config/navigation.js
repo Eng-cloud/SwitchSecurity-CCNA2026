@@ -46,6 +46,7 @@ const NAVIGATION = {
   ],
   supervisor: [
     { to: '/app/supervisor', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
+    { to: '/app/supervisor/coverage', labelKey: 'nav.coverage', icon: '🛡', primary: true },
     { to: '/app/supervisor/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
     { to: '/app/supervisor/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫', primary: true },
     { to: '/app/supervisor/distinguished', labelKey: 'nav.distinguished', icon: '🏅' },
@@ -59,6 +60,7 @@ const NAVIGATION = {
     { to: '/app/admin/supervisors', labelKey: 'nav.supervisors', icon: '🧭' },
     { to: '/app/admin/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫' },
     { to: '/app/admin/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
+    { to: '/app/admin/coverage', labelKey: 'nav.coverage', icon: '🛡' },
     { to: '/app/admin/requests', labelKey: 'nav.requests', icon: '📬' },
     { to: '/app/admin/reports', labelKey: 'nav.reports', icon: '📊' },
     { to: '/app/admin/analytics', labelKey: 'nav.analytics', icon: '📈', primary: true },

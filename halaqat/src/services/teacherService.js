@@ -3,6 +3,7 @@
 import { request, ApiError, paginate, matchesQuery } from '../mock/api.js';
 import { getDb, mutateDb, getCircle, getStudent, getUser, getSurahName } from '../mock/db.js';
 import { toISODate } from '../lib/format.js';
+import { authorityOver } from './coverageService.js';
 
 function circleOfTeacher(teacherId) {
   return getDb().circles.find((circle) => circle.teacherId === teacherId) ?? null;
@@ -102,11 +103,16 @@ export const ATTENDANCE_NOT_RECORDED = 'notRecorded';
  * يحذف السجل فيعود اليوم كما لو لم يُلمس — وهذا هو التراجع الحقيقي، لا
  * استبدال خطأٍ بخطأٍ آخر اسمه «غائب».
  */
-export async function setAttendance(studentId, status) {
+export async function setAttendance({ studentId, status, role, userId }) {
   return request(() =>
     mutateDb((db) => {
       const student = db.students.find((item) => item.id === studentId);
       if (!student) throw new ApiError('notFound', 'state.notFoundHint');
+
+      // من يقود الحلقة اليوم يسجّل حضورها: معلّمها، أو نائبه، أو مشرفها.
+      // السلطة تُسأل من مصدر واحد فلا تتفرق قواعدها بين شاشة وأخرى.
+      const { allowed } = authorityOver(db, { role, userId, circleId: student.circleId });
+      if (!allowed) throw new ApiError('forbidden', 'state.forbiddenHint');
 
       const today = toISODate(new Date());
       const index = db.attendance.findIndex(

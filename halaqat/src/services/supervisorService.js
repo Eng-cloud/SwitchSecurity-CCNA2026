@@ -2,6 +2,7 @@
 
 import { request, ApiError, paginate, matchesQuery } from '../mock/api.js';
 import { getDb, getCircle, getUser } from '../mock/db.js';
+import { toISODate } from '../lib/format.js';
 
 function circleStats(circleId) {
   const db = getDb();
@@ -88,6 +89,7 @@ export async function getCircleDetail(circleId) {
     const db = getDb();
     const teacher = getUser(circle.teacherId);
     const students = db.students.filter((student) => student.circleId === circleId);
+    const today = toISODate(new Date());
 
     return {
       id: circle.id,
@@ -111,6 +113,10 @@ export async function getCircleDetail(circleId) {
         id: student.id,
         name: student.name,
         attendanceRate: student.attendanceRate,
+        // حضور اليوم: بدونه لا يستطيع المشرف تسجيله ولا تصحيحه من الحلقة.
+        attendanceToday:
+          db.attendance.find((row) => row.studentId === student.id && row.date === today)?.status ??
+          'notRecorded',
         masteryAvg: student.masteryAvg,
         memorizedPages: student.memorizedPages,
         status: student.status,

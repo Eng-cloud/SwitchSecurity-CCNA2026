@@ -60,12 +60,32 @@ export async function logout(page) {
 }
 
 /**
+ * أيّ تنقّلٍ تعرضه الشاشة الآن: الشريط الجانبي أم زرّ الدرج؟
+ *
+ * السؤال لا يُطرح قبل أن يستقرّ أحدهما على الشاشة. سؤالٌ سابقٌ لأوانه —
+ * أثناء انتقال المسار مثلًا — يقرأ «لا شريط» فيمضي إلى فرع الجوال
+ * وينتظر زرًّا لن يظهر على سطح المكتب أبدًا.
+ */
+export async function sidebarVisible(page) {
+  const sidebar = page.locator('[data-app-sidebar]');
+  const menuButton = page.getByRole('button', { name: 'فتح القائمة الرئيسية' });
+
+  // ننتظر أن يستقرّ أحدهما — أيّهما كان — قبل أن نقرأ أيّ تخطيطٍ نحن فيه.
+  await expect(async () => {
+    const ready = (await sidebar.isVisible()) || (await menuButton.isVisible());
+    expect(ready, 'لم يظهر الشريط الجانبي ولا زر الدرج').toBe(true);
+  }).toPass({ timeout: 10_000 });
+
+  return sidebar.isVisible();
+}
+
+/**
  * تنقّل داخل التطبيق يعمل على كل المقاسات:
  * سطح المكتب من القائمة الجانبية، والجوال من قائمة الدرج.
  */
 export async function navigate(page, linkName, expectedUrl) {
   const sidebar = page.locator('[data-app-sidebar]');
-  if (await sidebar.isVisible()) {
+  if (await sidebarVisible(page)) {
     await sidebar.getByRole('link', { name: linkName, exact: true }).click();
   } else {
     await page.getByRole('button', { name: 'فتح القائمة الرئيسية' }).click();

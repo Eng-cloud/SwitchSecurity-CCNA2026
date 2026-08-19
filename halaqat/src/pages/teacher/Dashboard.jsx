@@ -4,6 +4,8 @@ import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import * as teacherService from '../../services/teacherService.js';
+import CoveragePanel from '../../components/coverage/CoveragePanel.jsx';
+import DeputyInbox from '../../components/coverage/DeputyInbox.jsx';
 import { formatNumber, formatPercent } from '../../lib/format.js';
 import {
   PageHeader,
@@ -52,6 +54,12 @@ export default function TeacherDashboard() {
       >
         {data ? (
           <div className="stack-6">
+            {/* أول ما يُسأل عنه المعلم صباحًا: هل أنت حاضر؟ ومن ينوب عنك إن لم تكن؟ */}
+            <DeputyInbox onChange={refetch} />
+            {data.circle?.id ? (
+              <CoveragePanel circleId={data.circle.id} onChange={refetch} />
+            ) : null}
+
             <div className="grid grid-4 stagger">
               <Stat
                 label={t('teacher.circleStudents')}

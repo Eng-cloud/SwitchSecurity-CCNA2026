@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { watchConsole, assertNoConsoleErrors, loginAs } from './helpers.js';
+import { watchConsole, assertNoConsoleErrors, loginAs, sidebarVisible } from './helpers.js';
 
 /** رابط التنقل يظهر في الشريط الجانبي على سطح المكتب وفي الدرج على الجوال. */
 async function expectNavLink(page, name, shouldExist = true) {
   const sidebar = page.locator('[data-app-sidebar]');
-  if (await sidebar.isVisible()) {
+  if (await sidebarVisible(page)) {
     await expect(sidebar.getByRole('link', { name })).toHaveCount(shouldExist ? 1 : 0);
     return;
   }

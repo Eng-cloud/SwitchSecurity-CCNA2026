@@ -35,6 +35,7 @@ export const ACTIONS = {
   ENROLLMENT_CREATE: 'enrollment.create',
   ENROLLMENT_REVIEW: 'enrollment.review',
   ATTENDANCE_RECORD: 'attendance.record',
+  COVERAGE_MANAGE: 'coverage.manage',
   NOTES_WRITE: 'notes.write',
 };
 
@@ -46,6 +47,10 @@ const A = ACTIONS;
  * - الطباعة: للمعلم والمشرف والإدارة فقط.
  * - إضافة الطلاب وحذفهم (STUDENTS_MANAGE): للمشرف والإدارة فقط.
  *   المعلم يعلّم حلقته ويتابعها ولا يبني تشكيلتها، فلا تختلط الأدوار.
+ * - الحضور (ATTENDANCE_RECORD): للمعلم في حلقته، وللمشرف في حلقاته كاملةً.
+ *   المشرف مسؤول عن انعقاد الحلقة، ومن يُسأل عن انعقادها يملك تسجيله.
+ * - التغطية (COVERAGE_MANAGE): المعلم يطلب نائبًا ويردّ على الطلبات،
+ *   والمشرف يعيّن بديلًا أو يتولّى الحلقة بنفسه.
  */
 const MATRIX = {
   student: [A.QURAN_READ, A.RECITATION_RECORD],
@@ -60,6 +65,7 @@ const MATRIX = {
     A.DISTINGUISHED_VIEW,
     A.TASKS_ASSIGN,
     A.ATTENDANCE_RECORD,
+    A.COVERAGE_MANAGE,
     A.NOTES_WRITE,
   ],
 
@@ -71,6 +77,8 @@ const MATRIX = {
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
     A.DISTINGUISHED_VIEW,
+    A.ATTENDANCE_RECORD,
+    A.COVERAGE_MANAGE,
     A.NOTES_WRITE,
   ],
 
@@ -83,6 +91,8 @@ const MATRIX = {
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
     A.DISTINGUISHED_VIEW,
+    A.ATTENDANCE_RECORD,
+    A.COVERAGE_MANAGE,
   ],
 
   parent: [A.QURAN_READ, A.ENROLLMENT_CREATE],

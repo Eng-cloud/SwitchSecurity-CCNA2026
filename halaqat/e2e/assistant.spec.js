@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { watchConsole, assertNoConsoleErrors, loginAs, navigate } from './helpers.js';
+import { watchConsole, assertNoConsoleErrors, loginAs, navigate, sidebarVisible } from './helpers.js';
 
 /**
  * مسار «الطالب المتميز ← مساعد المعلم ← توكيل بالمراجعة ← انتهاء التوكيل».
@@ -18,7 +18,7 @@ async function freshSession(page) {
 /** رابط التنقل موجود؟ (الشريط الجانبي على سطح المكتب، الدرج على الجوال) */
 async function navLinkCount(page, name) {
   const sidebar = page.locator('[data-app-sidebar]');
-  if (await sidebar.isVisible()) {
+  if (await sidebarVisible(page)) {
     return sidebar.getByRole('link', { name, exact: true }).count();
   }
   await page.getByRole('button', { name: 'فتح القائمة الرئيسية' }).click();
