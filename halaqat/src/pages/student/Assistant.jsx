@@ -72,6 +72,28 @@ export default function StudentAssistant() {
     }
   };
 
+  /**
+   * التراجع عن توثيقٍ خاطئ.
+   * النقر على اسمٍ بدل اسم واقعة متوقّعة، فالتوثيق يُرفع كما وُضع:
+   * الاسم يعود إلى الانتظار والجلسة تُحذف من سجل الطالب.
+   */
+  const undo = async (item) => {
+    setSaving(true);
+    try {
+      await assistantService.undoReview({
+        assistantStudentId: user.studentId,
+        delegationId: delegation.id,
+        studentId: item.studentId,
+      });
+      toast.success(t('student.assistant.undone', { name: item.studentName }));
+      await reload();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     setSaving(true);
@@ -151,7 +173,9 @@ export default function StudentAssistant() {
         breadcrumb={breadcrumb}
       />
 
-      <Alert variant="info" title={t('student.assistant.scopeNotice')}>
+      {/* نوع المراجعة يتصدّر: المساعد يحتاج أن يعرف ماذا يسمع قبل ممّن. */}
+      <Alert variant="info" title={t(`teacher.assistant.reviewKind.${delegation.reviewKind ?? 'minor'}`)}>
+        {t(`teacher.assistant.reviewKindHint.${delegation.reviewKind ?? 'minor'}`)} —{' '}
         {t('student.assistant.scopeNoticeText')}
       </Alert>
 
@@ -216,11 +240,21 @@ export default function StudentAssistant() {
                   <Badge variant={item.status === 'done' ? 'success' : 'neutral'}>
                     {t(`teacher.assistant.itemStatus.${item.status}`)}
                   </Badge>
-                  {item.status !== 'done' ? (
+                  {item.status === 'done' ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={saving}
+                      onClick={() => undo(item)}
+                      data-testid="undo-review"
+                    >
+                      {t('student.assistant.undo')}
+                    </Button>
+                  ) : (
                     <Button size="sm" onClick={() => openRecord(item)} data-testid="record-review">
                       {t('student.assistant.record')}
                     </Button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             </Card>

@@ -21,6 +21,14 @@ import { evaluateStudent } from './distinguishedService.js';
 export const ELIGIBILITY_MASTERY = 85;
 
 /**
+ * نوع المراجعة الموكَّلة.
+ *  minor: المراجعة الصغرى — الورد القريب الذي يُثبَّت.
+ *  major: المراجعة الكبرى — المحفوظ القديم الذي يُتعاهد.
+ * تحديدها عند التوكيل لا عند التسميع: المعلم هو من يقرّر ماذا يُراجَع.
+ */
+export const REVIEW_KINDS = ['minor', 'major'];
+
+/**
  * يؤهَّل للمساعدة من أثبت جدارته بأحد طريقين:
  *  - متوسط عام ≥ 85% (سجل طويل)، أو
  *  - تميّز هذا الشهر بمعايير «متميزي الشهر» (أداء حاضر).
@@ -203,6 +211,7 @@ export async function createDelegation({
   assistantStudentId,
   studentIds = [],
   selectionMode = 'teacher',
+  reviewKind = 'minor',
   quota = 3,
   note = '',
 }) {
@@ -226,6 +235,9 @@ export async function createDelegation({
 
       if (!['teacher', 'assistant'].includes(selectionMode)) {
         throw new ApiError('invalidMode', 'teacher.assistant.errors.invalidMode');
+      }
+      if (!REVIEW_KINDS.includes(reviewKind)) {
+        throw new ApiError('invalidKind', 'teacher.assistant.errors.invalidReviewKind');
       }
 
       // في وضع «المساعد يختار» لا أسماء عند الإنشاء، بل عدد مسموح به فقط.
@@ -266,6 +278,7 @@ export async function createDelegation({
         teacherId,
         circleId,
         scope: 'review',
+        reviewKind,
         status: 'active',
         selectionMode,
         // العدد المسموح به: حصة المساعد في وضع اختياره، وإلا عدد الأسماء.
@@ -301,6 +314,56 @@ export async function createDelegation({
 }
 
 /** إنهاء التوكيل مبكرًا بقرار المعلم. */
+/**
+ * يتراجع عن توثيق تسميعٍ سُجّل بالخطأ.
+ *
+ * المساعد يوثّق ما سمعه، والتوثيق يُخطئ: يُنقر اسمٌ بدل اسم. ولمّا كان
+ * التوثيق يترك أثرًا — جلسة في سجل الطالب وربما إغلاقًا للتوكيل — فإن
+ * التراجع يرفعه كاملًا: يعيد الاسم إلى قائمة الانتظار، ويحذف الجلسة،
+ * ويفتح التوكيل إن كان قد أُغلق بها. تراجعٌ ناقص أسوأ من لا تراجع.
+ */
+export async function undoReview({ assistantStudentId, delegationId, studentId }) {
+  const result = await request(() =>
+    mutateDb((db) => {
+      const delegation = delegations(db).find((item) => item.id === delegationId);
+      if (!delegation) throw new ApiError('notFound', 'state.notFoundHint');
+      if (delegation.assistantStudentId !== assistantStudentId) {
+        throw new ApiError('forbidden', 'state.forbiddenHint');
+      }
+
+      const item = delegation.items.find((entry) => entry.studentId === studentId);
+      if (!item) throw new ApiError('notDelegated', 'teacher.assistant.errors.notDelegated');
+      if (item.status !== 'done') {
+        throw new ApiError('notDone', 'teacher.assistant.errors.notDone');
+      }
+
+      item.status = 'pending';
+      item.mastery = null;
+      item.note = '';
+      item.doneAt = null;
+
+      // الجلسة التي وثّقها المساعد لهذا الطالب في هذا التوكيل ترتفع معه.
+      const index = db.sessions.findIndex(
+        (session) =>
+          session.studentId === studentId &&
+          session.recordedByAssistantId === assistantStudentId &&
+          session.circleId === delegation.circleId,
+      );
+      if (index >= 0) db.sessions.splice(index, 1);
+
+      // أُغلق التوكيل بهذا التوثيق ⇒ يُفتح بارتفاعه.
+      if (delegation.status === 'completed') {
+        delegation.status = 'active';
+        delegation.completedAt = null;
+      }
+
+      return shape(delegation);
+    }),
+  );
+  emitChange();
+  return result;
+}
+
 export async function completeDelegation({ role, delegationId }) {
   const result = await request(() =>
     mutateDb((db) => {

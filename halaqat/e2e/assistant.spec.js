@@ -129,12 +129,28 @@ test('الطالب المساعد يرى مهمته المؤقتة ثم تختف
 
   // لافتة المهمة على اللوحة، ورابط مؤقت في التنقل.
   await expect(page.getByTestId('duty-banner-cta')).toBeVisible();
-  expect(await navLinkCount(page, 'مهمة التسميع')).toBe(1);
+  expect(await navLinkCount(page, 'مساعد معلم')).toBe(1);
 
   await page.getByTestId('duty-banner-cta').click();
   await expect(page).toHaveURL(/\/app\/student\/assistant/);
-  await expect(page.getByText('حدود التوكيل')).toBeVisible();
   await expect(page.getByText(/لست معلمًا ولا تملك صلاحياته/)).toBeVisible();
+  // نوع المراجعة يتصدّر الصفحة: المساعد يعرف ماذا يسمع قبل ممّن.
+  await expect(page.getByText(/مراجعة (صغرى|كبرى)/).first()).toBeVisible();
+
+  // توثيقٌ خاطئ يُرفع بالكامل: الاسم يعود إلى الانتظار.
+  // العدّان يُلتقطان أولًا لأن التوكيل المبذور قد يحمل أسماءً موثَّقة سلفًا.
+  const pendingBefore = await page.getByTestId('record-review').count();
+  const doneBefore = await page.getByTestId('undo-review').count();
+
+  await page.getByTestId('record-review').first().click();
+  await page.getByTestId('record-submit').click();
+  await expect(page.getByTestId('record-review')).toHaveCount(pendingBefore - 1);
+  await expect(page.getByTestId('undo-review')).toHaveCount(doneBefore + 1);
+
+  await page.getByTestId('undo-review').first().click();
+  await expect(page.getByText(/أُلغي توثيق تسميع /).first()).toBeVisible();
+  await expect(page.getByTestId('record-review')).toHaveCount(pendingBefore);
+  await expect(page.getByTestId('undo-review')).toHaveCount(doneBefore);
 
   // يسمّع من بقي من الزملاء حتى تنتهي الأسماء.
   let remaining = await page.getByTestId('record-review').count();
@@ -153,7 +169,7 @@ test('الطالب المساعد يرى مهمته المؤقتة ثم تختف
 
   // انتهت المهمة: عاد الطالب لوضعه الطبيعي والرابط المؤقت اختفى.
   await expect(page.getByText('لا توجد مهمة موكَّلة إليك الآن')).toBeVisible();
-  expect(await navLinkCount(page, 'مهمة التسميع')).toBe(0);
+  expect(await navLinkCount(page, 'مساعد معلم')).toBe(0);
 
   await navigate(page, 'الرئيسية', /\/app\/student/);
   await expect(page.getByTestId('duty-banner-cta')).toHaveCount(0);

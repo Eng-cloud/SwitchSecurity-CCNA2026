@@ -51,6 +51,7 @@ export default function TeacherAssistant() {
   const [showAllEligible, setShowAllEligible] = useState(false);
   const [month, setMonth] = useState('current');
   const [selectionMode, setSelectionMode] = useState('teacher');
+  const [reviewKind, setReviewKind] = useState('minor');
   const [quota, setQuota] = useState('3');
 
   const fetcher = useCallback(
@@ -106,6 +107,7 @@ export default function TeacherAssistant() {
         assistantStudentId: delegateFor.id,
         studentIds: picked,
         selectionMode,
+        reviewKind,
         quota: Number(quota),
         note,
       });
@@ -339,6 +341,8 @@ export default function TeacherAssistant() {
                         <span className="row row-2">
                           <Badge variant="neutral">
                             {t(`teacher.assistant.modeBadge.${delegation.selectionMode ?? 'teacher'}`)}
+                            {' · '}
+                            {t(`teacher.assistant.reviewKind.${delegation.reviewKind ?? 'minor'}`)}
                           </Badge>
                           <Badge variant={DELEGATION_VARIANT[delegation.status]}>
                             {t(`teacher.assistant.status.${delegation.status}`)}
@@ -432,6 +436,26 @@ export default function TeacherAssistant() {
       >
         <form id="delegate-form" className="stack-3" onSubmit={submitDelegation}>
           <Alert variant="info">{t('teacher.assistant.scopeNoticeText')}</Alert>
+
+          {/* ماذا يُراجَع قبل ممّن يُراجَع: القرار للمعلم لا للمساعد. */}
+          <RadioGroup
+            legend={t('teacher.assistant.reviewKindLegend')}
+            name="review-kind"
+            value={reviewKind}
+            onChange={setReviewKind}
+            options={[
+              {
+                value: 'minor',
+                label: t('teacher.assistant.reviewKind.minor'),
+                hint: t('teacher.assistant.reviewKindHint.minor'),
+              },
+              {
+                value: 'major',
+                label: t('teacher.assistant.reviewKind.major'),
+                hint: t('teacher.assistant.reviewKindHint.major'),
+              },
+            ]}
+          />
 
           <RadioGroup
             legend={t('teacher.assistant.selectionLegend')}

@@ -637,3 +637,161 @@ describe('خدمة مساعد المعلم', () => {
     expect(first.delegation.progress.toChoose).toBe(1);
   });
 });
+
+describe('نوع المراجعة والتراجع عن التوثيق', () => {
+  beforeEach(() => {
+    resetDb();
+    clearDelegations();
+  });
+
+  /** مشهد جاهز: حلقةٌ ومساعدٌ معيَّن وزملاؤه. */
+  function scene() {
+    const { circle, teacherId, assistant, peers } = context();
+    return { teacher: { id: teacherId }, circle, assistant, peers };
+  }
+
+  it('المعلم يحدّد نوع المراجعة، ويُرفض ما سواه', async () => {
+    const { teacher, circle, assistant, peers } = scene();
+
+    const major = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId: teacher.id,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id],
+      reviewKind: 'major',
+    });
+    expect(major.reviewKind).toBe('major');
+
+    await assistantService.completeDelegation({ role: 'teacher', delegationId: major.id });
+
+    // الافتراض «صغرى» حين لا يُذكر شيء.
+    const minor = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId: teacher.id,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id],
+    });
+    expect(minor.reviewKind).toBe('minor');
+
+    await assistantService.completeDelegation({ role: 'teacher', delegationId: minor.id });
+
+    await expect(
+      assistantService.createDelegation({
+        role: 'teacher',
+        teacherId: teacher.id,
+        circleId: circle.id,
+        assistantStudentId: assistant.id,
+        studentIds: [peers[0].id],
+        reviewKind: 'weekly',
+      }),
+    ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.invalidReviewKind' });
+  });
+
+  it('التراجع يرفع التوثيق كاملًا: الاسم يعود والجلسة تُحذف', async () => {
+    const { teacher, circle, assistant, peers } = scene();
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId: teacher.id,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id, peers[1].id],
+    });
+
+    await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+      mastery: 88,
+    });
+    expect(
+      getDb().sessions.some(
+        (session) =>
+          session.studentId === peers[0].id && session.recordedByAssistantId === assistant.id,
+      ),
+    ).toBe(true);
+
+    const after = await assistantService.undoReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+    });
+
+    const item = after.items.find((entry) => entry.studentId === peers[0].id);
+    expect(item.status).toBe('pending');
+    expect(item.mastery).toBeNull();
+    expect(item.doneAt).toBeNull();
+    expect(after.progress.done).toBe(0);
+    expect(
+      getDb().sessions.some(
+        (session) =>
+          session.studentId === peers[0].id && session.recordedByAssistantId === assistant.id,
+      ),
+    ).toBe(false);
+  });
+
+  it('التراجع عن آخر اسم يعيد فتح التوكيل المنتهي', async () => {
+    const { teacher, circle, assistant, peers } = scene();
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId: teacher.id,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id],
+    });
+
+    const done = await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+      mastery: 95,
+    });
+    expect(done.closed).toBe(true);
+    expect(getDb().assistantDelegations.find((d) => d.id === delegation.id).status).toBe(
+      'completed',
+    );
+
+    const reopened = await assistantService.undoReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+    });
+    expect(reopened.status).toBe('active');
+    expect(reopened.completedAt).toBeNull();
+  });
+
+  it('لا يتراجع غير المساعد، ولا عمّا لم يُوثَّق', async () => {
+    const { teacher, circle, assistant, peers } = scene();
+    const delegation = await assistantService.createDelegation({
+      role: 'teacher',
+      teacherId: teacher.id,
+      circleId: circle.id,
+      assistantStudentId: assistant.id,
+      studentIds: [peers[0].id, peers[1].id],
+    });
+
+    await assistantService.recordReview({
+      assistantStudentId: assistant.id,
+      delegationId: delegation.id,
+      studentId: peers[0].id,
+      mastery: 90,
+    });
+
+    await expect(
+      assistantService.undoReview({
+        assistantStudentId: peers[1].id,
+        delegationId: delegation.id,
+        studentId: peers[0].id,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+
+    await expect(
+      assistantService.undoReview({
+        assistantStudentId: assistant.id,
+        delegationId: delegation.id,
+        studentId: peers[1].id,
+      }),
+    ).rejects.toMatchObject({ messageKey: 'teacher.assistant.errors.notDone' });
+  });
+});
