@@ -110,12 +110,21 @@ describe('مصفوفة الصلاحيات', () => {
     }
   });
 
-  it('التغطية والإنابة: المعلم يطلب ويردّ، والمشرف يعيّن أو يتولّى', () => {
-    for (const role of ['teacher', 'supervisor', 'admin']) {
+  it('التغطية اليومية عملٌ ميداني: المعلم ومشرفه، لا الإدارة', () => {
+    for (const role of ['teacher', 'supervisor']) {
       expect(can(role, ACTIONS.COVERAGE_MANAGE)).toBe(true);
     }
-    for (const role of ['student', 'parent']) {
+    for (const role of ['admin', 'student', 'parent']) {
       expect(can(role, ACTIONS.COVERAGE_MANAGE)).toBe(false);
+    }
+  });
+
+  it('تقرير التغطية للمشرف والإدارة: تُقرأ في آخر الشهر ولا يُتدخَّل في يومها', () => {
+    for (const role of ['supervisor', 'admin']) {
+      expect(can(role, ACTIONS.COVERAGE_REPORT)).toBe(true);
+    }
+    for (const role of ['teacher', 'student', 'parent']) {
+      expect(can(role, ACTIONS.COVERAGE_REPORT)).toBe(false);
     }
   });
 

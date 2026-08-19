@@ -115,8 +115,8 @@ export default function AdminReports() {
         subtitle={t('admin.dashboardTitle')}
         breadcrumb={[{ label: t('nav.home'), to: '/app/admin' }, { label: t('reports.title') }]}
         actions={
-          <Button variant="secondary" to="/app/admin/reports/coverage">
-            {t('coverage.openReport')}
+          <Button variant="secondary" to="/app/admin/reports/teachers">
+            {t('teacherAttendance.title')}
           </Button>
         }
       />

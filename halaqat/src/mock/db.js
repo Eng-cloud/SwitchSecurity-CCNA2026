@@ -8,7 +8,7 @@ import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 import { seedTajweedItems } from './tajweed.js';
 
-const DB_VERSION = 8;
+const DB_VERSION = 9;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -353,6 +353,37 @@ function generate() {
     }
   });
 
+  /* --- حضور المعلمين خلال الشهرين الماضيين ---
+     تقرير آخر الشهر بلا تاريخٍ خلفه صفحةٌ فارغة، فتُبذر أيامٌ مضت
+     ليُقرأ فيها متى حضر المعلم ومتى غاب ومتى استأذن. */
+  const circleAttendance = [];
+  const attendanceToday = new Date();
+  circles.forEach((circle, index) => {
+    for (let back = 1; back <= 60; back += 1) {
+      const day = new Date(attendanceToday);
+      day.setDate(day.getDate() - back);
+      // الجمعة عطلة الحلقات فلا تُحسب على أحد.
+      if (day.getDay() === 5) continue;
+
+      const roll = rng.int(1, 100) + index;
+      const status = roll % 17 === 0 ? 'absent' : roll % 23 === 0 ? 'excused' : 'present';
+      const date = day.toISOString().slice(0, 10);
+
+      circleAttendance.push({
+        id: `cat-${circle.id}-${date}`,
+        circleId: circle.id,
+        teacherId: circle.teacherId,
+        date,
+        status,
+        note: status === 'excused' ? 'إذن مسبق' : '',
+        recordedBy: circle.teacherId,
+        recordedByRole: 'teacher',
+        recordedByName: teachers[index]?.name ?? '',
+        recordedAt: day.toISOString(),
+      });
+    }
+  });
+
   /* --- الاختبارات --- */
   const tests = [
     {
@@ -479,7 +510,7 @@ function generate() {
     // مهام الطلاب — تُولَّد ليوم الطالب عند أول فتح وتُضاف إليها تعيينات المعلم.
     tasks: [],
     // حضور المعلم نفسه — سجل منفصل عن حضور الطلاب لأن غيابه يترك حلقةً بلا قائد.
-    circleAttendance: [],
+    circleAttendance,
     // الإنابات: من يقود الحلقة يوم غياب معلّمها.
     deputations: [],
     // مكتبة التجويد: تُضاف من الإدارة العليا وحدها، ويقرأها الجميع.

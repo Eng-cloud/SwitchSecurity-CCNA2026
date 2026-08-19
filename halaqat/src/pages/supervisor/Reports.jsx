@@ -62,9 +62,14 @@ export default function SupervisorReports() {
         subtitle={t('supervisor.circlesTitle')}
         breadcrumb={[{ label: t('nav.home'), to: '/app/supervisor' }, { label: t('reports.title') }]}
         actions={
-          <Button variant="secondary" to="/app/supervisor/reports/coverage">
-            {t('coverage.openReport')}
-          </Button>
+          <>
+            <Button variant="secondary" to="/app/supervisor/reports/teachers">
+              {t('teacherAttendance.title')}
+            </Button>
+            <Button variant="secondary" to="/app/supervisor/reports/coverage">
+              {t('coverage.openReport')}
+            </Button>
+          </>
         }
       />
 

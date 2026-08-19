@@ -62,7 +62,6 @@ const NAVIGATION = {
     { to: '/app/admin/supervisors', labelKey: 'nav.supervisors', icon: '🧭' },
     { to: '/app/admin/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫' },
     { to: '/app/admin/circles', labelKey: 'nav.circles', icon: '🕌', primary: true },
-    { to: '/app/admin/coverage', labelKey: 'nav.coverage', icon: '🛡' },
     { to: '/app/admin/requests', labelKey: 'nav.requests', icon: '📬' },
     TAJWEED_ITEM,
     { to: '/app/admin/reports', labelKey: 'nav.reports', icon: '📊' },

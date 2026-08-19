@@ -118,3 +118,35 @@ test('الطالب وولي الأمر لا يريان لوحة التغطية',
     await logout(page);
   }
 });
+
+test('تغطية اليوم عند المشرف وحده، والإدارة تقرأ تقرير الشهر', async ({ page }) => {
+  const errors = watchConsole(page);
+
+  // الإدارة: لا خانة تغطية في تنقّلها ولا مسار.
+  await loginAs(page, 'admin');
+  await expect(page.getByRole('link', { name: 'تغطية اليوم' })).toHaveCount(0);
+  await page.goto('/app/admin/coverage');
+  await expect(page.getByRole('heading', { name: 'الصفحة غير موجودة' })).toBeVisible();
+
+  // وبدلًا منها تقرير الشهر: متى حضر المعلم ومتى غاب ومتى استأذن.
+  await page.goto('/app/admin/reports');
+  await page.getByRole('link', { name: 'حضور المعلمين' }).click();
+  await expect(page).toHaveURL(/\/app\/admin\/reports\/teachers/);
+  await expect(page.getByRole('heading', { name: 'حضور المعلمين', level: 1 })).toBeVisible();
+
+  // الأرقام لا تكفي جوابًا عن «متى؟» — فالتفصيل يُفتح بالتواريخ.
+  await page.getByTestId('open-days-user-teacher-1').click();
+  await expect(page.getByTestId('day-log')).toBeVisible();
+  await expect(page.getByTestId('day-log').getByText(/حاضر|غائب|مستأذن/).first()).toBeVisible();
+  // النافذة فيها زرّ إغلاق أيقوني وآخر نصّي — نقصد الثاني.
+  await page.getByRole('dialog').getByRole('button', { name: 'إغلاق', exact: true }).last().click();
+  await logout(page);
+
+  // المشرف: لوحة اليوم باقية عنده، ومعها تقرير الشهر.
+  await loginAs(page, 'supervisor');
+  await expect(page.getByRole('link', { name: 'تغطية اليوم' }).first()).toBeVisible();
+  await page.goto('/app/supervisor/reports/teachers');
+  await expect(page.getByRole('heading', { name: 'حضور المعلمين', level: 1 })).toBeVisible();
+
+  assertNoConsoleErrors(errors);
+});

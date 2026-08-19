@@ -1870,3 +1870,31 @@
   font-size: var(--text-xs);
   color: var(--text-muted);
 }
+
+/* =========================================================
+   سجلّ الأيام — جواب «متى غاب؟» بالتاريخ لا بالرقم
+   ========================================================= */
+.day-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 420px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.day-log__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border);
+}
+
+.day-log__date {
+  min-width: 8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}

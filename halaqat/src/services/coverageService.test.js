@@ -523,3 +523,148 @@ describe('الغياب المفترض لا يُستبعد به معلّم', () =
     expect(flagged.busyReason).toBe('away');
   });
 });
+
+describe('تقرير حضور المعلمين — جواب «متى غاب؟»', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  it('يجمع أيام الشهر لكل معلم ويعطي تواريخها لا أرقامها فقط', async () => {
+    const report = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+    });
+
+    expect(report.rows.length).toBeGreaterThan(0);
+    expect(report.days).toBeGreaterThan(0);
+
+    const row = report.rows[0];
+    expect(row.present + row.absent + row.excused).toBe(row.totalDays);
+    expect(row.absentDates).toHaveLength(row.absent);
+    expect(row.excusedDates).toHaveLength(row.excused);
+    expect(row.days).toHaveLength(row.totalDays);
+    // كل يوم مؤرَّخ بحالته، لا رقمٌ صامت.
+    expect(row.days.every((day) => /^\d{4}-\d{2}-\d{2}$/.test(day.date))).toBe(true);
+  });
+
+  it('الأكثر غيابًا يتصدّر: التقرير يُقرأ لمن يحتاج متابعة', async () => {
+    const report = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+    });
+    const absences = report.rows.map((row) => row.absent);
+    expect([...absences].sort((a, b) => b - a)).toEqual(absences);
+  });
+
+  it('يومٌ بلا تسجيل يُقرأ غيابًا — القاعدة نفسها التي تُقرأ بها التغطية', async () => {
+    const db = getDb();
+    const circle = db.circles[0];
+    // نُفرغ سجلّ هذه الحلقة كليًّا: كل أيام الشهر تصير غيابًا.
+    db.circleAttendance = db.circleAttendance.filter((row) => row.circleId !== circle.id);
+
+    const report = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+    });
+    const row = report.rows.find((item) => item.circleId === circle.id);
+    expect(row.present).toBe(0);
+    expect(row.absent).toBe(row.totalDays);
+  });
+
+  it('المشرف يرى حلقاته وحدها، والإدارة تراها كلّها', async () => {
+    const supervisorReport = await coverageService.getTeacherAttendanceReport({
+      role: 'supervisor',
+      userId: 'user-supervisor-1',
+    });
+    const adminReport = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+    });
+
+    expect(supervisorReport.rows.length).toBeGreaterThan(0);
+    expect(adminReport.rows.length).toBeGreaterThan(supervisorReport.rows.length);
+  });
+
+  it('الشهر الماضي نطاقٌ مستقل عن الحالي', async () => {
+    const current = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+      month: 'current',
+    });
+    const previous = await coverageService.getTeacherAttendanceReport({
+      role: 'admin',
+      userId: 'user-admin',
+      month: 'previous',
+    });
+
+    expect(previous.monthKey).not.toBe(current.monthKey);
+    expect(previous.days).toBeGreaterThan(0);
+  });
+
+  it('الطالب وولي الأمر والمعلم لا يقرؤونه', async () => {
+    for (const role of ['student', 'parent', 'teacher']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        coverageService.getTeacherAttendanceReport({ role, userId: 'x' }),
+      ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+    }
+  });
+});
+
+describe('التغطية اليومية عملٌ ميداني', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  it('الإدارة تقرأ لوحة التغطية ولا تتصرّف فيها', async () => {
+    const db = getDb();
+    const circle = db.circles[0];
+
+    // القراءة مسموحة: التقرير حقٌّ لها.
+    await expect(
+      coverageService.listCoverage({ role: 'admin', userId: 'user-admin' }),
+    ).resolves.toMatchObject({ rows: expect.any(Array) });
+
+    // والتصرّف ممنوع: من لا يقف على اليوم لا يقرّر فيه.
+    for (const call of [
+      coverageService.setTeacherAttendance({
+        role: 'admin',
+        userId: 'user-admin',
+        circleId: circle.id,
+        status: 'absent',
+      }),
+      coverageService.claimCoverage({
+        role: 'admin',
+        userId: 'user-admin',
+        circleId: circle.id,
+      }),
+    ]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(call).rejects.toMatchObject({
+        messageKey: 'coverage.errors.notFieldRole',
+      });
+    }
+  });
+
+  it('المشرف والمعلم يبقيان على تصرّفهما', async () => {
+    const db = getDb();
+    const circle = db.circles[0];
+
+    await expect(
+      coverageService.setTeacherAttendance({
+        role: 'teacher',
+        userId: circle.teacherId,
+        circleId: circle.id,
+        status: 'excused',
+      }),
+    ).resolves.toMatchObject({ teacherStatus: 'excused' });
+
+    await expect(
+      coverageService.claimCoverage({
+        role: 'supervisor',
+        userId: circle.supervisorId,
+        circleId: circle.id,
+      }),
+    ).resolves.toMatchObject({ state: 'deputized' });
+  });
+});

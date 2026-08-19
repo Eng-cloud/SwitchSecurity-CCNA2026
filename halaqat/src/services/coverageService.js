@@ -20,6 +20,7 @@ import { request, ApiError } from '../mock/api.js';
 import { getDb, mutateDb } from '../mock/db.js';
 import { can, ACTIONS } from '../config/permissions.js';
 import { toISODate } from '../lib/format.js';
+import { monthRange } from './distinguishedService.js';
 
 /** ثلاث حالات لحضور المعلم، كحضور الطالب سواءً بسواء. */
 export const TEACHER_STATUSES = ['present', 'absent', 'excused'];
@@ -136,8 +137,17 @@ export function authorityOver(db, { role, userId, circleId, date = today() }) {
   return { allowed: false, as: null };
 }
 
-/** يرمي إن لم يكن للفاعل سلطة، ويعيد نوعها إن كانت. */
+/**
+ * يرمي إن لم يكن للفاعل سلطة، ويعيد نوعها إن كانت.
+ *
+ * شرطان لا شرط: صلاحية إدارة التغطية في المصفوفة، وسلطةٌ على هذه الحلقة
+ * بعينها. الأولى تُخرج من لا شأن له باليوم أصلًا (الإدارة تقرأ ولا
+ * تتدخّل)، والثانية تحصر من له شأنٌ به في حلقاته.
+ */
 function requireAuthority(db, { role, userId, circleId, date, allow }) {
+  if (!can(role, ACTIONS.COVERAGE_MANAGE)) {
+    throw new ApiError('forbidden', 'coverage.errors.notFieldRole');
+  }
   const authority = authorityOver(db, { role, userId, circleId, date });
   if (!authority.allowed) throw new ApiError('forbidden', 'state.forbiddenHint');
   if (allow && !allow.includes(authority.as)) {
@@ -527,7 +537,7 @@ export async function listCoverage({
 } = {}) {
   return request(() => {
     const db = getDb();
-    if (!can(role, ACTIONS.COVERAGE_MANAGE)) {
+    if (!can(role, ACTIONS.COVERAGE_REPORT)) {
       throw new ApiError('forbidden', 'state.forbiddenHint');
     }
 
@@ -586,6 +596,139 @@ export async function getDeputyInbox({ userId, date = today() }) {
       date,
       pending: mine.filter((row) => row.status === 'pending').map((row) => shapeDeputation(db, row)),
       active: mine.filter((row) => row.status === 'active').map((row) => shapeDeputation(db, row)),
+    };
+  });
+}
+
+/* ---------------------------------------------------------------
+   تقرير الشهر — متى حضر المعلم ومتى غاب ومتى استأذن
+   --------------------------------------------------------------- */
+
+/** أيام الشهر التي مرّت فعلًا: لا يُحسب على المعلم غدٌ لم يأتِ. */
+function elapsedDays(range, now = new Date()) {
+  const end = range.end.getTime() < now.getTime() ? range.end : now;
+  const days = [];
+  for (
+    let cursor = new Date(range.start);
+    cursor.getTime() <= end.getTime();
+    cursor.setDate(cursor.getDate() + 1)
+  ) {
+    days.push(toISODate(cursor));
+  }
+  return days;
+}
+
+/**
+ * سجلّ حضور المعلمين في شهر.
+ *
+ * هذا ما يُقرأ في آخر الشهر لا في أثنائه: صفٌّ لكل معلم فيه عدد أيام
+ * حضوره وغيابه واستئذانه، ومعه الأيام نفسها مؤرَّخة — فمن سأل «متى غاب؟»
+ * وجد التاريخ لا الرقم وحده.
+ *
+ * الأيام التي لم يُسجَّل فيها شيء تُحسب غيابًا، على القاعدة نفسها التي
+ * تقرأ بها التغطية يومَها: من لم يُسجَّل حضوره لم يحضر.
+ */
+export async function getTeacherAttendanceReport({
+  role,
+  userId,
+  month = 'current',
+  city = 'all',
+  district = 'all',
+  mosque = 'all',
+} = {}) {
+  return request(() => {
+    const db = getDb();
+    if (!can(role, ACTIONS.COVERAGE_REPORT)) {
+      throw new ApiError('forbidden', 'state.forbiddenHint');
+    }
+
+    const range = monthRange(month);
+    const days = elapsedDays(range);
+
+    const scope =
+      role === 'admin'
+        ? db.circles
+        : db.circles.filter((circle) => circle.supervisorId === userId);
+
+    const optionsOf = (key) =>
+      [...new Set(scope.map((circle) => circle[key]).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, 'ar'),
+      );
+
+    const filtered = scope.filter(
+      (circle) =>
+        (city === 'all' || circle.city === city) &&
+        (district === 'all' || circle.district === district) &&
+        (mosque === 'all' || circle.mosque === mosque),
+    );
+
+    const rows = filtered
+      .filter((circle) => circle.teacherId)
+      .map((circle) => {
+        const teacher = userOf(db, circle.teacherId);
+        const records = attendanceRows(db).filter((row) => row.circleId === circle.id);
+
+        const byDay = days.map((day) => {
+          const record = records.find((row) => row.date === day);
+          return {
+            date: day,
+            status: record?.status ?? 'absent',
+            note: record?.note ?? '',
+            recordedByRole: record?.recordedByRole ?? null,
+          };
+        });
+
+        const count = (status) => byDay.filter((entry) => entry.status === status).length;
+        const present = count('present');
+        const absent = count('absent');
+        const excused = count('excused');
+
+        // أيام الإنابة: غيابٌ لم تتعطّل معه الحلقة، وهو فارقٌ يُذكر.
+        const covered = deputationRows(db).filter(
+          (row) =>
+            row.circleId === circle.id && row.status === 'active' && days.includes(row.date),
+        ).length;
+
+        return {
+          teacherId: teacher?.id ?? circle.teacherId,
+          teacherName: teacher?.name ?? '',
+          circleId: circle.id,
+          circleName: circle.name,
+          city: circle.city ?? '',
+          district: circle.district ?? '',
+          mosque: circle.mosque ?? '',
+          totalDays: days.length,
+          present,
+          absent,
+          excused,
+          coveredDays: covered,
+          attendanceRate: days.length === 0 ? 0 : Math.round((present / days.length) * 100),
+          absentDates: byDay.filter((entry) => entry.status === 'absent').map((e) => e.date),
+          excusedDates: byDay.filter((entry) => entry.status === 'excused').map((e) => e.date),
+          presentDates: byDay.filter((entry) => entry.status === 'present').map((e) => e.date),
+          days: byDay,
+        };
+      })
+      // الأكثر غيابًا أولًا: التقرير يُقرأ لمن يحتاج متابعة لا لمن انضبط.
+      .sort((a, b) => b.absent - a.absent || a.teacherName.localeCompare(b.teacherName, 'ar'));
+
+    return {
+      month,
+      monthKey: range.key,
+      days: days.length,
+      filters: { city, district, mosque },
+      options: {
+        cities: optionsOf('city'),
+        districts: optionsOf('district'),
+        mosques: optionsOf('mosque'),
+      },
+      rows,
+      totals: {
+        teachers: rows.length,
+        absent: rows.reduce((sum, row) => sum + row.absent, 0),
+        excused: rows.reduce((sum, row) => sum + row.excused, 0),
+        present: rows.reduce((sum, row) => sum + row.present, 0),
+      },
     };
   });
 }

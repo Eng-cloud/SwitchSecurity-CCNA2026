@@ -36,6 +36,7 @@ export const ACTIONS = {
   ENROLLMENT_REVIEW: 'enrollment.review',
   ATTENDANCE_RECORD: 'attendance.record',
   COVERAGE_MANAGE: 'coverage.manage',
+  COVERAGE_REPORT: 'coverage.report',
   TAJWEED_VIEW: 'tajweed.view',
   TAJWEED_MANAGE: 'tajweed.manage',
   NOTES_WRITE: 'notes.write',
@@ -54,7 +55,10 @@ const A = ACTIONS;
  * - الحضور (ATTENDANCE_RECORD): للمعلم في حلقته، وللمشرف في حلقاته كاملةً.
  *   المشرف مسؤول عن انعقاد الحلقة، ومن يُسأل عن انعقادها يملك تسجيله.
  * - التغطية (COVERAGE_MANAGE): المعلم يطلب نائبًا ويردّ على الطلبات،
- *   والمشرف يعيّن بديلًا أو يتولّى الحلقة بنفسه.
+ *   والمشرف يعيّن بديلًا أو يتولّى الحلقة بنفسه. الإدارة خارجها: تغطية
+ *   اليوم عملٌ ميداني يُتابَع بالساعة، ومن يتابعه هو من يقف عليه.
+ * - تقرير التغطية (COVERAGE_REPORT): للمشرف والإدارة. الإدارة تقرأ في
+ *   آخر الشهر ما جرى، ولا تتدخّل في يومه.
  * - التجويد: المشاهدة (TAJWEED_VIEW) للطالب والمعلم والإدارة، والإضافة
  *   (TAJWEED_MANAGE) للإدارة وحدها — ثم تضيق أكثر داخل الخدمة على
  *   الإدارة العليا دون الإداري المحدود.
@@ -85,6 +89,7 @@ const MATRIX = {
     A.DISTINGUISHED_VIEW,
     A.ATTENDANCE_RECORD,
     A.COVERAGE_MANAGE,
+    A.COVERAGE_REPORT,
     A.NOTES_WRITE,
   ],
 
@@ -98,7 +103,7 @@ const MATRIX = {
     A.ENROLLMENT_REVIEW,
     A.DISTINGUISHED_VIEW,
     A.ATTENDANCE_RECORD,
-    A.COVERAGE_MANAGE,
+    A.COVERAGE_REPORT,
     A.TAJWEED_VIEW,
     A.TAJWEED_MANAGE,
   ],
