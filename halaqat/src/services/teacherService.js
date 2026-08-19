@@ -72,7 +72,8 @@ export async function getCircleStudents(
       return {
         id: student.id,
         name: student.name,
-        attendanceToday: attendance?.status ?? 'absent',
+        // لا سجل ≠ غياب: التمييز بينهما هو ما يجعل التصحيح ممكنًا.
+        attendanceToday: attendance?.status ?? 'notRecorded',
         attendanceRate: student.attendanceRate,
         memorizedPages: student.memorizedPages,
         reviewRate: student.reviewRate,
@@ -87,25 +88,52 @@ export async function getCircleStudents(
   });
 }
 
+/** حالات الحضور المخزَّنة. «لم يُسجَّل» ليست منها: هي غياب السجل نفسه. */
+export const ATTENDANCE_STATUSES = ['present', 'late', 'absent', 'excused'];
+
+export const ATTENDANCE_NOT_RECORDED = 'notRecorded';
+
+/**
+ * يضبط حضور اليوم لطالب — أو يمحوه.
+ *
+ * الحضور إقرار من المعلم، والإقرار يُخطئ: يُنقر السطر الخطأ، أو يصل الطالب
+ * متأخرًا بعد أن سُجِّل غيابه. لذلك ليست هذه دالة «تسجيل» باتجاه واحد، بل
+ * ضبطٌ لحالة تقبل كل القيم وتقبل المسح. تمرير `notRecorded` (أو `null`)
+ * يحذف السجل فيعود اليوم كما لو لم يُلمس — وهذا هو التراجع الحقيقي، لا
+ * استبدال خطأٍ بخطأٍ آخر اسمه «غائب».
+ */
 export async function setAttendance(studentId, status) {
   return request(() =>
     mutateDb((db) => {
       const student = db.students.find((item) => item.id === studentId);
       if (!student) throw new ApiError('notFound', 'state.notFoundHint');
+
       const today = toISODate(new Date());
-      const existing = db.attendance.find(
+      const index = db.attendance.findIndex(
         (row) => row.studentId === studentId && row.date === today,
       );
-      if (existing) existing.status = status;
+
+      if (status === null || status === ATTENDANCE_NOT_RECORDED) {
+        if (index >= 0) db.attendance.splice(index, 1);
+        return { studentId, status: ATTENDANCE_NOT_RECORDED, date: today, cleared: true };
+      }
+
+      if (!ATTENDANCE_STATUSES.includes(status)) {
+        throw new ApiError('validation', 'teacher.attendanceInvalid');
+      }
+
+      if (index >= 0) db.attendance[index].status = status;
       else
         db.attendance.unshift({
-          id: `att-${Date.now()}`,
+          // مفتاح مشتق من الطالب واليوم: لا يتكرر ولو ضُبط الحضور مرارًا.
+          id: `att-${studentId}-${today}`,
           studentId,
           circleId: student.circleId,
           date: today,
           status,
         });
-      return { studentId, status, date: today };
+
+      return { studentId, status, date: today, cleared: false };
     }),
   );
 }

@@ -31,11 +31,15 @@ const STATUS_VARIANT = {
 };
 
 const ATTENDANCE_VARIANT = {
+  notRecorded: 'neutral',
   present: 'success',
   absent: 'danger',
   late: 'warning',
   excused: 'info',
 };
+
+/** «لم يُسجَّل» أولًا: هي حالة اليوم قبل أن يلمسه المعلم، وهي أيضًا طريق التراجع. */
+const ATTENDANCE_OPTIONS = ['notRecorded', 'present', 'late', 'absent', 'excused'];
 
 /**
  * جدول الحلقة — الحالة والحضور والإجراءات.
@@ -47,6 +51,7 @@ export default function TeacherCircle() {
   const toast = useToast();
   const [noteFor, setNoteFor] = useState(null);
   const [sort, setSort] = useState(null);
+  const [pending, setPending] = useState({});
 
   const { values, setValue } = useListState({
     defaults: { q: '', status: 'all', page: 1 },
@@ -72,13 +77,35 @@ export default function TeacherCircle() {
     sort,
   ]);
 
-  const handleAttendance = async (studentId, status) => {
+  /**
+   * ضبط الحضور — لا «تسجيله».
+   * الحالة السابقة تُحفظ ثم تُعاد إن فشل الحفظ، فلا يبقى الاختيار في الشاشة
+   * على قيمة لم تُكتب في البيانات.
+   */
+  const handleAttendance = async (row, status) => {
+    const previous = row.attendanceToday;
+    if (status === previous) return;
+
+    setPending((current) => ({ ...current, [row.id]: status }));
     try {
-      await teacherService.setAttendance(studentId, status);
-      toast.success(t('teacher.attendanceSaved'));
-      refetch();
-    } catch {
-      toast.error(t('state.errorHint'));
+      await teacherService.setAttendance(row.id, status);
+      toast.success(
+        status === 'notRecorded'
+          ? t('teacher.attendanceCleared', { name: row.name })
+          : t('teacher.attendanceSaved', {
+              name: row.name,
+              status: t(`teacher.attendanceStatus.${status}`),
+            }),
+      );
+      await refetch();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setPending((current) => {
+        const next = { ...current };
+        delete next[row.id];
+        return next;
+      });
     }
   };
 
@@ -102,11 +129,29 @@ export default function TeacherCircle() {
     {
       key: 'attendanceToday',
       header: t('teacher.tableAttendance'),
-      render: (row) => (
-        <Badge variant={ATTENDANCE_VARIANT[row.attendanceToday]}>
-          {t(`teacher.attendanceStatus.${row.attendanceToday}`)}
-        </Badge>
-      ),
+      // الحضور يُضبط من مكانه في الجدول: الحالة المعروضة هي نفسها أداة تغييرها،
+      // فالتصحيح خطوة واحدة لا رحلة إلى شاشة أخرى.
+      render: (row) => {
+        const value = pending[row.id] ?? row.attendanceToday;
+        return (
+          <Select
+            className="select--attendance"
+            // اللون من نفس سُلَّم الشارات، فلا يفترق معنى الأخضر بين عمود وآخر.
+            data-variant={ATTENDANCE_VARIANT[value]}
+            data-testid={`attendance-${row.id}`}
+            aria-label={t('teacher.attendanceLabel', { name: row.name })}
+            value={value}
+            disabled={Boolean(pending[row.id])}
+            onChange={(event) => handleAttendance(row, event.target.value)}
+          >
+            {ATTENDANCE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {t(`teacher.attendanceStatus.${option}`)}
+              </option>
+            ))}
+          </Select>
+        );
+      },
     },
     {
       key: 'memorizedPages',
@@ -139,14 +184,6 @@ export default function TeacherCircle() {
         <div className="table__actions">
           <Button size="sm" variant="secondary" to={`/app/teacher/students/${row.id}`}>
             {t('teacher.viewStudent')}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => handleAttendance(row.id, 'present')}
-            disabled={row.attendanceToday === 'present'}
-          >
-            {t('teacher.markAttendance')}
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setNoteFor(row)}>
             {t('teacher.addNote')}

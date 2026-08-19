@@ -19,12 +19,27 @@ test('رحلة المعلم: الحلقة → الطلاب → الطالب → 
   await navigate(page, 'الحلقة', /\/app\/teacher\/circle/);
   await expect(page.getByRole('table')).toBeVisible();
 
-  // تسجيل حضور من الجدول
-  const attendanceButton = page.getByRole('button', { name: 'تسجيل حضور' }).first();
-  if (await attendanceButton.isEnabled()) {
-    await attendanceButton.click();
-    await expect(page.getByText('تم تسجيل الحضور').first()).toBeVisible();
-  }
+  // الحضور يُضبط من الجدول — ويُتراجَع عنه.
+  // النقر بالخطأ على طالب غائب واقعة يومية، فالاختبار يقطع الطريق كاملًا:
+  // تسجيل، ثم تصحيح إلى حالة أخرى، ثم إلغاء التسجيل من أصله.
+  const attendance = page.getByTestId('attendance-student-1-01');
+  // البيانات تبدأ بهذا الطالب حاضرًا — نؤكّدها صراحةً كي ينكسر الاختبار
+  // إن تغيّرت البذرة بدل أن يمرّ وهو لا يفحص شيئًا.
+  await expect(attendance).toHaveValue('present');
+
+  // تصحيح تسجيل خاطئ إلى حالة أخرى
+  await attendance.selectOption('absent');
+  await expect(page.getByText(/حُدِّث حضور .+: غائب/).first()).toBeVisible();
+  await expect(attendance).toHaveValue('absent');
+
+  // ثم إلغاء التسجيل من أصله — رجوعٌ إلى ما قبل اللمس
+  await attendance.selectOption('notRecorded');
+  await expect(page.getByText(/أُلغي تسجيل حضور /).first()).toBeVisible();
+  await expect(attendance).toHaveValue('notRecorded');
+
+  // وإعادة التسجيل بعد الإلغاء تعمل كما في المرة الأولى
+  await attendance.selectOption('present');
+  await expect(attendance).toHaveValue('present');
 
   // Students → Student profile
   await page.goto('/app/teacher/students');
