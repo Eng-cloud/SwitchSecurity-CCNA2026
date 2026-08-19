@@ -157,7 +157,15 @@ export function AppRoutes() {
               <Route path="student" element={<StudentDashboard />} />
               <Route path="student/quran" element={<Navigate to="/app/quran" replace />} />
               <Route path="student/review" element={<Review />} />
-              <Route path="student/recitation" element={<Recitation />} />
+              {/* التسميع بابان: حفظٌ جديد يزيد الرصيد، ومراجعةٌ تتعاهده */}
+              <Route
+                path="student/review/recite"
+                element={<Recitation sessionType="review" />}
+              />
+              <Route
+                path="student/recitation"
+                element={<Recitation sessionType="memorization" />}
+              />
               <Route path="student/tests" element={<Tests />} />
               <Route path="student/tests/:testId/run" element={<TestRunner />} />
               <Route path="student/tests/:testId/result" element={<TestResult />} />

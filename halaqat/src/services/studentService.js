@@ -284,18 +284,34 @@ export async function getSessions(studentId, { type = 'all' } = {}) {
   });
 }
 
+/** التسميع نوعان لا نوعٌ واحد بوجهين. */
+export const RECITATION_TYPES = ['memorization', 'review'];
+
+/**
+ * يحفظ جلسة تسميع — حفظًا جديدًا أو مراجعة.
+ *
+ * كانت الجلسة تُحفظ «مراجعة» دائمًا مهما كان الباب الذي دخل منه الطالب،
+ * فيختلط في سجلّه ما حفظه اليوم بما تعاهده. النوع الآن يأتي صريحًا من
+ * الشاشة، والفارق بينهما حقيقي لا في الاسم: الحفظ الجديد يزيد صفحاته
+ * المحفوظة، والمراجعة تُثبِّت ما حُفظ ولا تزيده.
+ */
 export async function saveRecitationSession(studentId, payload) {
   return request(() =>
     mutateDb((db) => {
       const student = db.students.find((item) => item.id === studentId);
       if (!student) throw new ApiError('notFound', 'state.notFoundHint');
 
+      const type = payload.type ?? 'review';
+      if (!RECITATION_TYPES.includes(type)) {
+        throw new ApiError('validation', 'recitation.errors.invalidType');
+      }
+
       const session = {
         id: `session-live-${Date.now()}`,
         studentId,
         teacherId: student.teacherId,
         circleId: student.circleId,
-        type: 'review',
+        type,
         surahNumber: payload.surahNumber,
         fromAyah: payload.fromAyah,
         toAyah: payload.toAyah,
@@ -311,6 +327,8 @@ export async function saveRecitationSession(studentId, payload) {
       student.todayDone = Math.min(student.targetDaily, student.todayDone + 1);
       student.lastRecitationAt = session.createdAt;
       student.masteryAvg = Math.round((student.masteryAvg * 3 + payload.mastery) / 4);
+      // الحفظ الجديد وحده يزيد الرصيد؛ المراجعة تتعاهده.
+      if (type === 'memorization') student.memorizedPages += 1;
 
       db.notifications.unshift({
         id: `notif-${Date.now()}`,

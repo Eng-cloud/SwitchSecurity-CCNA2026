@@ -43,12 +43,9 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   await expect(page).toHaveURL(/\/app\/quran\/1/);
   await expect(page.getByText('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ')).toBeVisible();
 
-  // Review
-  await page.goto('/app/student/review');
-  await expect(page.getByRole('heading', { name: 'المراجعة' })).toBeVisible();
-
-  // Recitation → Mock AI → Save
+  // الحفظ الجديد: بابٌ مستقل يزيد الرصيد
   await page.goto('/app/student/recitation');
+  await expect(page.getByRole('heading', { name: 'الحفظ الجديد', level: 1 })).toBeVisible();
   await page.getByTestId('start-recitation').click();
   await expect(page.getByText('جارٍ التسجيل')).toBeVisible();
   await page.getByTestId('stop-recitation').click();
@@ -59,6 +56,25 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   await expect(page.getByText(/ليست تقييمًا بالذكاء الاصطناعي/)).toBeVisible();
   await page.getByTestId('save-session').click();
   await expect(page.getByText('تم حفظ الجلسة').first()).toBeVisible();
+
+  // المراجعة: بابها الخاص بالتسميع — لا يُخلط بالحفظ الجديد
+  await page.goto('/app/student/review');
+  await page.getByTestId('start-review-recitation').click();
+  await expect(page).toHaveURL(/\/app\/student\/review\/recite/);
+  await expect(page.getByRole('heading', { name: 'تسميع المراجعة', level: 1 })).toBeVisible();
+  await page.getByTestId('start-recitation').click();
+  await page.getByTestId('stop-recitation').click();
+  await expect(page.getByTestId('recitation-result')).toBeVisible({ timeout: 15000 });
+  await page.getByTestId('save-session').click();
+  await expect(page.getByText('تم حفظ الجلسة').first()).toBeVisible();
+
+  // ويظهر كلٌّ في بابه من سجل المراجعة
+  await page.goto('/app/student/review');
+  await page.getByRole('tab', { name: 'حفظ جديد' }).click();
+  await expect(page.getByRole('tab', { name: 'حفظ جديد' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
 
   // Weekly test: instructions → start → answer → submit → result
   await page.goto('/app/student/tests');

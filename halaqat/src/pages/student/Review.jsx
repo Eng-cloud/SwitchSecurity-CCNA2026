@@ -48,8 +48,8 @@ export default function Review() {
         subtitle={t('student.plan.recentReview')}
         breadcrumb={[{ label: t('nav.home'), to: '/app/student' }, { label: t('nav.review') }]}
         actions={
-          <Button to="/app/student/recitation" variant="secondary">
-            {t('recitation.start')}
+          <Button to="/app/student/review/recite" size="lg" data-testid="start-review-recitation">
+            {t('recitation.review.start')}
           </Button>
         }
       />

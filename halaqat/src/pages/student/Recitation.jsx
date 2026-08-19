@@ -23,8 +23,12 @@ import {
 /**
  * التسميع مع قراءة أولية آلية (ليست ذكاءً اصطناعيًا).
  * الرحلة: اختيار المقطع → تسجيل → إيقاف → تحليل → نتيجة → حفظ.
+ *
+ * شاشةٌ واحدة ببابين: «الحفظ الجديد» و«تسميع المراجعة». النوع يأتي من
+ * المسار لا من حقلٍ يختاره الطالب، لأنه يقرَّر قبل أن يفتح فمه — ولأن
+ * ما يُسجَّل به يختلف: الحفظ يزيد الرصيد والمراجعة تتعاهده.
  */
-export default function Recitation() {
+export default function Recitation({ sessionType = 'memorization' }) {
   const t = useT();
   const { user } = useAuth();
   const toast = useToast();
@@ -81,6 +85,7 @@ export default function Recitation() {
     setSaveStatus('loading');
     try {
       await studentService.saveRecitationSession(user.studentId, {
+        type: sessionType,
         surahNumber: result.range.surahNumber,
         fromAyah: result.range.fromAyah,
         toAyah: result.range.toAyah,
@@ -107,9 +112,16 @@ export default function Recitation() {
   return (
     <>
       <PageHeader
-        title={t('recitation.title')}
-        subtitle={t('recitation.subtitle')}
-        breadcrumb={[{ label: t('nav.home'), to: '/app/student' }, { label: t('recitation.title') }]}
+        title={t(`recitation.${sessionType}.title`)}
+        documentTitle={t(`recitation.${sessionType}.title`)}
+        subtitle={t(`recitation.${sessionType}.subtitle`)}
+        breadcrumb={[
+          { label: t('nav.home'), to: '/app/student' },
+          ...(sessionType === 'review'
+            ? [{ label: t('nav.review'), to: '/app/student/review' }]
+            : []),
+          { label: t(`recitation.${sessionType}.title`) },
+        ]}
       />
 
       {/* اختيار المقطع */}

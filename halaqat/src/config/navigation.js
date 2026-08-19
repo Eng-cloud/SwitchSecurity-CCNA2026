@@ -23,7 +23,7 @@ const NAVIGATION = {
   student: [
     { to: '/app/student', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
     QURAN_ITEM,
-    { to: '/app/student/recitation', labelKey: 'nav.recitation', icon: '🎙', primary: true },
+    { to: '/app/student/recitation', labelKey: 'nav.newMemorization', icon: '🎙', primary: true },
     TAJWEED_ITEM,
     // مؤقت: يظهر فقط أثناء وجود توكيل نشِط من المعلم ويختفي بانتهائه.
     {
@@ -33,7 +33,7 @@ const NAVIGATION = {
       primary: true,
       requires: 'assistantDuty',
     },
-    { to: '/app/student/review', labelKey: 'nav.review', icon: '🔁' },
+    { to: '/app/student/review', labelKey: 'nav.review', icon: '🔁', primary: true },
     { to: '/app/student/tests', labelKey: 'nav.tests', icon: '📝' },
     { to: '/app/student/goals', labelKey: 'nav.goals', icon: '🎯' },
   ],

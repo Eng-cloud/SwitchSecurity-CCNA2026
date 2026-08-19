@@ -64,3 +64,56 @@ describe('خدمة الطالب — خطة اليوم', () => {
     ).rejects.toMatchObject({ messageKey: 'state.notFoundHint' });
   });
 });
+
+describe('التسميع بابان: حفظٌ جديد ومراجعة', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  const RANGE = { surahNumber: 1, fromAyah: 1, toAyah: 5, mastery: 90, durationSeconds: 60 };
+
+  it('الحفظ الجديد يزيد الرصيد، والمراجعة تتعاهده ولا تزيده', async () => {
+    const student = getDb().students[0];
+    const before = student.memorizedPages;
+
+    await studentService.saveRecitationSession(student.id, { ...RANGE, type: 'memorization' });
+    const afterMemorize = getDb().students.find((item) => item.id === student.id).memorizedPages;
+    expect(afterMemorize).toBe(before + 1);
+
+    await studentService.saveRecitationSession(student.id, { ...RANGE, type: 'review' });
+    expect(getDb().students.find((item) => item.id === student.id).memorizedPages).toBe(
+      afterMemorize,
+    );
+  });
+
+  it('النوع يُسجَّل كما جاء، لا «مراجعة» دائمًا', async () => {
+    const student = getDb().students[0];
+
+    const memorize = await studentService.saveRecitationSession(student.id, {
+      ...RANGE,
+      type: 'memorization',
+    });
+    expect(memorize.type).toBe('memorization');
+
+    const review = await studentService.saveRecitationSession(student.id, {
+      ...RANGE,
+      type: 'review',
+    });
+    expect(review.type).toBe('review');
+
+    // ويظهران مفترقين في سجل الطالب.
+    const onlyMemorization = await studentService.getSessions(student.id, {
+      type: 'memorization',
+    });
+    expect(onlyMemorization.every((session) => session.type === 'memorization')).toBe(true);
+    expect(onlyMemorization.some((session) => session.id === memorize.id)).toBe(true);
+    expect(onlyMemorization.some((session) => session.id === review.id)).toBe(false);
+  });
+
+  it('نوع مجهول يُرفض', async () => {
+    const student = getDb().students[0];
+    await expect(
+      studentService.saveRecitationSession(student.id, { ...RANGE, type: 'test' }),
+    ).rejects.toMatchObject({ messageKey: 'recitation.errors.invalidType' });
+  });
+});
