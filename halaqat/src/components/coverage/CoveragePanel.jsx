@@ -14,7 +14,6 @@ const STATE_VARIANT = {
   pending: 'warning',
   needsCover: 'danger',
   escalated: 'danger',
-  unknown: 'neutral',
 };
 
 /**
@@ -107,7 +106,7 @@ export default function CoveragePanel({ circleId, onChange }) {
                     circleId,
                     status,
                   }),
-                status === 'notRecorded' ? 'coverage.cleared' : 'coverage.saved',
+                'coverage.saved',
               )
             }
           />

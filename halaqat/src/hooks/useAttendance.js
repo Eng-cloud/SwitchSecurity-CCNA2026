@@ -30,12 +30,10 @@ export default function useAttendance({ onSaved } = {}) {
           userId: user?.userId,
         });
         toast.success(
-          status === 'notRecorded'
-            ? t('teacher.attendanceCleared', { name: row.name })
-            : t('teacher.attendanceSaved', {
-                name: row.name,
-                status: t(`teacher.attendanceStatus.${status}`),
-              }),
+          t('teacher.attendanceSaved', {
+            name: row.name,
+            status: t(`teacher.attendanceStatus.${status}`),
+          }),
         );
         await onSaved?.();
         return true;

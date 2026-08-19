@@ -31,27 +31,28 @@ function freshStudent() {
   return student;
 }
 
-describe('حضور اليوم — ضبط لا تسجيل باتجاه واحد', () => {
+describe('حضور اليوم — ثلاث حالات تُضبط في الاتجاهين', () => {
   beforeEach(() => {
     resetDb();
   });
 
-  it('اليوم قبل أن يُلمس ليس غيابًا بل «لم يُسجَّل»', async () => {
+  it('من لم يُسجَّل حضوره يُقرأ غائبًا', async () => {
     const student = freshStudent();
 
     expect(attendanceRow(student.id)).toBeUndefined();
-    expect((await rowFor(student)).attendanceToday).toBe('notRecorded');
+    expect((await rowFor(student)).attendanceToday).toBe('absent');
   });
 
-  it('المعلم يصحّح حضورًا سجّله بالخطأ إلى أي حالة أخرى', async () => {
+  it('المعلم يصحّح حضورًا سجّله بالخطأ، ويعود منه إلى الغياب', async () => {
     const student = freshStudent();
 
-    await teacherService.setAttendance({ studentId: student.id, status: 'present', ...asTeacher(student) });
-    expect((await rowFor(student)).attendanceToday).toBe('present');
-
-    for (const status of ['absent', 'late', 'excused', 'present']) {
+    for (const status of ['present', 'excused', 'absent', 'present']) {
       // eslint-disable-next-line no-await-in-loop
-      const result = await teacherService.setAttendance({ studentId: student.id, status, ...asTeacher(student) });
+      const result = await teacherService.setAttendance({
+        studentId: student.id,
+        status,
+        ...asTeacher(student),
+      });
       expect(result.status).toBe(status);
       // eslint-disable-next-line no-await-in-loop
       expect((await rowFor(student)).attendanceToday).toBe(status);
@@ -64,30 +65,7 @@ describe('حضور اليوم — ضبط لا تسجيل باتجاه واحد',
     expect(rows).toHaveLength(1);
   });
 
-  it('إلغاء التسجيل يمحو السجل فيعود اليوم كما كان', async () => {
-    const student = freshStudent();
-
-    await teacherService.setAttendance({ studentId: student.id, status: 'present', ...asTeacher(student) });
-    expect(attendanceRow(student.id)).toBeTruthy();
-
-    const result = await teacherService.setAttendance({
-      studentId: student.id,
-      status: 'notRecorded',
-      ...asTeacher(student),
-    });
-    expect(result.cleared).toBe(true);
-    expect(attendanceRow(student.id)).toBeUndefined();
-    expect((await rowFor(student)).attendanceToday).toBe('notRecorded');
-
-    // الإلغاء على يومٍ غير مسجَّل أصلًا لا يعطب.
-    await expect(
-      teacherService.setAttendance({ studentId: student.id, status: null, ...asTeacher(student) }),
-    ).resolves.toMatchObject({
-      status: 'notRecorded',
-    });
-  });
-
-  it('الإلغاء لا يمسّ أيام الطالب الأخرى ولا بقية الطلاب', async () => {
+  it('الضبط لا يمسّ أيام الطالب الأخرى ولا بقية الطلاب', async () => {
     const db = getDb();
     const student = freshStudent();
     const other = db.students.find((item) => item.id !== student.id);
@@ -99,23 +77,32 @@ describe('حضور اليوم — ضبط لا تسجيل باتجاه واحد',
       date: '2026-01-05',
       status: 'present',
     });
-    await teacherService.setAttendance({ studentId: other.id, status: 'present', role: 'teacher', userId: other.teacherId });
-    await teacherService.setAttendance({ studentId: student.id, status: 'present', ...asTeacher(student) });
+    await teacherService.setAttendance({
+      studentId: other.id,
+      status: 'present',
+      role: 'teacher',
+      userId: other.teacherId,
+    });
 
-    await teacherService.setAttendance({ studentId: student.id, status: 'notRecorded', ...asTeacher(student) });
+    await teacherService.setAttendance({
+      studentId: student.id,
+      status: 'absent',
+      ...asTeacher(student),
+    });
 
-    expect(getDb().attendance.find((row) => row.id === 'att-old')).toBeTruthy();
+    expect(getDb().attendance.find((row) => row.id === 'att-old')?.status).toBe('present');
     expect(attendanceRow(other.id)?.status).toBe('present');
   });
 
-  it('حالة غير معروفة تُرفض بدل أن تُكتب في البيانات', async () => {
+  it('الحالات المحذوفة لم تعد تُقبل، ولا أيّ حالة مجهولة', async () => {
     const student = freshStudent();
 
-    await expect(
-      teacherService.setAttendance({ studentId: student.id, status: 'here', ...asTeacher(student) }),
-    ).rejects.toMatchObject({
-      messageKey: 'teacher.attendanceInvalid',
-    });
+    for (const status of ['late', 'notRecorded', 'here', null]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        teacherService.setAttendance({ studentId: student.id, status, ...asTeacher(student) }),
+      ).rejects.toMatchObject({ messageKey: 'teacher.attendanceInvalid' });
+    }
     expect(attendanceRow(student.id)).toBeUndefined();
   });
 
@@ -146,11 +133,11 @@ describe('حضور اليوم — ضبط لا تسجيل باتجاه واحد',
 
     await teacherService.setAttendance({
       studentId: student.id,
-      status: 'late',
+      status: 'excused',
       role: 'supervisor',
       userId: circle.supervisorId,
     });
-    expect(attendanceRow(student.id)?.status).toBe('late');
+    expect(attendanceRow(student.id)?.status).toBe('excused');
 
     // ومشرف حلقةٍ أخرى لا يملك ذلك.
     const otherSupervisor = db.users.find(
@@ -174,8 +161,6 @@ describe('حضور اليوم — ضبط لا تسجيل باتجاه واحد',
         role: 'teacher',
         userId: 'user-teacher-1',
       }),
-    ).rejects.toMatchObject({
-      messageKey: 'state.notFoundHint',
-    });
+    ).rejects.toMatchObject({ messageKey: 'state.notFoundHint' });
   });
 });

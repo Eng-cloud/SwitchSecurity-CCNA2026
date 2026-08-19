@@ -33,8 +33,8 @@ export default function ParentDashboard() {
         documentTitle={t('nav.dashboard')}
         subtitle={t('parent.subtitle')}
         actions={
-          <Button to="/app/parent/reports" variant="secondary">
-            {t('reports.title')}
+          <Button to="/app/parent/children" variant="secondary">
+            {t('nav.children')}
           </Button>
         }
       />

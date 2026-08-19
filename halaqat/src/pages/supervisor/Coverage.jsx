@@ -24,7 +24,6 @@ const STATE_VARIANT = {
   pending: 'warning',
   needsCover: 'danger',
   escalated: 'danger',
-  unknown: 'neutral',
 };
 
 /**
@@ -150,9 +149,9 @@ export default function SupervisorCoverage() {
             <div className="grid grid-3 stagger">
               <Stat label={t('coverage.gapsStat')} value={formatNumber(data.gaps)} icon="!" />
               <Stat
-                label={t('coverage.unknownStat')}
-                value={formatNumber(data.unknown)}
-                icon="?"
+                label={t('coverage.coveredStat')}
+                value={formatNumber(data.covered)}
+                icon="✓"
               />
               <Stat
                 label={t('coverage.circlesStat')}

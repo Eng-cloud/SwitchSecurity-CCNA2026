@@ -289,7 +289,6 @@ const ar = {
       pending: 'بانتظار ردّ النائب',
       needsCover: 'بلا معلّم',
       escalated: 'تحتاج المشرف',
-      unknown: 'لم يُسجَّل بعد',
     },
 
     alert: {
@@ -328,7 +327,6 @@ const ar = {
     },
 
     saved: 'حُدِّث حضور المعلم',
-    cleared: 'أُلغي تسجيل حضور المعلم',
     requested: 'أُرسل طلب الإنابة',
     accepted: 'قبلت الإنابة — الحلقة لك اليوم',
     declined: 'أُرسل اعتذارك إلى المشرف',
@@ -338,7 +336,7 @@ const ar = {
     gapsTitle: 'حلقات بلا معلّم اليوم: {count}',
     gapsHint: 'تولَّ الحلقة بنفسك أو ادخلها لتعيّن نائبًا.',
     gapsStat: 'تحتاج تدخّلك',
-    unknownStat: 'لم يسجّل معلّمها',
+    coveredStat: 'مُغطّاة',
     circlesStat: 'حلقاتك',
     emptyTitle: 'لا حلقات تحت إشرافك',
     emptyText: 'ستظهر هنا حلقاتك وتغطيتها اليومية.',
@@ -352,7 +350,6 @@ const ar = {
       alreadyCovered: 'للحلقة نائب يقودها اليوم',
       alreadyAnswered: 'رُدَّ على هذا الطلب من قبل',
       alreadyEnded: 'انتهت هذه الإنابة',
-      hasOpenDeputation: 'أنهِ الإنابة القائمة قبل مسح تسجيل الغياب',
     },
   },
 
@@ -769,13 +766,10 @@ const ar = {
     openReport: 'فتح التقرير',
     attendanceLabel: 'حضور {name} اليوم',
     attendanceSaved: 'حُدِّث حضور {name}: {status}',
-    attendanceCleared: 'أُلغي تسجيل حضور {name}',
     attendanceInvalid: 'حالة حضور غير معروفة',
     attendanceStatus: {
-      notRecorded: 'لم يُسجَّل',
       present: 'حاضر',
       absent: 'غائب',
-      late: 'متأخر',
       excused: 'مستأذن',
     },
     status: {

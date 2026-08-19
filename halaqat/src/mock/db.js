@@ -332,7 +332,7 @@ function generate() {
   });
 
   /* --- الحضور (آخر 14 يومًا) --- */
-  const attendanceStatuses = ['present', 'present', 'present', 'late', 'absent', 'excused'];
+  const attendanceStatuses = ['present', 'present', 'present', 'absent', 'excused'];
   students.forEach((student) => {
     for (let day = 0; day < 14; day += 1) {
       attendance.push({
@@ -376,9 +376,9 @@ function generate() {
   const notificationSeeds = [
     { typeKey: 'session', daysAgo: 0, link: '/app/student/recitation' },
     { typeKey: 'test', daysAgo: 0, link: '/app/student/tests' },
-    { typeKey: 'report', daysAgo: 1, link: '/app/student/reports' },
+    { typeKey: 'report', daysAgo: 1, link: '/app/student' },
     { typeKey: 'goal', daysAgo: 2, link: '/app/student/goals' },
-    { typeKey: 'note', daysAgo: 3, link: '/app/student/progress' },
+    { typeKey: 'note', daysAgo: 3, link: '/app/student' },
   ];
   notificationSeeds.forEach((seed, index) => {
     notifications.push({

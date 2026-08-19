@@ -94,8 +94,8 @@ export default function StudentDashboard() {
                       <p className="ward__range">{t('student.home.wardEmptyHint')}</p>
                     </div>
                     <div className="ward__actions">
-                      <Button variant="secondary" to="/app/student/progress">
-                        {t('student.home.viewProgress')}
+                      <Button variant="secondary" to="/app/student/review">
+                        {t('nav.review')}
                       </Button>
                     </div>
                   </section>
@@ -203,11 +203,6 @@ export default function StudentDashboard() {
             <Section
               title={t('student.recentActivity')}
               id="recent-activity"
-              actions={
-                <Link to="/app/student/progress" className="t-sm">
-                  {t('common.seeAll')} ←
-                </Link>
-              }
             >
               {data.recent.length === 0 ? (
                 <Card variant="quiet" className="t-center t-muted">

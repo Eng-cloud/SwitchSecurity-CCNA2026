@@ -33,11 +33,11 @@ test('رحلة المعلم: الحلقة → الطلاب → الطالب → 
   await expect(attendance).toHaveValue('absent');
 
   // ثم إلغاء التسجيل من أصله — رجوعٌ إلى ما قبل اللمس
-  await attendance.selectOption('notRecorded');
-  await expect(page.getByText(/أُلغي تسجيل حضور /).first()).toBeVisible();
-  await expect(attendance).toHaveValue('notRecorded');
+  await attendance.selectOption('excused');
+  await expect(page.getByText(/حُدِّث حضور .+: مستأذن/).first()).toBeVisible();
+  await expect(attendance).toHaveValue('excused');
 
-  // وإعادة التسجيل بعد الإلغاء تعمل كما في المرة الأولى
+  // والعودة إلى ما بدأ منه متاحة كذلك — الضبط في الاتجاهين.
   await attendance.selectOption('present');
   await expect(attendance).toHaveValue('present');
 
@@ -62,11 +62,11 @@ test('رحلة المعلم: الحلقة → الطلاب → الطالب → 
   await page.getByTestId('save-session').click();
   await expect(page.getByText('تم تسجيل الجلسة').first()).toBeVisible();
 
-  // Report + print preview
+  // تقرير المعلم: يُقرأ ولا يُطبع — الإخراج الرسمي للمشرف والإدارة.
   await page.goto('/app/teacher/reports');
   await expect(page.getByRole('table')).toBeVisible();
-  await page.getByRole('button', { name: 'معاينة الطباعة' }).click();
-  await expect(page.locator('.print-header')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'معاينة الطباعة' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toHaveCount(0);
 
   // رجوع داخل التطبيق ثم تقدّم المتصفح
   // «رجوع» يرجع في سجل التنقل فعلًا (لا يدفع صفحة جديدة)، فالتقدّم يعيدنا للملف.
@@ -158,7 +158,7 @@ test('رحلة الإدارة: المستخدمون → الحلقات → ال�
   assertNoConsoleErrors(errors);
 });
 
-test('رحلة ولي الأمر: الأبناء → تفاصيل ابن → تقارير → خروج', async ({ page }) => {
+test('رحلة ولي الأمر: الأبناء → تفاصيل ابن → خروج', async ({ page }) => {
   const errors = watchConsole(page);
   await loginAs(page, 'parent');
 
@@ -169,9 +169,12 @@ test('رحلة ولي الأمر: الأبناء → تفاصيل ابن → ت�
   await page.getByRole('tab', { name: 'الجلسات' }).click();
   await expect(page.getByRole('tab', { name: 'الجلسات' })).toHaveAttribute('aria-selected', 'true');
 
+  // ولي الأمر ليس مسؤولًا عن التقارير: يتابع ابنه ولا يُصدر عنه تقريرًا.
   await page.goto('/app/parent/reports');
-  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'الصفحة غير موجودة' })).toBeVisible();
 
+  // صفحة 404 خارج هيكل التطبيق: نعود إليه قبل الخروج من قائمة الحساب.
+  await page.goto('/app/parent');
   await logout(page);
   assertNoConsoleErrors(errors);
 });

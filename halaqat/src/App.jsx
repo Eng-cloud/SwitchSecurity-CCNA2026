@@ -48,8 +48,6 @@ const Tests = lazy(() => import('./pages/student/Tests.jsx'));
 const TestRunner = lazy(() => import('./pages/student/TestRunner.jsx'));
 const TestResult = lazy(() => import('./pages/student/TestResult.jsx'));
 const Goals = lazy(() => import('./pages/student/Goals.jsx'));
-const Progress = lazy(() => import('./pages/student/Progress.jsx'));
-const StudentReports = lazy(() => import('./pages/student/Reports.jsx'));
 const StudentAssistant = lazy(() => import('./pages/student/Assistant.jsx'));
 
 /* المعلم */
@@ -85,7 +83,6 @@ const AdminTeachers = lazy(() => import('./pages/admin/Teachers.jsx'));
 const ParentDashboard = lazy(() => import('./pages/parent/Dashboard.jsx'));
 const ParentChildren = lazy(() => import('./pages/parent/Children.jsx'));
 const ParentChildDetail = lazy(() => import('./pages/parent/ChildDetail.jsx'));
-const ParentReports = lazy(() => import('./pages/parent/Reports.jsx'));
 const ParentRequests = lazy(() => import('./pages/parent/Requests.jsx'));
 
 /* صفحات مشتركة */
@@ -159,8 +156,6 @@ export function AppRoutes() {
               <Route path="student/tests/:testId/run" element={<TestRunner />} />
               <Route path="student/tests/:testId/result" element={<TestResult />} />
               <Route path="student/goals" element={<Goals />} />
-              <Route path="student/progress" element={<Progress />} />
-              <Route path="student/reports" element={<StudentReports />} />
               {/* مهمة المساعد: صفحة مؤقتة تعتمد على وجود توكيل نشِط لا على الدور */}
               <Route path="student/assistant" element={<StudentAssistant />} />
             </Route>
@@ -214,7 +209,6 @@ export function AppRoutes() {
               <Route path="parent/children" element={<ParentChildren />} />
               <Route path="parent/children/:studentId" element={<ParentChildDetail />} />
               <Route path="parent/requests" element={<ParentRequests />} />
-              <Route path="parent/reports" element={<ParentReports />} />
             </Route>
 
             {/* مشتركة */}

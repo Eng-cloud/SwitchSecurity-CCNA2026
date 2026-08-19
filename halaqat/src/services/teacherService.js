@@ -73,8 +73,8 @@ export async function getCircleStudents(
       return {
         id: student.id,
         name: student.name,
-        // لا سجل ≠ غياب: التمييز بينهما هو ما يجعل التصحيح ممكنًا.
-        attendanceToday: attendance?.status ?? 'notRecorded',
+        // لا سجل = غياب: من لم يُسجَّل حضوره لم يحضر.
+        attendanceToday: attendance?.status ?? 'absent',
         attendanceRate: student.attendanceRate,
         memorizedPages: student.memorizedPages,
         reviewRate: student.reviewRate,
@@ -90,18 +90,15 @@ export async function getCircleStudents(
 }
 
 /** حالات الحضور المخزَّنة. «لم يُسجَّل» ليست منها: هي غياب السجل نفسه. */
-export const ATTENDANCE_STATUSES = ['present', 'late', 'absent', 'excused'];
-
-export const ATTENDANCE_NOT_RECORDED = 'notRecorded';
+/** ثلاث حالات لا رابع لها. */
+export const ATTENDANCE_STATUSES = ['present', 'absent', 'excused'];
 
 /**
- * يضبط حضور اليوم لطالب — أو يمحوه.
+ * يضبط حضور اليوم لطالب.
  *
  * الحضور إقرار من المعلم، والإقرار يُخطئ: يُنقر السطر الخطأ، أو يصل الطالب
- * متأخرًا بعد أن سُجِّل غيابه. لذلك ليست هذه دالة «تسجيل» باتجاه واحد، بل
- * ضبطٌ لحالة تقبل كل القيم وتقبل المسح. تمرير `notRecorded` (أو `null`)
- * يحذف السجل فيعود اليوم كما لو لم يُلمس — وهذا هو التراجع الحقيقي، لا
- * استبدال خطأٍ بخطأٍ آخر اسمه «غائب».
+ * بعد أن سُجِّل غيابه. لذلك ليست هذه دالة «تسجيل» باتجاه واحد بل ضبطٌ
+ * لحالة تقبل الحالات الثلاث في الاتجاهين، فالتصحيح خطوة كالتسجيل.
  */
 export async function setAttendance({ studentId, status, role, userId }) {
   return request(() =>
@@ -119,11 +116,6 @@ export async function setAttendance({ studentId, status, role, userId }) {
         (row) => row.studentId === studentId && row.date === today,
       );
 
-      if (status === null || status === ATTENDANCE_NOT_RECORDED) {
-        if (index >= 0) db.attendance.splice(index, 1);
-        return { studentId, status: ATTENDANCE_NOT_RECORDED, date: today, cleared: true };
-      }
-
       if (!ATTENDANCE_STATUSES.includes(status)) {
         throw new ApiError('validation', 'teacher.attendanceInvalid');
       }
@@ -139,7 +131,7 @@ export async function setAttendance({ studentId, status, role, userId }) {
           status,
         });
 
-      return { studentId, status, date: today, cleared: false };
+      return { studentId, status, date: today };
     }),
   );
 }

@@ -23,10 +23,9 @@ test('السلسلة كاملة: غياب المعلم ← طلب إنابة ←
   /* --- ١) المعلم يسجّل غيابه ويطلب نائبًا --- */
   await loginAs(page, 'teacher');
 
+  // اليوم يبدأ بلا تغطية: الأصل أن تُثبَت لا أن تُفترض.
   const teacherAttendance = page.getByTestId('teacher-attendance');
-  await expect(teacherAttendance).toHaveValue('notRecorded');
-
-  await teacherAttendance.selectOption('absent');
+  await expect(teacherAttendance).toHaveValue('absent');
   await expect(page.getByText('الحلقة اليوم بلا معلّم')).toBeVisible();
 
   await page.getByTestId('deputy-picker').selectOption(DEPUTY_ID);
@@ -75,14 +74,9 @@ test('عودة المعلم حاضرًا تُنهي الإنابة ولا تتر
   await loginAs(page, 'teacher');
   const attendance = page.getByTestId('teacher-attendance');
 
-  await attendance.selectOption('absent');
   await page.getByTestId('deputy-picker').selectOption(DEPUTY_ID);
   await page.getByTestId('request-deputy').click();
   await expect(page.getByText('بانتظار ردّ النائب').first()).toBeVisible();
-
-  // مسح التسجيل ممنوع ما دام الطلب قائمًا — ترتيب الخطوات مقصود.
-  await attendance.selectOption('notRecorded');
-  await expect(page.getByText('أنهِ الإنابة القائمة قبل مسح تسجيل الغياب').first()).toBeVisible();
 
   await attendance.selectOption('present');
   await expect(page.getByText('المعلم حاضر').first()).toBeVisible();
@@ -100,14 +94,14 @@ test('المشرف يحضّر ويغيّب طلاب حلقته من داخلها
   const student = page.getByTestId('attendance-student-1-01');
   await expect(student).toBeVisible();
 
+  await student.selectOption('excused');
+  await expect(page.getByText(/حُدِّث حضور .+: مستأذن/).first()).toBeVisible();
+  await expect(student).toHaveValue('excused');
+
+  // والتراجع متاح له كما هو متاح للمعلم.
   await student.selectOption('absent');
   await expect(page.getByText(/حُدِّث حضور .+: غائب/).first()).toBeVisible();
   await expect(student).toHaveValue('absent');
-
-  // والتراجع متاح له كما هو متاح للمعلم.
-  await student.selectOption('notRecorded');
-  await expect(page.getByText(/أُلغي تسجيل حضور /).first()).toBeVisible();
-  await expect(student).toHaveValue('notRecorded');
 
   assertNoConsoleErrors(errors);
 });

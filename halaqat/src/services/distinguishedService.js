@@ -52,7 +52,7 @@ function statsFor(db, student, range) {
     ? Math.round(sessions.reduce((sum, s) => sum + (s.mastery ?? 0), 0) / sessions.length)
     : null;
 
-  const attended = attendance.filter((row) => row.status === 'present' || row.status === 'late');
+  const attended = attendance.filter((row) => row.status === 'present');
   const attendanceRate = attendance.length
     ? Math.round((attended.length / attendance.length) * 100)
     : null;

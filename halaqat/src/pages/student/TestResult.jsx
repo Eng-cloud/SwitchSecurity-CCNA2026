@@ -83,8 +83,8 @@ export default function TestResult() {
                 >
                   {t('tests.reviewAnswers')}
                 </Button>
-                <Button variant="ghost" to="/app/student/reports">
-                  {t('tests.openReport')}
+                <Button variant="ghost" to="/app/student/tests">
+                  {t('nav.tests')}
                 </Button>
               </div>
             </Card>

@@ -2,20 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { can, permissionsOf, searchScope, ACTIONS } from './permissions.js';
 
 describe('مصفوفة الصلاحيات', () => {
-  it('المصحف متاح للطالب والمعلم والمشرف وولي الأمر دون الإدارة', () => {
-    expect(can('student', ACTIONS.QURAN_READ)).toBe(true);
-    expect(can('teacher', ACTIONS.QURAN_READ)).toBe(true);
-    expect(can('supervisor', ACTIONS.QURAN_READ)).toBe(true);
-    expect(can('parent', ACTIONS.QURAN_READ)).toBe(true);
-    expect(can('admin', ACTIONS.QURAN_READ)).toBe(false);
+  it('المصحف للطالب والمعلم وولي الأمر — لا للمشرف ولا للإدارة', () => {
+    // أداة تعليم لا أداة إشراف: من دوره إداري أو إشرافي لا يحتاجها.
+    for (const role of ['student', 'teacher', 'parent']) {
+      expect(can(role, ACTIONS.QURAN_READ)).toBe(true);
+    }
+    for (const role of ['supervisor', 'admin']) {
+      expect(can(role, ACTIONS.QURAN_READ)).toBe(false);
+    }
   });
 
-  it('الطباعة للمعلم والمشرف والإدارة فقط', () => {
-    expect(can('teacher', ACTIONS.REPORTS_PRINT)).toBe(true);
-    expect(can('supervisor', ACTIONS.REPORTS_PRINT)).toBe(true);
-    expect(can('admin', ACTIONS.REPORTS_PRINT)).toBe(true);
-    expect(can('student', ACTIONS.REPORTS_PRINT)).toBe(false);
-    expect(can('parent', ACTIONS.REPORTS_PRINT)).toBe(false);
+  it('الطباعة والتصدير للمشرف والإدارة فقط', () => {
+    // المعلم يقرأ تقارير حلقته ولا يُخرجها من المنصة.
+    for (const role of ['supervisor', 'admin']) {
+      expect(can(role, ACTIONS.REPORTS_PRINT)).toBe(true);
+    }
+    for (const role of ['teacher', 'student', 'parent']) {
+      expect(can(role, ACTIONS.REPORTS_PRINT)).toBe(false);
+    }
   });
 
   it('المشرف يدير المعلمين والحلقات والطلاب', () => {
@@ -63,7 +67,6 @@ describe('مصفوفة الصلاحيات', () => {
     expect(permissionsOf('teacher').sort()).toEqual(
       [
         ACTIONS.QURAN_READ,
-        ACTIONS.REPORTS_PRINT,
         ACTIONS.ASSISTANT_ASSIGN,
         ACTIONS.DELEGATION_MANAGE,
         ACTIONS.DISTINGUISHED_VIEW,

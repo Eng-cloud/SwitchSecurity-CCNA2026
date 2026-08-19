@@ -43,8 +43,10 @@ const A = ACTIONS;
 
 /**
  * الصلاحيات لكل دور.
- * - المصحف: للطالب والمعلم والمشرف وولي الأمر (الإدارة دورها إداري).
- * - الطباعة: للمعلم والمشرف والإدارة فقط.
+ * - المصحف: للطالب والمعلم وولي الأمر. الإدارة والمشرف دورهما إداري
+ *   وإشرافي، والمصحف أداة تعليم لا أداة إشراف.
+ * - الطباعة والتصدير (REPORTS_PRINT): للمشرف والإدارة فقط. المعلم يقرأ
+ *   تقارير حلقته ولا يُخرجها من المنصة — التوثيق الرسمي فوقه.
  * - إضافة الطلاب وحذفهم (STUDENTS_MANAGE): للمشرف والإدارة فقط.
  *   المعلم يعلّم حلقته ويتابعها ولا يبني تشكيلتها، فلا تختلط الأدوار.
  * - الحضور (ATTENDANCE_RECORD): للمعلم في حلقته، وللمشرف في حلقاته كاملةً.
@@ -59,7 +61,6 @@ const MATRIX = {
   // ليس له STUDENTS_MANAGE ولا TEACHERS_MANAGE ولا CIRCLES_MANAGE ولا مراجعة الطلبات.
   teacher: [
     A.QURAN_READ,
-    A.REPORTS_PRINT,
     A.ASSISTANT_ASSIGN,
     A.DELEGATION_MANAGE,
     A.DISTINGUISHED_VIEW,
@@ -70,7 +71,6 @@ const MATRIX = {
   ],
 
   supervisor: [
-    A.QURAN_READ,
     A.REPORTS_PRINT,
     A.TEACHERS_MANAGE,
     A.CIRCLES_MANAGE,

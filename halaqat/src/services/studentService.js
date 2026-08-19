@@ -317,7 +317,7 @@ export async function saveRecitationSession(studentId, payload) {
         typeKey: 'session',
         createdAt: session.createdAt,
         read: false,
-        link: '/app/student/progress',
+        link: '/app/student',
         roles: ['student'],
       });
 

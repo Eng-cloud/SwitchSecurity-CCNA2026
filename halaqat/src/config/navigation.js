@@ -32,8 +32,6 @@ const NAVIGATION = {
     { to: '/app/student/review', labelKey: 'nav.review', icon: '🔁' },
     { to: '/app/student/tests', labelKey: 'nav.tests', icon: '📝' },
     { to: '/app/student/goals', labelKey: 'nav.goals', icon: '🎯' },
-    { to: '/app/student/progress', labelKey: 'nav.progress', icon: '📈', primary: true },
-    { to: '/app/student/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
   teacher: [
     { to: '/app/teacher', labelKey: 'nav.dashboard', icon: '🏠', end: true, primary: true },
@@ -51,7 +49,6 @@ const NAVIGATION = {
     { to: '/app/supervisor/teachers', labelKey: 'nav.teachers', icon: '🧑‍🏫', primary: true },
     { to: '/app/supervisor/distinguished', labelKey: 'nav.distinguished', icon: '🏅' },
     { to: '/app/supervisor/requests', labelKey: 'nav.requests', icon: '📬', primary: true },
-    QURAN_ITEM,
     { to: '/app/supervisor/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
   admin: [
@@ -71,7 +68,6 @@ const NAVIGATION = {
     { to: '/app/parent/children', labelKey: 'nav.children', icon: '🧑‍🎓', primary: true },
     { to: '/app/parent/requests', labelKey: 'nav.requests', icon: '📬', primary: true },
     QURAN_ITEM,
-    { to: '/app/parent/reports', labelKey: 'nav.reports', icon: '📊' },
   ],
 };
 

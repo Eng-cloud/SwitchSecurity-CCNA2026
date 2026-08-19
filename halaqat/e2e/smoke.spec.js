@@ -12,8 +12,6 @@ const ROUTES = {
     '/app/student/recitation',
     '/app/student/tests',
     '/app/student/goals',
-    '/app/student/progress',
-    '/app/student/reports',
   ],
   teacher: [
     '/app/teacher',
@@ -30,7 +28,7 @@ const ROUTES = {
     '/app/supervisor/manage-teachers',
     '/app/supervisor/requests',
     '/app/supervisor/reports',
-    '/app/quran',
+    '/app/supervisor/coverage',
   ],
   admin: [
     '/app/admin',
@@ -47,7 +45,6 @@ const ROUTES = {
     '/app/parent',
     '/app/parent/children',
     '/app/parent/requests',
-    '/app/parent/reports',
     '/app/quran',
   ],
 };

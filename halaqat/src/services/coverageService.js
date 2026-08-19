@@ -21,31 +21,22 @@ import { getDb, mutateDb } from '../mock/db.js';
 import { can, ACTIONS } from '../config/permissions.js';
 import { toISODate } from '../lib/format.js';
 
-/** حالات حضور المعلم المخزَّنة. «لم يُسجَّل» غيابُ السجل لا حالةٌ فيه. */
-export const TEACHER_STATUSES = ['present', 'late', 'absent', 'excused'];
-
-export const NOT_RECORDED = 'notRecorded';
+/** ثلاث حالات لحضور المعلم، كحضور الطالب سواءً بسواء. */
+export const TEACHER_STATUSES = ['present', 'absent', 'excused'];
 
 /** الحالتان اللتان تتركان الحلقة بلا معلّم فتستدعيان الإنابة. */
 export const ABSENT_STATUSES = ['absent', 'excused'];
 
 /**
  * حالات التغطية — ترتيبها هنا هو ترتيب إلحاحها عند المشرف.
- *  needsCover: غاب المعلم ولم يُطلب أحد.
+ *  needsCover: الحلقة بلا معلّم ولم يُطلب أحد. وهي حالة اليوم قبل أن
+ *              يسجّل المعلم حضوره: الأصل أن تُثبَت التغطية لا أن تُفترض.
  *  escalated : طُلب نائب فاعتذر — المسؤولية على المشرف.
  *  pending   : طلبٌ بانتظار ردّ.
  *  deputized : نائب قَبِل ويقود الحلقة.
  *  onSite    : المعلم نفسه موجود.
- *  unknown   : لم يُسجَّل حضور المعلم بعد.
  */
-export const COVERAGE_ORDER = [
-  'needsCover',
-  'escalated',
-  'pending',
-  'deputized',
-  'unknown',
-  'onSite',
-];
+export const COVERAGE_ORDER = ['needsCover', 'escalated', 'pending', 'deputized', 'onSite'];
 
 const OPEN_DEPUTATION = ['pending', 'active'];
 
@@ -95,12 +86,11 @@ function deputationOf(db, circleId, date) {
  */
 export function coverageOf(db, circleId, date) {
   const attendance = attendanceOf(db, circleId, date);
-  const teacherStatus = attendance?.status ?? NOT_RECORDED;
+  const teacherStatus = attendance?.status ?? 'absent';
   const deputation = deputationOf(db, circleId, date);
 
   let state;
-  if (teacherStatus === NOT_RECORDED) state = 'unknown';
-  else if (!ABSENT_STATUSES.includes(teacherStatus)) state = 'onSite';
+  if (!ABSENT_STATUSES.includes(teacherStatus)) state = 'onSite';
   else if (deputation?.status === 'active') state = 'deputized';
   else if (deputation?.status === 'pending') state = 'pending';
   else if (deputation?.status === 'declined') state = 'escalated';
@@ -200,7 +190,8 @@ function shapeDay(db, circle, date) {
  *
  * النائب مستثنى عمدًا: من ينوب عن غائب لا يقرّر حضور الغائب.
  * وعودة المعلم حاضرًا تُنهي الإنابة القائمة تلقائيًا، فلا تبقى سلطتان
- * على حلقة واحدة في وقت واحد.
+ * على حلقة واحدة في وقت واحد. والعكس صحيح: تسجيلُه غائبًا بعد حضورٍ
+ * خاطئ يعيد الحلقة إلى طلب التغطية.
  */
 export async function setTeacherAttendance({
   role,
@@ -228,13 +219,6 @@ export async function setTeacherAttendance({
         (row) =>
           row.circleId === circleId && row.date === date && OPEN_DEPUTATION.includes(row.status),
       );
-
-      if (status === null || status === NOT_RECORDED) {
-        // مسح الغياب وإنابةٌ قائمة تناقضٌ صريح: تُنهى الإنابة أولًا.
-        if (open) throw new ApiError('conflict', 'coverage.errors.hasOpenDeputation');
-        if (index >= 0) rows.splice(index, 1);
-        return shapeDay(db, circle, date);
-      }
 
       if (!TEACHER_STATUSES.includes(status)) {
         throw new ApiError('validation', 'coverage.errors.invalidStatus');
@@ -296,12 +280,14 @@ export async function listDeputyCandidates({ role, userId, circleId, date = toda
       )
       .map((user) => {
         const own = db.circles.find((item) => item.teacherId === user.id);
-        const ownState = own ? coverageOf(db, own.id, date) : null;
         const committed = deputationRows(db).some(
           (row) =>
             row.date === date && row.deputyId === user.id && OPEN_DEPUTATION.includes(row.status),
         );
-        const away = ownState ? ABSENT_STATUSES.includes(ownState.teacherStatus) : false;
+        // «غائب» هنا تعني غيابًا مُسجَّلًا لا مفترضًا: افتراض التغطية يصلح
+        // لتنبيه المشرف، ولا يصلح لاستبعاد معلمٍ لم يقل شيئًا بعد.
+        const ownRecord = own ? attendanceOf(db, own.id, date) : null;
+        const away = ownRecord ? ABSENT_STATUSES.includes(ownRecord.status) : false;
 
         return {
           id: user.id,
@@ -442,9 +428,7 @@ export async function claimCoverage({ role, userId, userName, circleId, date = t
       requireAuthority(db, { role, userId, circleId, date, allow: ['supervisor', 'admin'] });
 
       const { state } = coverageOf(db, circle.id, date);
-      if (state === 'onSite' || state === 'unknown') {
-        throw new ApiError('conflict', 'coverage.errors.notNeeded');
-      }
+      if (state === 'onSite') throw new ApiError('conflict', 'coverage.errors.notNeeded');
       if (state === 'deputized') throw new ApiError('conflict', 'coverage.errors.alreadyCovered');
 
       const now = new Date().toISOString();
@@ -551,7 +535,7 @@ export async function listCoverage({ role, userId, date = today() }) {
       date,
       rows,
       gaps: rows.filter((row) => row.needsSupervisor).length,
-      unknown: rows.filter((row) => row.state === 'unknown').length,
+      covered: rows.filter((row) => row.state === 'onSite' || row.state === 'deputized').length,
     };
   });
 }

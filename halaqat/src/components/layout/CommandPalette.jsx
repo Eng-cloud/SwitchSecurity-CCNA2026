@@ -95,23 +95,8 @@ export default function CommandPalette({ open, onClose }) {
       });
     }
 
-    if (role === 'student') {
-      base.unshift({
-        id: 'reports',
-        section: 'navigation',
-        label: t('palette.commands.openReports'),
-        icon: '📊',
-        run: () => navigate('/app/student/reports'),
-      });
-    } else if (role === 'parent') {
-      base.unshift({
-        id: 'reports',
-        section: 'navigation',
-        label: t('palette.commands.openReports'),
-        icon: '📊',
-        run: () => navigate('/app/parent/reports'),
-      });
-    } else {
+    // التقارير للمعلم والمشرف والإدارة: الطالب يوثّق، وولي الأمر يتابع ابنه.
+    if (role !== 'student' && role !== 'parent') {
       base.unshift(
         {
           id: 'searchStudent',

@@ -90,7 +90,7 @@ test('لوحة الأوامر تفتح بـCtrl+K وتُغلق بـEscape وتع
 
 test('التبويبات تعمل بالأسهم وتعلن التحديد', async ({ page }) => {
   await loginAs(page, 'student');
-  await page.goto('/app/student/reports');
+  await page.goto('/app/student/review');
 
   const first = page.getByRole('tab').first();
   await first.click();

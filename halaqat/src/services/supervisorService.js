@@ -116,7 +116,7 @@ export async function getCircleDetail(circleId) {
         // حضور اليوم: بدونه لا يستطيع المشرف تسجيله ولا تصحيحه من الحلقة.
         attendanceToday:
           db.attendance.find((row) => row.studentId === student.id && row.date === today)?.status ??
-          'notRecorded',
+          'absent',
         masteryAvg: student.masteryAvg,
         memorizedPages: student.memorizedPages,
         status: student.status,

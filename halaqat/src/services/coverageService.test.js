@@ -29,16 +29,17 @@ describe('حضور المعلم', () => {
     resetDb();
   });
 
-  it('اليوم يبدأ بلا تسجيل، والمعلم يسجّل نفسه', async () => {
+  it('اليوم يبدأ بلا تغطية حتى يُثبتها المعلم بحضوره', async () => {
     const world = scene();
 
+    // الأصل أن تُثبَت التغطية لا أن تُفترض: قبل التسجيل الحلقة بلا معلّم.
     const before = await coverageService.getCircleDay({
       role: 'teacher',
       userId: world.teacher.id,
       circleId: world.circle.id,
     });
-    expect(before.teacherStatus).toBe('notRecorded');
-    expect(before.state).toBe('unknown');
+    expect(before.teacherStatus).toBe('absent');
+    expect(before.state).toBe('needsCover');
 
     const after = await coverageService.setTeacherAttendance({
       role: 'teacher',
@@ -328,24 +329,20 @@ describe('الإنابة — السلسلة كاملة', () => {
     ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
   });
 
-  it('مسح تسجيل الغياب مرفوض ما دامت هناك إنابة قائمة', async () => {
+  it('الحالات المحذوفة لم تعد تُقبل لحضور المعلم', async () => {
     const world = scene();
-    await markAway(world);
-    await coverageService.requestDeputy({
-      role: 'teacher',
-      userId: world.teacher.id,
-      circleId: world.circle.id,
-      deputyId: world.other.id,
-    });
 
-    await expect(
-      coverageService.setTeacherAttendance({
-        role: 'teacher',
-        userId: world.teacher.id,
-        circleId: world.circle.id,
-        status: 'notRecorded',
-      }),
-    ).rejects.toMatchObject({ messageKey: 'coverage.errors.hasOpenDeputation' });
+    for (const status of ['late', 'notRecorded', null]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(
+        coverageService.setTeacherAttendance({
+          role: 'teacher',
+          userId: world.teacher.id,
+          circleId: world.circle.id,
+          status,
+        }),
+      ).rejects.toMatchObject({ messageKey: 'coverage.errors.invalidStatus' });
+    }
   });
 });
 
@@ -417,6 +414,12 @@ describe('المشرف — آخر السلسلة', () => {
   it('لا يتولّى حلقةً معلّمها حاضر، ولا حلقةً ليست تحت إشرافه', async () => {
     const world = scene();
 
+    await coverageService.setTeacherAttendance({
+      role: 'teacher',
+      userId: world.teacher.id,
+      circleId: world.circle.id,
+      status: 'present',
+    });
     await expect(
       coverageService.claimCoverage({
         role: 'supervisor',
@@ -449,9 +452,24 @@ describe('المشرف — آخر السلسلة', () => {
 
     expect(board.rows.length).toBeGreaterThan(0);
     expect(board.rows.every((row) => row.supervisorId === world.supervisor.id)).toBe(true);
-    expect(board.rows[0].circleId).toBe(world.circle.id);
     expect(board.rows[0].state).toBe('needsCover');
-    expect(board.gaps).toBe(1);
+    // كل حلقات المشرف بلا تغطية ما دام معلّموها لم يسجّلوا حضورهم.
+    expect(board.gaps).toBe(board.rows.length);
+    expect(board.covered).toBe(0);
+
+    // وحضور معلّم واحد ينقل حلقته إلى المغطّاة.
+    await coverageService.setTeacherAttendance({
+      role: 'teacher',
+      userId: world.teacher.id,
+      circleId: world.circle.id,
+      status: 'present',
+    });
+    const after = await coverageService.listCoverage({
+      role: 'supervisor',
+      userId: world.supervisor.id,
+    });
+    expect(after.covered).toBe(1);
+    expect(after.gaps).toBe(board.gaps - 1);
   });
 
   it('من لا يملك التغطية لا يقرأ لوحتها', async () => {
@@ -461,5 +479,47 @@ describe('المشرف — آخر السلسلة', () => {
         coverageService.listCoverage({ role, userId: 'user-parent-1' }),
       ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
     }
+  });
+});
+
+describe('الغياب المفترض لا يُستبعد به معلّم', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  it('من لم يسجّل حضوره بعد يبقى مرشّحًا للإنابة', async () => {
+    const world = scene();
+    await markAway(world);
+
+    const candidates = await coverageService.listDeputyCandidates({
+      role: 'teacher',
+      userId: world.teacher.id,
+      circleId: world.circle.id,
+    });
+
+    // كل المعلمين «غائبون» بالافتراض في بداية اليوم، ولو استُبعدوا لما
+    // بقي أحدٌ ينوب — فالاستبعاد يكون بغيابٍ مُسجَّل لا مفترض.
+    expect(candidates.length).toBeGreaterThan(0);
+    expect(candidates.every((item) => item.busy)).toBe(false);
+
+    // ومن سجّل غيابه فعلًا يُستبعد موسومًا بسببه.
+    const away = world.db.circles.find(
+      (circle) => circle.teacherId !== world.teacher.id && circle.teacherId !== world.other.id,
+    );
+    await coverageService.setTeacherAttendance({
+      role: 'teacher',
+      userId: away.teacherId,
+      circleId: away.id,
+      status: 'absent',
+    });
+
+    const after = await coverageService.listDeputyCandidates({
+      role: 'teacher',
+      userId: world.teacher.id,
+      circleId: world.circle.id,
+    });
+    const flagged = after.find((item) => item.id === away.teacherId);
+    expect(flagged.busy).toBe(true);
+    expect(flagged.busyReason).toBe('away');
   });
 });

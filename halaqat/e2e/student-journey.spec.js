@@ -27,6 +27,15 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   // ثم رحلة الأسبوع بثلاثة أرقام.
   await expect(page.getByRole('heading', { name: 'رحلتك هذا الأسبوع' })).toBeVisible();
 
+  // الطالب لا تقارير له ولا صفحة تقدّم: مسؤوليته التوثيق، والتقارير
+  // للمعلم فما فوق. المسارات المحذوفة لم تعد موجودة أصلًا.
+  for (const gone of ['/app/student/reports', '/app/student/progress']) {
+    // eslint-disable-next-line no-await-in-loop
+    await page.goto(gone);
+    // eslint-disable-next-line no-await-in-loop
+    await expect(page.getByRole('heading', { name: 'الصفحة غير موجودة' })).toBeVisible();
+  }
+
   // Quran: library → surah reader
   await page.goto('/app/quran');
   await expect(page.getByRole('heading', { name: 'المصحف' })).toBeVisible();
@@ -79,12 +88,6 @@ test('رحلة الطالب من البداية إلى النهاية', async ({
   }
   await page.getByTestId('submit-test').click();
   await expect(page).toHaveURL(/\/tests\/test-monthly-1\/result/, { timeout: 15000 });
-
-  // Reports
-  await page.goto('/app/student/reports');
-  await expect(page.getByRole('heading', { name: 'التقارير' })).toBeVisible();
-  await page.getByRole('tab', { name: 'الاختبارات' }).click();
-  await expect(page.getByRole('tab', { name: 'الاختبارات' })).toHaveAttribute('aria-selected', 'true');
 
   // Settings
   await page.goto('/app/settings');

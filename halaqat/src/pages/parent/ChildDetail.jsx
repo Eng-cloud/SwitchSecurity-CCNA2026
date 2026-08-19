@@ -191,13 +191,7 @@ export default function ParentChildDetail() {
                           {formatShortDate(row.date)} — {t(`teacher.attendanceStatus.${row.status}`)}
                         </span>
                         <span aria-hidden="true">
-                          {row.status === 'present'
-                            ? '✓'
-                            : row.status === 'absent'
-                              ? '✕'
-                              : row.status === 'late'
-                                ? '⏱'
-                                : '○'}
+                          {row.status === 'present' ? '✓' : row.status === 'absent' ? '✕' : '○'}
                         </span>
                       </span>
                     ))}

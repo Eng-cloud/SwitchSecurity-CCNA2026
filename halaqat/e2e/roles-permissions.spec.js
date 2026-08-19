@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { watchConsole, assertNoConsoleErrors, loginAs, sidebarVisible } from './helpers.js';
+import {
+  watchConsole,
+  assertNoConsoleErrors,
+  loginAs,
+  logout,
+  sidebarVisible,
+} from './helpers.js';
 
 /** رابط التنقل يظهر في الشريط الجانبي على سطح المكتب وفي الدرج على الجوال. */
 async function expectNavLink(page, name, shouldExist = true) {
@@ -16,10 +22,10 @@ async function expectNavLink(page, name, shouldExist = true) {
 
 /** الصلاحيات: المصحف، الطباعة، ونطاق البحث لكل دور. */
 
-test('المصحف متاح للطالب والمعلم والمشرف وولي الأمر ومحجوب عن الإدارة', async ({ page }) => {
+test('المصحف للطالب والمعلم وولي الأمر ومحجوب عن المشرف والإدارة', async ({ page }) => {
   const errors = watchConsole(page);
 
-  for (const role of ['student', 'teacher', 'supervisor', 'parent']) {
+  for (const role of ['student', 'teacher', 'parent']) {
     // eslint-disable-next-line no-await-in-loop
     await page.goto('/');
     // eslint-disable-next-line no-await-in-loop
@@ -35,38 +41,47 @@ test('المصحف متاح للطالب والمعلم والمشرف وولي 
     await expect(page.getByText('الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ')).toBeVisible();
   }
 
-  // الإدارة: لا مصحف، ومحاولة الوصول تُعيدها إلى لوحتها
-  await page.goto('/');
-  await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
-  await loginAs(page, 'admin');
-  await expectNavLink(page, 'المصحف', false);
-  await page.goto('/app/quran');
-  await expect(page).toHaveURL(/\/app\/admin/);
+  // المشرف والإدارة: دورهما إشرافي وإداري، والمصحف أداة تعليم.
+  for (const role of ['supervisor', 'admin']) {
+    // eslint-disable-next-line no-await-in-loop
+    await page.goto('/');
+    // eslint-disable-next-line no-await-in-loop
+    await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
+    // eslint-disable-next-line no-await-in-loop
+    await loginAs(page, role);
+    // eslint-disable-next-line no-await-in-loop
+    await expectNavLink(page, 'المصحف', false);
+    // eslint-disable-next-line no-await-in-loop
+    await page.goto('/app/quran');
+    // eslint-disable-next-line no-await-in-loop
+    await expect(page).toHaveURL(new RegExp(`/app/${role}`));
+  }
 
   assertNoConsoleErrors(errors);
 });
 
-test('الطباعة للمعلم والمشرف والإدارة فقط', async ({ page }) => {
+test('الطباعة للمشرف والإدارة فقط', async ({ page }) => {
   const errors = watchConsole(page);
 
-  // الطالب: تقارير بلا طباعة
-  await loginAs(page, 'student');
-  await page.goto('/app/student/reports');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'معاينة الطباعة' })).toHaveCount(0);
-
-  // ولي الأمر: كذلك
-  await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
-  await loginAs(page, 'parent');
-  await page.goto('/app/parent/reports');
-  await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toHaveCount(0);
-
-  // المعلم: الطباعة متاحة
-  await page.evaluate(() => window.localStorage.removeItem('halaqat.session'));
+  // المعلم: يقرأ تقرير حلقته بلا طباعة ولا تصدير.
   await loginAs(page, 'teacher');
   await page.goto('/app/teacher/reports');
-  await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'معاينة الطباعة' })).toHaveCount(0);
+  await logout(page);
+
+  // المشرف والإدارة: الطباعة متاحة.
+  for (const role of ['supervisor', 'admin']) {
+    // eslint-disable-next-line no-await-in-loop
+    await loginAs(page, role);
+    // eslint-disable-next-line no-await-in-loop
+    await page.goto(`/app/${role}/reports`);
+    // eslint-disable-next-line no-await-in-loop
+    await expect(page.getByRole('button', { name: 'طباعة', exact: true })).toBeVisible();
+    // eslint-disable-next-line no-await-in-loop
+    await logout(page);
+  }
 
   assertNoConsoleErrors(errors);
 });
