@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useT } from '../../i18n/index.jsx';
+import MessageThread from '../../components/messages/MessageThread.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { useToast } from '../../context/ToastContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
 import useListState from '../../hooks/useListState.js';
 import * as parentService from '../../services/parentService.js';
@@ -31,7 +31,6 @@ export default function ParentChildDetail() {
   const t = useT();
   const { studentId } = useParams();
   const { user } = useAuth();
-  const toast = useToast();
   const { values, setValue } = useListState({ defaults: { tab: 'progress' } });
 
   const fetcher = useCallback(
@@ -59,7 +58,7 @@ export default function ParentChildDetail() {
           { label: data?.name ?? '' },
         ]}
         actions={
-          <Button variant="secondary" onClick={() => toast.info(t('parent.contactNote'))}>
+          <Button variant="secondary" href="#message-thread" data-testid="contact-teacher">
             {t('parent.contactTeacher')}
           </Button>
         }
@@ -202,6 +201,11 @@ export default function ParentChildDetail() {
           </div>
         ) : null}
       </DataState>
+
+      {/* التواصل مع المعلم: محادثة فعلية لا زرٌّ يعتذر */}
+      <div id="message-thread">
+        <MessageThread studentId={studentId} />
+      </div>
     </>
   );
 }

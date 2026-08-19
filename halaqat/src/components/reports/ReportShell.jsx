@@ -5,6 +5,7 @@ import { can, ACTIONS } from '../../config/permissions.js';
 import { formatDateTime } from '../../lib/format.js';
 import { Button, SegmentedControl } from '../ui/index.js';
 import Logo from '../layout/Logo.jsx';
+import ExportMenu from './ExportMenu.jsx';
 
 /**
  * غلاف موحّد للتقارير:
@@ -18,10 +19,11 @@ export default function ReportShell({
   filters,
   children,
   actions,
+  exportData,
 }) {
   const t = useT();
   const { role } = useAuth();
-  // الطباعة صلاحية إدارية: المعلم والمشرف والإدارة فقط.
+  // الطباعة والتصدير صلاحية واحدة: المشرف والإدارة. المعلم يقرأ ولا يُخرج.
   const canPrint = can(role, ACTIONS.REPORTS_PRINT);
   const [preview, setPreview] = useState(false);
   const printedAt = formatDateTime(new Date());
@@ -60,6 +62,7 @@ export default function ReportShell({
           {actions}
           {canPrint ? (
             <>
+              <ExportMenu data={exportData} />
               <Button
                 variant="secondary"
                 onClick={() => setPreview((prev) => !prev)}

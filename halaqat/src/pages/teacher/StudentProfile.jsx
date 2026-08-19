@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import MessageThread from '../../components/messages/MessageThread.jsx';
 import { useT } from '../../i18n/index.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import useAsyncData from '../../hooks/useAsyncData.js';
@@ -293,6 +294,10 @@ export default function StudentProfile() {
           </div>
         ) : null}
       </DataState>
+
+      {/* الطرف الآخر للمحادثة نفسها التي يفتحها ولي الأمر من صفحة ابنه.
+          الصفحة يشاركها المشرف والإدارة، والمحادثة بين طرفيها لا ثالث لهما. */}
+      {role === 'teacher' ? <MessageThread studentId={studentId} /> : null}
 
       <AddNoteModal
         open={noteOpen}

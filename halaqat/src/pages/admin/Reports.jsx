@@ -15,6 +15,7 @@ import {
   PageSkeleton,
 } from '../../components/ui/index.js';
 import ReportShell from '../../components/reports/ReportShell.jsx';
+import { exportColumns } from '../../lib/export.js';
 
 /** التقرير العام للإدارة. */
 export default function AdminReports() {
@@ -67,6 +68,13 @@ export default function AdminReports() {
         period={values.period}
         onPeriodChange={(period) => setValue('period', period)}
         preparedBy={user.name}
+        exportData={{
+          filename: `halaqat-admin-${values.period}`,
+          title: t('admin.dashboardTitle'),
+          meta: t(`reports.${values.period}`),
+          columns: exportColumns(columns),
+          rows: data?.rows ?? [],
+        }}
       >
         <DataState
           loading={loading}

@@ -72,6 +72,11 @@ test('لوحة الأوامر تفتح بـCtrl+K وتُغلق بـEscape وتع
   const errors = watchConsole(page);
   await loginAs(page, 'student');
 
+  // شريط التطبيق دليلٌ على أن الهيكل رُكِّب ومعه مستمع الاختصار؛ الضغط
+  // قبله يضيع بلا أثر ويجعل الاختبار يسقط متقطّعًا تحت الحمل.
+  // (زرّ اللوحة نفسه لا يصلح: لا يظهر على الجوال.)
+  await expect(page.getByRole('button', { name: /تغيير وضع الواجهة/ })).toBeVisible();
+
   await page.keyboard.press('Control+k');
   const palette = page.getByRole('dialog', { name: 'لوحة الأوامر' });
   await expect(palette).toBeVisible();

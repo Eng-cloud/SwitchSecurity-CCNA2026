@@ -8,7 +8,7 @@ import { SURAHS_WITH_TEXT, SURAHS } from './quran.js';
 import { readStorage, writeStorage, removeStorage, STORAGE_KEYS } from '../lib/storage.js';
 import { seedTajweedItems } from './tajweed.js';
 
-const DB_VERSION = 7;
+const DB_VERSION = 8;
 
 /* ---------------------------------------------------------------
    مولّد أرقام عشوائية حتمي
@@ -484,6 +484,8 @@ function generate() {
     deputations: [],
     // مكتبة التجويد: تُضاف من الإدارة العليا وحدها، ويقرأها الجميع.
     tajweedItems: seedTajweedItems(new Date().toISOString()),
+    // محادثات ولي الأمر ومعلّم ابنه — محادثة لكل طالب.
+    messages: [],
     users,
     circles,
     students,

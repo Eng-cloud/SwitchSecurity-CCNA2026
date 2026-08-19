@@ -15,6 +15,7 @@ import {
   PageSkeleton,
 } from '../../components/ui/index.js';
 import ReportShell from '../../components/reports/ReportShell.jsx';
+import { exportColumns } from '../../lib/export.js';
 
 /** تقرير المشرف عن كل الحلقات التابعة — مع معاينة الطباعة. */
 export default function SupervisorReports() {
@@ -66,6 +67,13 @@ export default function SupervisorReports() {
         period={values.period}
         onPeriodChange={(period) => setValue('period', period)}
         preparedBy={user.name}
+        exportData={{
+          filename: `halaqat-supervisor-${values.period}`,
+          title: t('supervisor.dashboardTitle'),
+          meta: t(`reports.${values.period}`),
+          columns: exportColumns(columns),
+          rows: data?.rows ?? [],
+        }}
       >
         <DataState
           loading={loading}
