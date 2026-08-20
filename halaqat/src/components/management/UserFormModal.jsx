@@ -15,6 +15,7 @@ export default function UserFormModal({
   targetRole,
   supervisors = [],
   status = 'idle',
+  mayCreateCircle = true,
 }) {
   const t = useT();
   const [form, setForm] = useState({
@@ -151,7 +152,9 @@ export default function UserFormModal({
           </Field>
         ) : null}
 
-        {targetRole === 'teacher' ? (
+        {/* إنشاء حلقةٍ مع المعلم إذنٌ مستقل: من لا يملكه لا يُسأل عنها،
+            فحقلٌ يُملأ ثم يُهمَل أسوأ من حقلٍ لا يظهر. */}
+        {targetRole === 'teacher' && mayCreateCircle ? (
           <>
             <Field label={t('admin.form.circleName')} hint={t('admin.form.optionalCircle')} optional>
               <Input

@@ -48,6 +48,7 @@ export default function AdminTeachers() {
   const [status, setStatus] = useState('idle');
 
   const canAssignAssistant = can(role, ACTIONS.ASSISTANT_ASSIGN);
+  const mayCreateCircle = can(role, ACTIONS.CIRCLES_MANAGE);
   const isSupervisor = role === 'supervisor';
 
   const fetcher = useCallback(
@@ -305,6 +306,7 @@ export default function AdminTeachers() {
       </DataState>
 
       <UserFormModal
+        mayCreateCircle={mayCreateCircle}
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSubmit={handleCreate}

@@ -99,16 +99,21 @@ test('الإدارة: ثلاثة أقسام مع إضافة معلم وتغيي�
   assertNoConsoleErrors(errors);
 });
 
-test('المشرف يضيف حلقة ويدير معلميه وطلابهم', async ({ page }) => {
+test('المشرف يدير معلميه وطلابهم ولا يُنشئ حلقة ولا يحذفها', async ({ page }) => {
   const errors = watchConsole(page);
   await loginAs(page, 'supervisor');
 
-  // إضافة حلقة
+  // الحلقة كيانٌ في هيكل المنصة: بناؤه وهدمه قرارٌ إداري لا إشرافي.
   await page.goto('/app/supervisor/circles');
-  await page.getByTestId('add-circle').click();
-  await page.getByTestId('circle-name').fill('حلقة المشرف الجديدة');
-  await page.getByTestId('submit-circle').click();
-  await expect(page.getByText('تمت إضافة الحلقة').first()).toBeVisible();
+  await expect(page.getByRole('table')).toBeVisible();
+  await expect(page.getByTestId('add-circle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'حذف' })).toHaveCount(0);
+
+  // ولا يُسأل عن اسم حلقةٍ عند إضافة معلم، لأنها لن تُنشأ.
+  await page.goto('/app/supervisor/manage-teachers');
+  await page.getByTestId('add-teacher').click();
+  await expect(page.getByTestId('user-circle-name')).toHaveCount(0);
+  await page.getByRole('button', { name: 'إلغاء' }).click();
 
   // إدارة المعلمين: إضافة طالب إلى حلقة معلم
   await page.goto('/app/supervisor/manage-teachers');

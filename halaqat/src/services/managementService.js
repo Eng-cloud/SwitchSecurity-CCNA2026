@@ -226,8 +226,8 @@ export async function createUser({ role, actorId, payload }) {
       };
       db.users.push(user);
 
-      // معلم جديد يحتاج حلقة ليظهر له طلاب وجدول.
-      if (targetRole === 'teacher' && payload.circleName) {
+      // معلم جديد يحتاج حلقة ليظهر له طلاب وجدول — وإنشاؤها إذنٌ مستقل.
+      if (targetRole === 'teacher' && payload.circleName && can(role, ACTIONS.CIRCLES_MANAGE)) {
         db.circles.push({
           id: `circle-${Date.now()}`,
           name: String(payload.circleName).trim(),
@@ -395,7 +395,7 @@ export async function deleteCircle({ role, circleId }) {
 export async function assignCircleRole({ role, actorId, circleId, slot, userId }) {
   return request(() =>
     mutateDb((db) => {
-      assertCan(role, ACTIONS.CIRCLES_MANAGE);
+      assertCan(role, ACTIONS.CIRCLES_ASSIGN);
 
       if (!['teacher', 'supervisor'].includes(slot)) {
         throw new ApiError('invalidSlot', 'admin.errors.invalidSlot');
@@ -444,7 +444,7 @@ export async function assignCircleRole({ role, actorId, circleId, slot, userId }
 export async function updateCircleSchedule({ role, actorId, circleId, days, startTime, endTime }) {
   return request(() =>
     mutateDb((db) => {
-      assertCan(role, ACTIONS.CIRCLES_MANAGE);
+      assertCan(role, ACTIONS.CIRCLES_ASSIGN);
       const circle = db.circles.find((item) => item.id === circleId);
       if (!circle) throw new ApiError('notFound', 'state.notFoundHint');
       if (role === 'supervisor' && circle.supervisorId !== actorId) {
@@ -460,7 +460,7 @@ export async function updateCircleSchedule({ role, actorId, circleId, days, star
 /** مرشّحو التعيين: النشِطون من الدور المطلوب، والمعلم الموكّل يُوسم بحلقته. */
 export async function listAssignable({ role, slot }) {
   return request(() => {
-    assertCan(role, ACTIONS.CIRCLES_MANAGE);
+    assertCan(role, ACTIONS.CIRCLES_ASSIGN);
     const db = getDb();
 
     return db.users

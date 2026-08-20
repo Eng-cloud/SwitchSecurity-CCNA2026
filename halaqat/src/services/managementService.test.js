@@ -570,3 +570,72 @@ describe('موعد الحلقة — أيامٌ ووقتٌ صريح', () => {
     }
   });
 });
+
+describe('إنشاء الحلقات وحذفها — قرارٌ إداري', () => {
+  beforeEach(() => {
+    resetDb();
+  });
+
+  it('المشرف لا يُنشئ حلقة ولا يحذفها', async () => {
+    const circle = getDb().circles.find((item) => item.supervisorId === 'user-supervisor-1');
+
+    await expect(
+      managementService.createCircle({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        payload: { name: 'حلقة المشرف' },
+      }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+
+    // ولا حتى حلقته هو.
+    await expect(
+      managementService.deleteCircle({ role: 'supervisor', circleId: circle.id }),
+    ).rejects.toMatchObject({ messageKey: 'state.forbiddenHint' });
+  });
+
+  it('ويبقى له ما هو إدارةٌ للقائم: التعيين وضبط الموعد', async () => {
+    const circle = getDb().circles.find((item) => item.supervisorId === 'user-supervisor-1');
+
+    await expect(
+      managementService.updateCircleSchedule({
+        role: 'supervisor',
+        actorId: 'user-supervisor-1',
+        circleId: circle.id,
+        days: 'السبت – الأربعاء',
+        startTime: '16:00',
+        endTime: '17:30',
+      }),
+    ).resolves.toMatchObject({ startTime: '16:00' });
+
+    await expect(
+      managementService.listAssignable({ role: 'supervisor', slot: 'teacher' }),
+    ).resolves.toEqual(expect.any(Array));
+  });
+
+  it('إضافة معلم من المشرف لا تُنشئ حلقة ولو مُرِّر اسمها', async () => {
+    const before = getDb().circles.length;
+
+    await managementService.createUser({
+      role: 'supervisor',
+      actorId: 'user-supervisor-1',
+      payload: { role: 'teacher', name: 'معلم جديد', circleName: 'حلقة مهرَّبة' },
+    });
+
+    // الحقل محجوب في الواجهة، والخدمة لا تثق بالواجهة.
+    expect(getDb().circles).toHaveLength(before);
+    expect(getDb().circles.some((circle) => circle.name === 'حلقة مهرَّبة')).toBe(false);
+  });
+
+  it('والإدارة تُنشئها مع المعلم كما كانت', async () => {
+    const before = getDb().circles.length;
+
+    await managementService.createUser({
+      role: 'admin',
+      actorId: 'user-admin',
+      payload: { role: 'teacher', name: 'معلم بحلقته', circleName: 'حلقة الإدارة' },
+    });
+
+    expect(getDb().circles).toHaveLength(before + 1);
+    expect(getDb().circles.some((circle) => circle.name === 'حلقة الإدارة')).toBe(true);
+  });
+});

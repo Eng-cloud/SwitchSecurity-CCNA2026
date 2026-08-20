@@ -27,6 +27,7 @@ export const ACTIONS = {
   SUPERVISORS_MANAGE: 'supervisors.manage',
   TEACHERS_MANAGE: 'teachers.manage',
   CIRCLES_MANAGE: 'circles.manage',
+  CIRCLES_ASSIGN: 'circles.assign',
   STUDENTS_MANAGE: 'students.manage',
   ASSISTANT_ASSIGN: 'assistant.assign',
   DELEGATION_MANAGE: 'delegation.manage',
@@ -50,6 +51,10 @@ const A = ACTIONS;
  *   وإشرافي، والمصحف أداة تعليم لا أداة إشراف.
  * - الطباعة والتصدير (REPORTS_PRINT): للمشرف والإدارة فقط. المعلم يقرأ
  *   تقارير حلقته ولا يُخرجها من المنصة — التوثيق الرسمي فوقه.
+ * - إنشاء الحلقات وحذفها (CIRCLES_MANAGE): للإدارة وحدها. الحلقة كيانٌ
+ *   في هيكل المنصة، وبناؤه وهدمه قرارٌ إداري لا إشرافي.
+ * - تعيين المعلم والمشرف وضبط الموعد (CIRCLES_ASSIGN): للمشرف داخل
+ *   حلقاته وللإدارة في كلّها — إدارةُ القائم غير إنشاء الجديد.
  * - إضافة الطلاب وحذفهم (STUDENTS_MANAGE): للمشرف والإدارة فقط.
  *   المعلم يعلّم حلقته ويتابعها ولا يبني تشكيلتها، فلا تختلط الأدوار.
  * - الحضور (ATTENDANCE_RECORD): للمعلم في حلقته، وللمشرف في حلقاته كاملةً.
@@ -83,7 +88,7 @@ const MATRIX = {
   supervisor: [
     A.REPORTS_PRINT,
     A.TEACHERS_MANAGE,
-    A.CIRCLES_MANAGE,
+    A.CIRCLES_ASSIGN,
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
     A.DISTINGUISHED_VIEW,
@@ -99,6 +104,7 @@ const MATRIX = {
     A.SUPERVISORS_MANAGE,
     A.TEACHERS_MANAGE,
     A.CIRCLES_MANAGE,
+    A.CIRCLES_ASSIGN,
     A.STUDENTS_MANAGE,
     A.ENROLLMENT_REVIEW,
     A.DISTINGUISHED_VIEW,

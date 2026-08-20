@@ -22,10 +22,25 @@ describe('مصفوفة الصلاحيات', () => {
     }
   });
 
-  it('المشرف يدير المعلمين والحلقات والطلاب', () => {
+  it('المشرف يدير المعلمين والطلاب داخل حلقاته', () => {
     expect(can('supervisor', ACTIONS.TEACHERS_MANAGE)).toBe(true);
-    expect(can('supervisor', ACTIONS.CIRCLES_MANAGE)).toBe(true);
     expect(can('supervisor', ACTIONS.STUDENTS_MANAGE)).toBe(true);
+  });
+
+  it('إنشاء الحلقات وحذفها للإدارة وحدها، وإدارةُ القائم للمشرف معها', () => {
+    // الحلقة كيانٌ في هيكل المنصة: بناؤه وهدمه قرارٌ إداري لا إشرافي.
+    expect(can('admin', ACTIONS.CIRCLES_MANAGE)).toBe(true);
+    for (const role of ['supervisor', 'teacher', 'student', 'parent']) {
+      expect(can(role, ACTIONS.CIRCLES_MANAGE)).toBe(false);
+    }
+
+    // أمّا تعيين المعلم وضبط الموعد فإدارةٌ للقائم يشترك فيها المشرف.
+    for (const role of ['admin', 'supervisor']) {
+      expect(can(role, ACTIONS.CIRCLES_ASSIGN)).toBe(true);
+    }
+    for (const role of ['teacher', 'student', 'parent']) {
+      expect(can(role, ACTIONS.CIRCLES_ASSIGN)).toBe(false);
+    }
   });
 
   it('إدارة المستخدمين والمشرفين للإدارة وحدها', () => {
