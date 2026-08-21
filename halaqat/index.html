@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="منصة الحلقات — منصة تعليمية لتحفيظ القرآن الكريم ومتابعة الحلقات." />
+    <meta name="color-scheme" content="light dark" />
+    <title>منصة الحلقات</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      // منع وميض المظهر (Flash of wrong theme) قبل تحميل React.
+      (function () {
+        try {
+          var raw = localStorage.getItem('halaqat.theme');
+          var mode = raw ? JSON.parse(raw) : 'system';
+          if (mode !== 'light' && mode !== 'dark' && mode !== 'system') mode = 'system';
+          var resolved =
+            mode === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light'
+              : mode;
+          document.documentElement.setAttribute('data-theme', resolved);
+
+          var a11yRaw = localStorage.getItem('halaqat.a11y');
+          if (a11yRaw) {
+            var a = JSON.parse(a11yRaw) || {};
+            if (a.fontScale) document.documentElement.setAttribute('data-font-scale', a.fontScale);
+            if (a.contrast) document.documentElement.setAttribute('data-contrast', a.contrast);
+            if (a.motion) document.documentElement.setAttribute('data-motion', a.motion);
+          }
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

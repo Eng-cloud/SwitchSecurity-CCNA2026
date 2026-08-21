@@ -1,0 +1,33 @@
+{
+  "name": "halaqat-frontend",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "description": "منصة الحلقات — Frontend Simulation (Mock Services / Mock Data / Mock AI)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test",
+    "build:single": "SINGLE_FILE=1 VITE_HASH_ROUTER=1 vite build && node scripts/build-single.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "jsdom": "^28.0.0",
+    "vite": "^8.2.1",
+    "vitest": "^4.1.10"
+  }
+}

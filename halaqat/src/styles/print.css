@@ -1,0 +1,149 @@
+/* =========================================================
+   Print — للتقارير (المشرف / الإدارة / المعلم)
+   يخفي التنقل ويحافظ على RTL والجداول
+   ========================================================= */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm 16mm;
+  }
+
+  :root,
+  :root[data-theme='dark'] {
+    --bg: #ffffff;
+    --bg-subtle: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #ffffff;
+    --surface-3: #f4f4f4;
+    --text: #000000;
+    --text-secondary: #222222;
+    --text-muted: #444444;
+    --border: #999999;
+    --border-subtle: #bbbbbb;
+    --border-strong: #555555;
+    --shadow-xs: none;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
+    --chart-grid: #cccccc;
+    --chart-axis: #555555;
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    direction: rtl;
+  }
+
+  /* إخفاء كل ما ليس محتوى التقرير */
+  [data-print='hide'],
+  .no-print,
+  header[data-app-topbar],
+  nav[data-app-sidebar],
+  nav[data-app-bottomnav],
+  [data-toast-region],
+  [data-command-palette],
+  .skip-link {
+    display: none !important;
+  }
+
+  [data-print='only'] {
+    display: block !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  /* رأس وتذييل الطباعة */
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+
+  .print-footer {
+    display: block !important;
+    border-top: 1px solid #999;
+    margin-top: 20px;
+    padding-top: 8px;
+    font-size: 11px;
+    color: #444;
+  }
+
+  /* الجداول */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1px solid #999 !important;
+    padding: 6px 8px !important;
+    text-align: start;
+    font-size: 12px;
+  }
+
+  th {
+    background: #eeeeee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* البطاقات والرسوم */
+  .print-block,
+  section,
+  figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  svg {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    max-width: 100%;
+  }
+
+  a[href]::after {
+    content: '';
+  }
+
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* معاينة الطباعة داخل الشاشة */
+.print-header,
+.print-footer {
+  display: none;
+}
+
+[data-print-preview='true'] .print-header,
+[data-print-preview='true'] .print-footer {
+  display: flex;
+}
+
+[data-print-preview='true'] .print-footer {
+  display: block;
+}

@@ -1,0 +1,353 @@
+import { useState } from 'react';
+import { useT } from '../../i18n/index.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
+import useAssistantDuty from '../../hooks/useAssistantDuty.js';
+import * as assistantService from '../../services/assistantService.js';
+import { formatPercent, formatRelative } from '../../lib/format.js';
+import { Checkbox } from '../../components/ui/Choice.jsx';
+import {
+  PageHeader,
+  Section,
+  Card,
+  Button,
+  Badge,
+  Alert,
+  Modal,
+  Field,
+  Input,
+  Textarea,
+  ProgressBar,
+  EmptyState,
+} from '../../components/ui/index.js';
+
+/**
+ * مهمة المساعد عند الطالب.
+ *
+ * صفحة مؤقتة بحكم طبيعتها: تظهر ما دام هناك توكيل نشِط، وتُخلي نفسها فور
+ * اكتمال الأسماء. الطالب هنا يسمع مراجعة زملاء بأعيانهم، لا أكثر.
+ */
+export default function StudentAssistant() {
+  const t = useT();
+  const { user } = useAuth();
+  const toast = useToast();
+  const { duty, reload } = useAssistantDuty();
+
+  const [target, setTarget] = useState(null);
+  const [choosing, setChoosing] = useState(false);
+  const [picked, setPicked] = useState([]);
+  const [mastery, setMastery] = useState('85');
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const delegation = duty?.delegation ?? null;
+
+  const openRecord = (item) => {
+    setMastery('85');
+    setNote('');
+    setTarget(item);
+  };
+
+  const togglePick = (studentId, checked) => {
+    setPicked((prev) => (checked ? [...prev, studentId] : prev.filter((id) => id !== studentId)));
+  };
+
+  const submitChoice = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      await assistantService.chooseDelegationStudents({
+        assistantStudentId: user.studentId,
+        delegationId: delegation.id,
+        studentIds: picked,
+      });
+      setChoosing(false);
+      setPicked([]);
+      toast.success(t('student.assistant.chosen'));
+      await reload();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * التراجع عن توثيقٍ خاطئ.
+   * النقر على اسمٍ بدل اسم واقعة متوقّعة، فالتوثيق يُرفع كما وُضع:
+   * الاسم يعود إلى الانتظار والجلسة تُحذف من سجل الطالب.
+   */
+  const undo = async (item) => {
+    setSaving(true);
+    try {
+      await assistantService.undoReview({
+        assistantStudentId: user.studentId,
+        delegationId: delegation.id,
+        studentId: item.studentId,
+      });
+      toast.success(t('student.assistant.undone', { name: item.studentName }));
+      await reload();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const result = await assistantService.recordReview({
+        assistantStudentId: user.studentId,
+        delegationId: delegation.id,
+        studentId: target.studentId,
+        mastery: Number(mastery),
+        note,
+      });
+      setTarget(null);
+      // انتهاء الأسماء ⇒ انتهاء المهمة: نقولها صراحةً بدل أن تختفي الصفحة بلا تفسير.
+      toast.success(result.closed ? t('student.assistant.completed') : t('student.assistant.saved'));
+      await reload();
+    } catch (err) {
+      toast.error(t(err?.messageKey ?? 'state.errorHint'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const breadcrumb = [
+    { label: t('nav.home'), to: '/app/student' },
+    { label: t('nav.assistantDuty') },
+  ];
+
+  if (!duty?.active) {
+    return (
+      <>
+        <PageHeader title={t('nav.assistantDuty')} breadcrumb={breadcrumb} />
+        <EmptyState
+          icon="⭐"
+          title={t('student.assistant.noDuty')}
+          text={t('student.assistant.noDutyHint')}
+          action={
+            <Button variant="secondary" to="/app/student">
+              {t('nav.dashboard')}
+            </Button>
+          }
+        />
+        {duty?.history?.length ? (
+          <Section id="duty-history" title={t('student.assistant.historyTitle')}>
+            <div className="stack-2">
+              {duty.history.map((item) => (
+                <Card key={item.id} variant="quiet">
+                  <div className="row row-2 row-between row-wrap">
+                    <span className="t-sm">
+                      {t('teacher.assistant.progress', {
+                        done: item.progress.done,
+                        total: item.progress.total,
+                      })}
+                    </span>
+                    <span className="t-sm t-muted">
+                      {formatRelative(item.completedAt ?? item.createdAt, t)}
+                    </span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </Section>
+        ) : null}
+      </>
+    );
+  }
+
+  const pending = delegation.items.filter((item) => item.status !== 'done');
+
+  return (
+    <>
+      <PageHeader
+        title={t('student.assistant.dutyTitle')}
+        subtitle={t('student.assistant.dutySubtitle', {
+          teacher: delegation.teacherName,
+          circle: delegation.circleName,
+        })}
+        breadcrumb={breadcrumb}
+      />
+
+      {/* نوع المراجعة يتصدّر: المساعد يحتاج أن يعرف ماذا يسمع قبل ممّن. */}
+      <Alert variant="info" title={t(`teacher.assistant.reviewKind.${delegation.reviewKind ?? 'minor'}`)}>
+        {t(`teacher.assistant.reviewKindHint.${delegation.reviewKind ?? 'minor'}`)} —{' '}
+        {t('student.assistant.scopeNoticeText')}
+      </Alert>
+
+      <Card>
+        <ProgressBar
+          value={delegation.progress.done}
+          max={delegation.progress.total}
+          label={t('teacher.assistant.progress', {
+            done: delegation.progress.done,
+            total: delegation.progress.total,
+          })}
+        />
+        <p className="t-sm t-muted">
+          {t('student.assistant.remaining', { count: pending.length })}
+        </p>
+        {delegation.note ? (
+          <p className="t-sm">
+            <strong>{t('student.assistant.noteFromTeacher')}:</strong> {delegation.note}
+          </p>
+        ) : null}
+      </Card>
+
+      {delegation.progress.toChoose > 0 ? (
+        <Card>
+          <p className="t-strong">{t('student.assistant.chooseTitle')}</p>
+          <p className="t-sm t-muted">
+            {t('student.assistant.chooseHint', { count: delegation.progress.total })} ·{' '}
+            {t('student.assistant.chooseRemaining', { count: delegation.progress.toChoose })}
+          </p>
+          <Button
+            onClick={() => {
+              setPicked([]);
+              setChoosing(true);
+            }}
+            data-testid="choose-open"
+          >
+            {t('student.assistant.chooseOpen')}
+          </Button>
+        </Card>
+      ) : null}
+
+      <Section id="duty-items" title={t('teacher.assistant.delegateStudents')}>
+        <div className="stack-2">
+          {delegation.items.length === 0 ? (
+            <Card variant="quiet">
+              <p className="t-muted">{t('student.assistant.chooseHint', { count: delegation.progress.total })}</p>
+            </Card>
+          ) : null}
+          {delegation.items.map((item) => (
+            <Card key={item.studentId} variant="quiet" data-testid="duty-item">
+              <div className="row row-2 row-between row-wrap">
+                <div className="stack-1">
+                  <p className="t-strong">{item.studentName}</p>
+                  {item.status === 'done' ? (
+                    <p className="t-sm t-muted">
+                      {t('teacher.assistant.mastery')}: {formatPercent(item.mastery)} ·{' '}
+                      {formatRelative(item.doneAt, t)}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="row row-2">
+                  <Badge variant={item.status === 'done' ? 'success' : 'neutral'}>
+                    {t(`teacher.assistant.itemStatus.${item.status}`)}
+                  </Badge>
+                  {item.status === 'done' ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={saving}
+                      onClick={() => undo(item)}
+                      data-testid="undo-review"
+                    >
+                      {t('student.assistant.undo')}
+                    </Button>
+                  ) : (
+                    <Button size="sm" onClick={() => openRecord(item)} data-testid="record-review">
+                      {t('student.assistant.record')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      <Modal
+        open={choosing}
+        onClose={() => setChoosing(false)}
+        title={t('student.assistant.chooseTitle')}
+        description={t('student.assistant.chooseHint', { count: delegation.progress.total })}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setChoosing(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="choose-form"
+              status={saving ? 'loading' : 'idle'}
+              data-testid="choose-submit"
+            >
+              {t('student.assistant.chooseSubmit')}
+            </Button>
+          </>
+        }
+      >
+        <form id="choose-form" className="stack-3" onSubmit={submitChoice}>
+          <Alert variant="info">{t('student.assistant.scopeNoticeText')}</Alert>
+          {(duty.candidates ?? []).length === 0 ? (
+            <p className="t-muted">{t('student.assistant.chooseEmpty')}</p>
+          ) : (
+            <div className="stack-2">
+              {(duty.candidates ?? []).map((candidate) => (
+                <Checkbox
+                  key={candidate.id}
+                  card
+                  label={candidate.name}
+                  checked={picked.includes(candidate.id)}
+                  onChange={(checked) => togglePick(candidate.id, checked)}
+                  disabled={
+                    !picked.includes(candidate.id) && picked.length >= delegation.progress.toChoose
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </form>
+      </Modal>
+
+      <Modal
+        open={Boolean(target)}
+        onClose={() => setTarget(null)}
+        title={target ? t('student.assistant.recordFor', { name: target.studentName }) : ''}
+        size="sm"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setTarget(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="submit"
+              form="record-review-form"
+              status={saving ? 'loading' : 'idle'}
+              data-testid="record-submit"
+            >
+              {t('student.assistant.submit')}
+            </Button>
+          </>
+        }
+      >
+        <form id="record-review-form" className="stack-3" onSubmit={submit}>
+          <Field label={t('student.assistant.masteryLabel')} hint={t('student.assistant.masteryHint')}>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={mastery}
+              onChange={(event) => setMastery(event.target.value)}
+              required
+            />
+          </Field>
+          <Field label={t('student.assistant.noteLabel')}>
+            <Textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              placeholder={t('student.assistant.notePlaceholder')}
+              rows={3}
+            />
+          </Field>
+        </form>
+      </Modal>
+    </>
+  );
+}
